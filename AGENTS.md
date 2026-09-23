@@ -72,6 +72,44 @@ the trap -- it would shadow `coverage.py` the moment `pytest-cov` is added.
 - Two switches drive conditionals in settings: `DEBUG` (bool) and `DJANGO_ENV`
   (`dev`/`test`/`prod`).
 
+## Data Model
+
+- `Outlet` -- a news source. `slug` is what the scrape command takes
+  (`scrape nyt`).
+- `Feed` -- one RSS feed belonging to an outlet. Outlets do not publish a single
+  firehose; the NYT splits RSS by section, so counting its output means reading
+  several feeds and deduping articles across them by URL.
+- `DailyCount` -- one row per (date, outlet, country), enforced by a unique
+  constraint. Only non-zero counts are stored, so an absent row means no
+  mentions.
+
+### Decisions worth not relitigating
+
+**`date` is the scrape date, not the article publication date.** RSS feeds are a
+moving window of recent articles, not a per-day archive. Keyed on publication
+date, any given day is only ever partially observed, and a later re-scrape sees
+fewer old articles than the first pass did -- so a plain upsert would silently
+shrink history. Keyed on scrape date, re-running on the same day overwrites the
+same rows and counts converge. The stored figure is "what this outlet's feeds
+looked like when we looked", which is the question the project is actually
+asking.
+
+**Two count fields, not one.** `mention_count` is total matches across all
+articles; `article_count` is how many distinct articles mentioned the country at
+least once. They diverge whenever one article repeats a country name. Both are
+stored because article text is not persisted -- whichever number is not recorded
+on the day is unrecoverable, since the articles scroll out of the feed.
+
+**`DailyCount.outlet` is PROTECT, `Feed.outlet` is CASCADE.** Feeds are
+configuration and belong to their outlet. Scraped counts are irreplaceable
+observations, so deleting an outlet must not silently discard months of them.
+
+## Testing
+
+Test directories are packages (`tests/__init__.py`). Without that, two files
+named `test_models.py` in different apps both import as the top-level module
+`test_models` and pytest fails collection with an import file mismatch.
+
 ## Known Trade-offs
 
 - **Matching is deliberately dumb**: substring matching against country name
