@@ -3,7 +3,7 @@ import datetime
 import pytest
 from django.db.utils import IntegrityError
 
-from frontpagejews.models import DailyCount, Feed, Outlet
+from frontpagejews.models import DailyCount, Outlet
 
 
 @pytest.fixture
@@ -71,34 +71,3 @@ def describe_daily_count():
 
         with pytest.raises(ProtectedError):
             nyt.delete()
-
-
-def describe_feed():
-    """Tests for Feed, which lets one outlet carry several section feeds"""
-
-    def test_an_outlet_may_have_several_feeds(nyt):
-        for section in ("HomePage", "World", "US", "Politics"):
-            Feed.objects.create(
-                outlet=nyt,
-                name=section,
-                url=f"https://rss.nytimes.com/services/xml/rss/nyt/{section}.xml",
-            )
-
-        assert nyt.feeds.count() == 4
-
-    def test_the_same_url_cannot_repeat_within_an_outlet(nyt):
-        url = "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
-        Feed.objects.create(outlet=nyt, name="World", url=url)
-
-        with pytest.raises(IntegrityError):
-            Feed.objects.create(outlet=nyt, name="World (again)", url=url)
-
-    def test_deleting_an_outlet_deletes_its_feeds(nyt):
-        """Feeds are configuration, so they cascade -- unlike DailyCount"""
-        Feed.objects.create(
-            outlet=nyt, name="World", url="https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
-        )
-
-        nyt.delete()
-
-        assert Feed.objects.count() == 0

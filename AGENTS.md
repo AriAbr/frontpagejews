@@ -76,12 +76,23 @@ the trap -- it would shadow `coverage.py` the moment `pytest-cov` is added.
 
 - `Outlet` -- a news source. `slug` is what the scrape command takes
   (`scrape nyt`).
-- `Feed` -- one RSS feed belonging to an outlet. Outlets do not publish a single
-  firehose; the NYT splits RSS by section, so counting its output means reading
-  several feeds and deduping articles across them by URL.
 - `DailyCount` -- one row per (date, outlet, country), enforced by a unique
   constraint. Only non-zero counts are stored, so an absent row means no
   mentions.
+
+### The database holds observations; code holds configuration
+
+`DailyCount` is an observation and `Outlet` is a dimension of one, so both are
+models. Feed URLs are input configuration: nothing joins to them, they are not
+observed, and no non-developer edits them. They live in code, in the same
+category as the country-variants data file, and `Outlet` rows are materialized
+from that registry with `get_or_create`.
+
+A `Feed` model was built and then removed. It was justified on the grounds that
+the NYT needs four section feeds, which confused *needing four URLs* with
+*needing a table*. Keeping feeds in code means a fresh clone can scrape with no
+fixture or seed step, and a feed URL change is a reviewable commit rather than
+an invisible state change in whichever environment someone clicked in.
 
 ### Decisions worth not relitigating
 
@@ -100,9 +111,19 @@ least once. They diverge whenever one article repeats a country name. Both are
 stored because article text is not persisted -- whichever number is not recorded
 on the day is unrecoverable, since the articles scroll out of the feed.
 
-**`DailyCount.outlet` is PROTECT, `Feed.outlet` is CASCADE.** Feeds are
-configuration and belong to their outlet. Scraped counts are irreplaceable
+**`DailyCount.outlet` is PROTECT.** Scraped counts are irreplaceable
 observations, so deleting an outlet must not silently discard months of them.
+The escape hatch, if this becomes annoying, is an `is_active` flag rather than
+switching to CASCADE.
+
+**`country_code` is indexed; `date` deliberately is not.** The unique constraint
+already creates a composite index on `(date, outlet, country_code)`, and a
+B-tree serves its leftmost prefix, so `date` needs nothing extra. `country_code`
+is the third column and gets no such help. Measured over 500k rows, the
+country-over-time query -- the one this project exists to run -- went from
+15.0ms to 2.9ms with the index, while a separate `date` index moved a date-range
+query only from 38.3ms to 32.8ms. SQLite falls back to a skip-scan without it;
+Postgres largely cannot, so the index matters at least as much after the move.
 
 ## Testing
 
