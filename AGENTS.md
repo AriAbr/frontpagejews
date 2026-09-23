@@ -76,9 +76,11 @@ the trap -- it would shadow `coverage.py` the moment `pytest-cov` is added.
 
 - `Outlet` -- a news source. `slug` is what the scrape command takes
   (`scrape nyt`).
-- `DailyCount` -- one row per (date, outlet, country), enforced by a unique
-  constraint. Only non-zero counts are stored, so an absent row means no
-  mentions.
+- `DailyScrape` -- one run over one outlet's feeds on one day, holding
+  `article_count`: how many unique articles were seen.
+- `DailyCountryCount` -- how many of that scrape's articles mentioned one
+  country, hanging off `DailyScrape` via `related_name="country_counts"`. Only
+  non-zero counts are stored, so an absent row means no mentions.
 
 ### The database holds observations; code holds configuration
 
@@ -105,16 +107,34 @@ same rows and counts converge. The stored figure is "what this outlet's feeds
 looked like when we looked", which is the question the project is actually
 asking.
 
-**Two count fields, not one.** `mention_count` is total matches across all
-articles; `article_count` is how many distinct articles mentioned the country at
-least once. They diverge whenever one article repeats a country name. Both are
-stored because article text is not persisted -- whichever number is not recorded
-on the day is unrecoverable, since the articles scroll out of the feed.
+**Matching runs against article titles only, and `count` is a single field.**
+RSS feeds do carry descriptions (~145 chars, NYT 108/115 items, WSJ 40/40), but
+they are unevenly supplied and vary in length by outlet and section, so matching
+them turns feed formatting into fake coverage differences between outlets.
+Titles are the one field everyone supplies identically. Measured over live NYT
+and WSJ feeds, total mentions and mentioning-articles were identical in 28 of 29
+rows when matching titles alone, so a second count field would be dead weight --
+they only diverge once descriptions are included (10/21 NYT rows, 5/13 WSJ).
 
-**`DailyCount.outlet` is PROTECT.** Scraped counts are irreplaceable
-observations, so deleting an outlet must not silently discard months of them.
-The escape hatch, if this becomes annoying, is an `is_active` flag rather than
-switching to CASCADE.
+**`DailyScrape.article_count` is the denominator, and it is not optional.** Raw
+per-country counts are not comparable between outlets that publish at different
+volumes: 10 Iran mentions from the NYT's 97 articles is less attention than 5
+from the WSJ's 40. It also separates a scrape that found no countries from one
+that never ran, which are otherwise identical, since only non-zero counts are
+stored. Neither is backfillable -- the articles are gone the next day.
+
+**Counts hang off the scrape by FK rather than repeating date and outlet.** The
+denominator query is the motivating one, and the FK makes it a single indexed
+join instead of a two-column join on `(date, outlet)` with nothing backing it.
+It also makes "this scrape's counts" a set that can be cleared and rewritten, so
+a same-day re-scrape cannot strand a row for a country that has since dropped
+out of the feed.
+
+**`DailyScrape.outlet` is PROTECT; `DailyCountryCount.daily_scrape` is
+CASCADE.** Scraped history is an irreplaceable observation, so deleting an
+outlet must not silently discard months of it -- the escape hatch, if that
+becomes annoying, is an `is_active` flag rather than switching to CASCADE. The
+per-country counts, by contrast, genuinely are part of their scrape.
 
 **`country_code` is indexed; `date` deliberately is not.** The unique constraint
 already creates a composite index on `(date, outlet, country_code)`, and a
@@ -124,6 +144,7 @@ country-over-time query -- the one this project exists to run -- went from
 15.0ms to 2.9ms with the index, while a separate `date` index moved a date-range
 query only from 38.3ms to 32.8ms. SQLite falls back to a skip-scan without it;
 Postgres largely cannot, so the index matters at least as much after the move.
+`date` now lives on `DailyScrape`, where the unique constraint covers it.
 
 ## Testing
 
