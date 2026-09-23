@@ -1,0 +1,84 @@
+# Based on eznashdb's ci.yml, trimmed: no Postgres service (SQLite for now),
+# no node jobs, no gettext/compilemessages.
+name: CI
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  POETRY_VERSION: 1.8.2
+  PYTHON_VERSION: "3.12"
+  # CI has no .env, so settings needs a throwaway key to boot.
+  SECRET_KEY: "insecurekey"
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install python dependencies
+        run: poetry install --no-interaction
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
+      - name: Run tests
+        run: poetry run pytest
+
+  pre-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install python dependencies
+        run: poetry install --no-interaction
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files

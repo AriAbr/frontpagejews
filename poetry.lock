@@ -206,6 +206,20 @@ pygments = ">=2.7.2"
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-describe"
+version = "3.2.0"
+description = "Describe-style plugin for pytest"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "pytest_describe-3.2.0-py3-none-any.whl", hash = "sha256:ea4ef9968145d017847b0e705d058b1ea35ea35c59b5adf4a34378c418ac455a"},
+    {file = "pytest_describe-3.2.0.tar.gz", hash = "sha256:8697f9818c330c80312c28c731022618ac96d0dab3b5238116c4a7d0cd187d9f"},
+]
+
+[package.dependencies]
+pytest = ">=7,<10"
+
+[[package]]
 name = "pytest-django"
 version = "4.14.0"
 description = "A Django plugin for pytest."
@@ -421,4 +435,4 @@ python-discovery = ">=1.6"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8b0a73d1232a93f46cea6e234fa67e2ae14e0d9595d4ed93a48197286b775a4e"
+content-hash = "0fb1739279bb2527fc32a4db9270590ffc4bd11806b4d2de17d22ec34ba042c8"
