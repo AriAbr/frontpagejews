@@ -37,8 +37,15 @@ Django apps are a packaging and reusability unit, not a domain-modelling unit --
 an app is something you could plausibly install into a different project. Split
 by *concern*, not by model type. eznashdb does exactly this: `eznashdb` holds
 the whole domain (`Shul`, `Room`, ...), while `users` and `feedback` are
-separate because they are genuinely separable. A second app here would be
-justified for something like auth, not for a new group of models.
+separate because they are genuinely separable. `users/` here is that same
+carve-out, and is the kind of thing that justifies a second app -- a new group
+of domain models is not.
+
+`users.User` subclasses `AbstractUser` and `AUTH_USER_MODEL` points at it. It
+adds only a case-insensitive unique-email constraint for now. The point is that
+it exists at all: `AUTH_USER_MODEL` cannot be repointed once migrations
+referencing it have been applied, so a custom user model is nearly free on day
+one and genuinely painful to retrofit later.
 
 The cost is asymmetric, which is why this is the default:
 
