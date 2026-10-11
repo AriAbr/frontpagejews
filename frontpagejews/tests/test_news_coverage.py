@@ -54,25 +54,3 @@ def describe_mention_counts():
         day_summaries = [day_summary("2026-09-22", {"foxnews.com": outlet(1, ISR=1)})]
 
         assert news_coverage.mention_counts(day_summaries, ["bbc"]) == {}
-
-
-def describe_last_days():
-    """Tests for picking out the scatterplot's window"""
-
-    def test_takes_the_most_recent_cached_days():
-        day_summaries = [day_summary(d, {}) for d in ["2026-09-20", "2026-09-21", "2026-09-22"]]
-
-        window = news_coverage.last_days(day_summaries, 2)
-
-        assert [s["date"] for s in window] == ["2026-09-21", "2026-09-22"]
-
-    def test_reaches_past_gaps_in_the_cache():
-        """Two cached days a month apart are still the two most recent"""
-        day_summaries = [day_summary(d, {}) for d in ["2026-08-01", "2026-08-23", "2026-09-22"]]
-
-        window = news_coverage.last_days(day_summaries, 2)
-
-        assert [s["date"] for s in window] == ["2026-08-23", "2026-09-22"]
-
-    def test_returns_nothing_without_data():
-        assert news_coverage.last_days([], 30) == []

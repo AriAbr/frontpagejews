@@ -5,10 +5,10 @@ from django.views.generic import TemplateView
 from frontpagejews import benchmarks, gdelt
 from frontpagejews.countries import country_name
 from frontpagejews.news_coverage import (
+    DAYS_SHOWN,
     HOME_COUNTRIES,
     OUTLETS,
     coverage_shares,
-    last_days,
     mention_counts,
 )
 
@@ -20,8 +20,6 @@ class Dashboard(TemplateView):
 
     template_name = "frontpagejews/dashboard.html"
     default_comparison = "CHN"
-    # The scatterplot totals mentions over this many of the most recent cached days.
-    scatter_days = 30
 
     # What the visitor picked, from the query string.
 
@@ -38,7 +36,8 @@ class Dashboard(TemplateView):
 
     @cached_property
     def day_summaries(self):
-        return [gdelt.load_day(day) for day in gdelt.cached_days()]
+        """The `DAYS_SHOWN` most recent cached days."""
+        return [gdelt.load_day(day) for day in gdelt.cached_days()[-DAYS_SHOWN:]]
 
     @cached_property
     def population(self):
@@ -75,8 +74,8 @@ class Dashboard(TemplateView):
 
     @cached_property
     def recent_mentions_by_country(self):
-        """Each country's mentions over the `scatter_days` most recent cached days."""
-        return mention_counts(last_days(self.day_summaries, self.scatter_days), self.outlets)
+        """Each country's mentions, added up over the days shown."""
+        return mention_counts(self.day_summaries, self.outlets)
 
     def scatter_points(self):
         """One point per country: its mentions over the scatter window, beside its population.
@@ -125,6 +124,6 @@ class Dashboard(TemplateView):
             scatter_data={
                 "points": self.scatter_points(),
                 "slope": self.average_mentions_per_person(),
-                "days": self.scatter_days,
+                "days": DAYS_SHOWN,
             },
         )

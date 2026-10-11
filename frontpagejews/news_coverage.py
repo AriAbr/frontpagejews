@@ -35,6 +35,11 @@ OUTLETS = {
     "guardian": Outlet("The Guardian", ["theguardian.com"]),
 }
 
+# How many of the most recent cached days the site shows, and so how far back
+# `fetch_gdelt` fills in by default. Counted in cached days, not calendar days:
+# a gap in the cache reaches further back rather than shrinking the window.
+DAYS_SHOWN = 30
+
 # Every domain the outlets publish under. The GDELT cache keeps only these.
 OUTLET_DOMAINS = {domain for outlet in OUTLETS.values() for domain in outlet.domains}
 
@@ -68,13 +73,3 @@ def coverage_shares(day_summaries, outlets):
     if not total:
         return {}
     return {code: count / total for code, count in mentions.items()}
-
-
-def last_days(day_summaries, window_days):
-    """The `window_days` most recent cached days.
-
-    Counted in cached days, not calendar days: a gap in the cache reaches
-    further back rather than shrinking the window, and a stale cache gives its
-    newest days rather than nothing.
-    """
-    return day_summaries[-window_days:]

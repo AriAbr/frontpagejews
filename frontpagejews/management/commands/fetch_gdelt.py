@@ -3,13 +3,19 @@ from datetime import UTC, datetime, timedelta
 from django.core.management.base import BaseCommand
 
 from frontpagejews import gdelt
+from frontpagejews.news_coverage import DAYS_SHOWN
 
 
 class Command(BaseCommand):
     help = "Download GDELT's GKG files for recent days and cache per-day country counts."
 
     def add_arguments(self, parser):
-        parser.add_argument("--days", type=int, default=7, help="How many finished days back to fetch")
+        parser.add_argument(
+            "--days",
+            type=int,
+            default=DAYS_SHOWN,
+            help="How many finished days back to fetch (default: as many as the site shows)",
+        )
         parser.add_argument(
             "--refresh", action="store_true", help="Rebuild days that are already cached"
         )
