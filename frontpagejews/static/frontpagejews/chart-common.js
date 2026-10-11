@@ -1,9 +1,6 @@
 // What both charts need to agree on. Importing this also sets Chart.js's
 // default text color, at the bottom.
 
-// Read a value the template wrote with json_script.
-export const data = id => JSON.parse(document.getElementById(id).textContent);
-
 const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name);
 export const BACKGROUND = cssVar("--bg");
 

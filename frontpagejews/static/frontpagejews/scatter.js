@@ -5,7 +5,7 @@
 // an axis, the chart is made as wide as it needs to be for the dashed line to
 // sit at 45 degrees, and scrolls sideways. Most countries sit near the origin,
 // because a few countries are huge and most are small.
-import { ANIMATION, BACKGROUND, COLORS, data } from "./chart-common.js";
+import { ANIMATION, BACKGROUND, COLORS } from "./chart-common.js";
 
 // Fixed, so the axis never rescales: just past India, the most populous country.
 const POPULATION_AXIS_MAX = 1.5e9;
@@ -21,13 +21,10 @@ const mentionsPerMillion = (mentions, population) =>
   ((mentions / population) * 1e6).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const roundUp = (n, step) => Math.ceil(n / step) * step;
 
-const canvas = document.getElementById("scatter");
-if (canvas) {
-  // points: {code, name, mentions, population} per country.
-  // slope: mentions per person, which is the dashed line's slope.
-  // days: how many days the mentions cover.
-  const { points, slope, days } = data("scatter-data");
-  const { focus, comparison } = data("countries");
+// points: {code, name, mentions, population} per country.
+// slope: mentions per person, which is the dashed line's slope.
+// days: how many days the mentions cover.
+export function drawScatter({ points, slope, days, focus, comparison }) {
   const mentionsAxisMax = roundUp(Math.max(MENTIONS_AXIS_STEP, ...points.map(p => p.mentions)), MENTIONS_AXIS_STEP);
 
   // One group of dots. Each dot keeps its whole point, so the tooltip and
@@ -49,7 +46,7 @@ if (canvas) {
   // top edge or the right one, whichever it reaches first.
   const lineEnd = slope ? Math.min(POPULATION_AXIS_MAX, mentionsAxisMax / slope) : 0;
 
-  const scatter = new Chart(canvas, {
+  const scatter = new Chart(document.getElementById("scatter"), {
     type: "scatter",
     data: {
       // Later datasets draw on top, so the two highlighted countries come last.

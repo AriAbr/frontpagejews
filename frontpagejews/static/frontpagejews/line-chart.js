@@ -1,18 +1,16 @@
 // Coverage and reality over time for the two countries, as shares on a log axis.
-import { ANIMATION, COLORS, data } from "./chart-common.js";
+import { ANIMATION, COLORS } from "./chart-common.js";
 
 // Two significant figures, written out: 150 rather than toPrecision's "1.5e+2".
 const twoFigures = n => (+n.toPrecision(2)).toLocaleString();
 // Log axes cannot show zero, so a day with no mentions is a gap.
-const pct = value => (value ? 100 * value : null);
+const percentOrGap = value => (value ? 100 * value : null);
 
-const canvas = document.getElementById("line-chart");
-if (canvas) {
-  const days = data("line-chart-data");
-  const { focus, comparison } = data("countries");
+// rows: one per day, from `lineChartRows` in coverage.js.
+export function drawLineChart({ rows, focus, comparison }) {
   const line = (label, key, color, dashed) => ({
     label,
-    data: days.map(day => pct(day[key])),
+    data: rows.map(row => percentOrGap(row[key])),
     borderColor: color,
     backgroundColor: color,
     borderDash: dashed ? [6, 4] : [],
@@ -20,16 +18,16 @@ if (canvas) {
     pointRadius: dashed ? 0 : 2,
     tension: 0.25,
   });
-  new Chart(canvas, {
+  new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: {
-      labels: days.map(day => day.date),
+      labels: rows.map(row => row.date),
       // Two shades per country: dark solid for coverage, light dashed for reality.
       datasets: [
-        line(`${focus.name} coverage`, "focus_coverage", COLORS.focus, false),
-        line(`${focus.name} reality`, "focus_reality", "#60a5fa", true),
-        line(`${comparison.name} coverage`, "comparison_coverage", COLORS.comparison, false),
-        line(`${comparison.name} reality`, "comparison_reality", "#fb923c", true),
+        line(`${focus.name} coverage`, "focusCoverage", COLORS.focus, false),
+        line(`${focus.name} reality`, "focusReality", "#60a5fa", true),
+        line(`${comparison.name} coverage`, "comparisonCoverage", COLORS.comparison, false),
+        line(`${comparison.name} reality`, "comparisonReality", "#fb923c", true),
       ],
     },
     options: {
