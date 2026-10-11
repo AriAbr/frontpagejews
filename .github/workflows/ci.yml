@@ -1,5 +1,5 @@
 # Based on eznashdb's ci.yml, trimmed: no Postgres service (SQLite for now),
-# no node jobs, no gettext/compilemessages.
+# no gettext/compilemessages.
 name: CI
 on:
   pull_request:
@@ -44,6 +44,21 @@ jobs:
 
       - name: Run tests
         run: poetry run pytest
+
+  js-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No dependencies to install: the tests use Node's built-in runner.
+      - name: Run tests
+        run: npm test
 
   pre-commit:
     runs-on: ubuntu-latest

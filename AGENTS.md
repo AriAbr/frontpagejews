@@ -9,9 +9,14 @@ GDP, conflict deaths, market moves).
 `manage.py fetch_gdelt` downloads GDELT's raw files for each finished day,
 reduces them to per-domain article and country-mention counts, and caches one
 JSON file per day under `var/gdelt/`. `manage.py fetch_benchmarks` caches
-World Bank population under `var/benchmarks/`. The dashboard reads only those
-caches and never fetches anything itself. Both caches are disposable:
+World Bank population under `var/benchmarks/`. Both caches are disposable:
 deleting them only means re-downloading.
+
+The site is static. `manage.py build_site` writes the dashboard to `build/`: the
+page, a `data.json` of each outlet's daily mentions over the last 30 days, and
+the scripts. The scripts work out everything that depends on the visitor's
+choice of outlets and comparison country in the browser (`coverage.js`, tested
+with `npm test`). Locally, `runserver` serves the same page and data.
 
 ## Tech Stack
 

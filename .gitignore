@@ -14,5 +14,8 @@ __pycache__/
 db.sqlite3
 /staticfiles
 
+# Static site output (manage.py build_site)
+/build
+
 # Local data caches
 /var
