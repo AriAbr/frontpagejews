@@ -35,6 +35,9 @@ OUTLETS = {
     "guardian": Outlet("The Guardian", ["theguardian.com"]),
 }
 
+# Every domain the outlets publish under. The GDELT cache keeps only these.
+OUTLET_DOMAINS = {domain for outlet in OUTLETS.values() for domain in outlet.domains}
+
 # Where the outlets are based. These get heavy coverage as home, which is not
 # the disproportion this project is looking for.
 HOME_COUNTRIES = {"USA", "GBR"}

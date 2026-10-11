@@ -13,8 +13,8 @@ mentions both Gaza and the West Bank counts once for Palestine. GDELT does,
 however, file the words "Palestine" and "Palestinian" under Israel's code, so
 Israel's counts include some Palestine coverage.
 
-Every domain is kept, not just the outlets on the dashboard, so changing which
-outlets to show never needs a re-download.
+Only the outlets' domains are kept, so adding an outlet means re-fetching past
+days with `--refresh`.
 """
 
 import io
@@ -29,6 +29,7 @@ import requests
 from django.conf import settings
 
 from frontpagejews.country_codes import FIPS_TO_ISO3
+from frontpagejews.news_coverage import OUTLET_DOMAINS
 
 BASE_URL = "https://data.gdeltproject.org/gdeltv2/"
 RAW_GDELT_FILES_PER_DAY = 24 * 4  # one every 15 minutes
@@ -102,7 +103,7 @@ def fetch_gkg(url):
 def summarize(raw_files):
     """Reduce a day's raw GDELT files to per-domain article and country counts.
 
-    Each raw file is its decoded contents, as returned by `fetch_gkg`. Articles
+    Only the outlets' domains are kept. Each raw file is its decoded contents, as returned by `fetch_gkg`. Articles
     are counted by URL, so one GDELT re-crawl of the same page is not counted
     twice.
     """
@@ -111,6 +112,8 @@ def summarize(raw_files):
     for raw_file in raw_files:
         files += 1
         for domain, url, countries in parse_gkg(raw_file):
+            if domain not in OUTLET_DOMAINS:
+                continue
             articles[domain].setdefault(url, set()).update(countries)
 
     domains = {}

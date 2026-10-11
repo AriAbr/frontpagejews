@@ -72,6 +72,16 @@ def describe_summarize():
 
         assert summary["domains"]["bbc.co.uk"] == {"articles": 1, "countries": {"ISR": 1}}
 
+    def test_keeps_only_the_outlets_domains():
+        raw_file = "\n".join(
+            [
+                gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV),
+                gkg_line("example.com", "https://example.com/1", TEL_AVIV),
+            ]
+        )
+
+        assert list(gdelt.summarize([raw_file])["domains"]) == ["bbc.co.uk"]
+
     def test_skips_non_web_sources():
         raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV, collection="2")
 
