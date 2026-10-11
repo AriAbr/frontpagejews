@@ -13,3 +13,6 @@ __pycache__/
 # Django
 db.sqlite3
 /staticfiles
+
+# Local data caches
+/var

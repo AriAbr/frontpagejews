@@ -17,6 +17,10 @@ load_dotenv(dotenv_path)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Daily summaries of GDELT's bulk files; disposable, see frontpagejews/gdelt.py.
+GDELT_CACHE_DIR = BASE_DIR / "var" / "gdelt"
+BENCHMARK_CACHE_DIR = BASE_DIR / "var" / "benchmarks"
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
