@@ -1,6 +1,7 @@
 """The dashboard as Django serves it locally. The live site is the same page
 built to static files by `manage.py build_site`."""
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import TemplateView
 
@@ -16,6 +17,7 @@ def page_context():
         "focus_name": country_name(FOCUS),
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
+        "ga_measurement_id": settings.GA_MEASUREMENT_ID,
     }
 
 

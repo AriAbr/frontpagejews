@@ -75,6 +75,16 @@ def describe_dashboard():
         assert response.status_code == 200
         assert b'value="fox"' in response.content
 
+    def test_includes_google_analytics_when_configured(client, settings):
+        settings.GA_MEASUREMENT_ID = "G-TEST123"
+
+        assert b"googletagmanager.com/gtag/js?id=G-TEST123" in client.get("/").content
+
+    def test_leaves_out_google_analytics_by_default(client, settings):
+        settings.GA_MEASUREMENT_ID = ""
+
+        assert b"googletagmanager" not in client.get("/").content
+
     def test_serves_the_data(client):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
 
