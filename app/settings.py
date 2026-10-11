@@ -21,6 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 GDELT_CACHE_DIR = BASE_DIR / "var" / "gdelt"
 BENCHMARK_CACHE_DIR = BASE_DIR / "var" / "benchmarks"
 
+# Google Analytics. Set only for the live site, so local visits aren't counted.
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "")
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
