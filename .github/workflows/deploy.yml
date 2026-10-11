@@ -21,6 +21,8 @@ env:
   PYTHON_VERSION: "3.12"
   # manage.py needs a key to boot; nothing here is secret.
   SECRET_KEY: "insecurekey"
+  # Print each day's line as it finishes, rather than buffered to the end.
+  PYTHONUNBUFFERED: "1"
 
 jobs:
   deploy:
