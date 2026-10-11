@@ -1,0 +1,31 @@
+:root { --bg: #fafaf9; --fg: #1c1917; --muted: #78716c; --border: #e7e5e4; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --border: #44403c; }
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; margin: 0; overflow-x: clip; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+h1 { font-size: 1.4rem; margin: 0 0 4px; }
+p { color: var(--muted); margin: 0 0 16px; }
+.picker { position: relative; width: 280px; max-width: 100%; margin-bottom: 16px; }
+.picker input { font: inherit; padding: 6px 10px; width: 100%; box-sizing: border-box;
+                background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
+.picker ul { position: absolute; z-index: 10; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0;
+             list-style: none; max-height: 320px; overflow-y: auto; background: var(--bg);
+             border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
+.picker li a { display: block; padding: 4px 10px; color: inherit; text-decoration: none; }
+.picker li.active a, .picker li a:hover { background: var(--border); }
+.picker li.current a { font-weight: 600; }
+.picker .none { padding: 4px 10px; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-start; margin-bottom: 16px; }
+.controls .heading { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+.controls .picker { margin-bottom: 0; }
+.outlets { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.outlets label { white-space: nowrap; }
+.chart { position: relative; height: 420px; }
+h2 { font-size: 1.1rem; margin: 40px 0 4px; }
+/* Full window width rather than the 1000px column, so the drawn-to-scale
+   scatter only scrolls when the window really is narrower than it. */
+.scroll { overflow-x: auto; margin-inline: calc(50% - 50vw); padding-inline: 16px; }
+.chart.wide { height: 460px; margin-inline: auto; }
+.empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
+code { font-size: 0.9em; }

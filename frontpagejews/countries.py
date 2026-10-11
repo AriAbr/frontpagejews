@@ -1,15 +1,8 @@
-"""Country names to match against article titles.
+"""Country display names, by ISO 3166-1 alpha-3 code.
 
-ISO 3166-1 alpha-3 code -> names to look for. Generated from ISO data, then
-hand-edited: add variants and abbreviations as false negatives turn up, remove
-or narrow entries as false positives turn up.
-
-Deliberately dumb for now. Known rough edges, left alone on purpose:
-
-- No abbreviations. `U.S.`, `UK`, `UAE` and similar are missing.
-- Ambiguous with people and places: `Georgia` (the US state), `Jordan`,
-  `Chad`, `Turkey`, `Lebanon` (several US towns).
-- `Congolese` is the demonym for both Congos, so it counts for both.
+The dashboard shows the first name in each list. The rest are variants
+(demonyms, alternate names) from when this file drove matching against article
+titles, and are unused for now.
 """
 
 COUNTRIES = {
@@ -20,6 +13,7 @@ COUNTRIES = {
     "ALA": ["Åland Islands"],
     "ALB": ["Albania", "Albanian"],
     "AND": ["Andorra", "Andorran"],
+    "ANT": ["Netherlands Antilles"],
     "ARE": ["United Arab Emirates", "Emirati"],
     "ARG": ["Argentina", "Argentine"],
     "ARM": ["Armenia", "Armenian"],
@@ -206,6 +200,7 @@ COUNTRIES = {
     "RWA": ["Rwanda", "Rwandan"],
     "SAU": ["Saudi Arabia", "Saudi"],
     "SDN": ["Sudan", "Sudanese"],
+    "SCG": ["Serbia and Montenegro"],
     "SEN": ["Senegal", "Senegalese"],
     "SGP": ["Singapore", "Singaporean"],
     "SGS": ["South Georgia and the South Sandwich Islands"],
@@ -258,8 +253,14 @@ COUNTRIES = {
     "VUT": ["Vanuatu", "Ni-Vanuatu"],
     "WLF": ["Wallis and Futuna"],
     "WSM": ["Samoa", "Samoan"],
+    "XKX": ["Kosovo", "Kosovar"],
     "YEM": ["Yemen", "Yemeni"],
     "ZAF": ["South Africa", "South African"],
     "ZMB": ["Zambia", "Zambian"],
     "ZWE": ["Zimbabwe", "Zimbabwean"],
 }
+
+
+def country_name(code):
+    """The display name for an ISO3 code, or the code itself if it has none."""
+    return COUNTRIES[code][0] if code in COUNTRIES else code

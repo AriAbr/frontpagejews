@@ -1,0 +1,67 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coverage vs Reality</title>
+  <link rel="stylesheet" href="{% static 'frontpagejews/dashboard.css' %}">
+</head>
+<body>
+<main>
+  <h1>{{ countries.focus.name }} vs {{ countries.comparison.name }}: coverage and reality</h1>
+  <p>Coverage: each country's share of all country mentions by the selected outlets that day (GDELT location tagging).
+     Reality: share of world population, standing in for the composite score until GDP, conflict deaths and market moves are added.
+     Log scale, fixed range, so the same distance means the same ratio for every country.</p>
+  <p>GDELT files "Palestine" and "Palestinian" under Israel, so Israel's coverage includes some Palestine coverage.</p>
+
+  <div class="controls">
+    <div>
+      <label class="heading" for="country-search">Compare with</label>
+      {# Every country is a plain link; the script only shows, filters and navigates the list. #}
+      <div class="picker">
+        <input id="country-search" value="{{ countries.comparison.name }}" placeholder="Filter countries"
+               autocomplete="off" aria-controls="country-list">
+        <ul id="country-list" hidden>
+          {% for code, name in choices %}
+            <li{% if code == countries.comparison.code %} class="current"{% endif %}><a href="?vs={{ code }}{% for slug in selected_outlets %}&amp;outlet={{ slug }}{% endfor %}">{{ name }}</a></li>
+          {% endfor %}
+          <li class="none" hidden>No matches</li>
+        </ul>
+      </div>
+    </div>
+    <form method="get" id="outlet-form">
+      <span class="heading">Outlets</span>
+      <input type="hidden" name="vs" value="{{ countries.comparison.code }}">
+      <div class="outlets">
+        {% for slug, name, checked in outlets %}
+          <label><input type="checkbox" name="outlet" value="{{ slug }}"{% if checked %} checked{% endif %}> {{ name }}</label>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+
+  {% if line_chart_data %}
+    <div class="chart"><canvas id="line-chart"></canvas></div>
+
+    <h2>Every country, last {{ scatter_data.days }} days</h2>
+    <p>One dot per country: how many times the selected outlets mentioned it over the {{ scatter_data.days }} most recent days downloaded, against its population.
+       Dots above the line get more mentions than their population would predict, dots below get fewer.
+       The United States and the United Kingdom are left off: the outlets are American and British, so those two get heavy coverage as home, and they are left out of the line too.
+       Click a dot to compare {{ countries.focus.name }} with it above.</p>
+    <div class="scroll"><div class="chart wide" id="scatter-wrap"><canvas id="scatter"></canvas></div></div>
+  {% else %}
+    <div class="empty">No data cached yet. Run <code>python manage.py fetch_gdelt</code>.</div>
+  {% endif %}
+</main>
+
+{{ countries|json_script:"countries" }}
+{{ line_chart_data|json_script:"line-chart-data" }}
+{{ scatter_data|json_script:"scatter-data" }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{# Modules, so each file's top-level names stay its own. #}
+<script type="module" src="{% static 'frontpagejews/controls.js' %}"></script>
+<script type="module" src="{% static 'frontpagejews/line-chart.js' %}"></script>
+<script type="module" src="{% static 'frontpagejews/scatter.js' %}"></script>
+</body>
+</html>
