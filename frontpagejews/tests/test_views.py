@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-from frontpagejews import benchmarks, gdelt, news_coverage
+from frontpagejews import benchmarks, gdelt, news_coverage, views
 
 
 @pytest.fixture(autouse=True)
@@ -75,6 +75,15 @@ def describe_dashboard():
 
         assert response.context["selected_outlets"] == ["fox"]
         assert response.context["line_chart_data"][0]["focus_coverage"] == 0.75
+
+    def test_shows_only_the_most_recent_cached_days(client, mocker):
+        mocker.patch.object(views, "DAYS_SHOWN", 1)
+        cache_day("2026-09-21", {"bbc.co.uk": {"ISR": 1}})
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+
+        response = client.get("/")
+
+        assert [day["date"] for day in response.context["line_chart_data"]] == ["2026-09-22"]
 
     def test_uses_every_outlet_when_none_is_selected(client):
         response = client.get("/", {"outlet": "not-an-outlet"})
