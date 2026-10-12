@@ -24,24 +24,31 @@ def world_bank(mocker):
         {"countryiso3code": "UKR", "value": 30},
         {"countryiso3code": "WLD", "value": 40},
     ]
+    # Some countries have no figure at all.
+    gdp = [
+        {"countryiso3code": "ISR", "value": 500},
+        {"countryiso3code": "UKR", "value": None},
+        {"countryiso3code": "WLD", "value": 500},
+    ]
     response = mocker.Mock()
-    response.json.side_effect = [[{}, countries], [{}, population]]
+    response.json.side_effect = [[{}, countries], [{}, population], [{}, gdp]]
     return mocker.patch.object(benchmarks.requests, "get", return_value=response)
 
 
-def describe_population_shares():
-    """Tests for the population shares the dashboard compares coverage against"""
+def describe_benchmarks():
+    """Tests for the real-world figures the dashboard compares coverage against"""
 
-    def test_gives_each_country_its_share_of_world_population(world_bank):
+    def test_caches_each_benchmark_for_countries_only(world_bank):
         """The "World" aggregate is excluded, or every share would be halved"""
-        benchmarks.refresh_population()
+        benchmarks.refresh()
 
-        assert benchmarks.population_shares() == {"ISR": 0.25, "UKR": 0.75}
+        assert benchmarks.load_figures("population") == {"ISR": 10, "UKR": 30}
+        assert benchmarks.load_figures("gdp") == {"ISR": 500}
 
-    def test_is_empty_and_does_not_fetch_before_the_first_refresh(mocker):
+    def test_are_empty_and_do_not_fetch_before_the_first_refresh(mocker):
         get = mocker.patch.object(benchmarks.requests, "get")
 
-        assert benchmarks.population_shares() == {}
+        assert benchmarks.load_figures("population") == {}
         get.assert_not_called()
 
 
@@ -53,7 +60,7 @@ def describe_fetch_benchmarks():
 
         call_command("fetch_benchmarks")
 
-        assert benchmarks.population()["ISR"] == 10
+        assert benchmarks.load_figures("population")["ISR"] == 10
 
     def test_keeps_the_old_cache_when_the_fetch_fails(mocker, cache_dir):
         old = {"ISR": 1}
@@ -63,4 +70,4 @@ def describe_fetch_benchmarks():
         with pytest.raises(benchmarks.requests.ConnectionError):
             call_command("fetch_benchmarks")
 
-        assert benchmarks.population() == old
+        assert benchmarks.load_figures("population") == old

@@ -27,8 +27,8 @@ def cache_day(day, mentions_by_domain):
     gdelt.cache_path(date.fromisoformat(day)).write_text(json.dumps({"date": day, "domains": domains}))
 
 
-def cache_population(**population):
-    benchmarks.population_path().write_text(json.dumps(population))
+def cache_figures(benchmark, **figures):
+    benchmarks.cache_path(benchmark).write_text(json.dumps(figures))
 
 
 def describe_site_data():
@@ -54,16 +54,21 @@ def describe_site_data():
 
         assert [day["date"] for day in site_data.site_data()["days"]] == ["2026-09-22"]
 
-    def test_names_every_country_mentioned_or_with_a_population():
+    def test_names_every_country_mentioned_or_with_a_benchmark_figure():
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
-        cache_population(CHN=90)
+        cache_figures("population", CHN=90)
+        cache_figures("gdp", UKR=5)
 
-        assert site_data.site_data()["names"] == {"CHN": "China", "ISR": "Israel"}
+        assert site_data.site_data()["names"] == {"CHN": "China", "ISR": "Israel", "UKR": "Ukraine"}
 
-    def test_includes_the_population():
-        cache_population(ISR=10, CHN=90)
+    def test_includes_each_benchmarks_figures():
+        """A benchmark not fetched yet is there but empty"""
+        cache_figures("population", ISR=10, CHN=90)
 
-        assert site_data.site_data()["population"] == {"ISR": 10, "CHN": 90}
+        assert site_data.site_data()["benchmark_figures"] == {
+            "population": {"ISR": 10, "CHN": 90},
+            "gdp": {},
+        }
 
 
 def describe_dashboard():

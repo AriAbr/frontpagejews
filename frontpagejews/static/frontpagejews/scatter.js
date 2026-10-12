@@ -1,5 +1,5 @@
-// Every country's mentions against its population, with a dashed line where a
-// country would sit if mentions followed population.
+// Every country's mentions against the chosen benchmark (population or GDP),
+// with a dashed line where a country would sit if mentions followed it.
 //
 // Plain totals on linear axes, drawn to scale. Rather than breaking or bending
 // an axis, the chart is made as wide as it needs to be for the dashed line to
@@ -7,24 +7,18 @@
 // because a few countries are huge and most are small.
 import { ANIMATION, BACKGROUND, COLORS } from "./chart-common.js";
 
-// Fixed, so the axis never rescales: just past India, the most populous country.
-const POPULATION_AXIS_MAX = 1.5e9;
 // Rounded up to this, so the mentions axis ends on a round number.
 const MENTIONS_AXIS_STEP = 500;
 const OTHER_COUNTRIES_COLOR = "#a8a29e99";
-const LINE_LABEL = "In proportion to population";
+const LINE_LABEL = "Average";
 
-// 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".
-const formatPopulation = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 2 }).format;
-// 1549 mentions over 10.1M people → "153.0".
-const mentionsPerMillion = (mentions, population) =>
-  ((mentions / population) * 1e6).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const roundUp = (n, step) => Math.ceil(n / step) * step;
 
-// points: {code, name, mentions, population} per country.
-// slope: mentions per person, which is the dashed line's slope.
+// points: {code, name, mentions, reality} per country.
+// slope: mentions per unit of the benchmark, which is the dashed line's slope.
+// benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
 // days: how many days the mentions cover.
-export function drawScatter({ points, slope, days, focus, comparison }) {
+export function drawScatter({ points, slope, benchmarkDisplaySettings, days, focus, comparison }) {
   const mentionsAxisMax = roundUp(Math.max(MENTIONS_AXIS_STEP, ...points.map(p => p.mentions)), MENTIONS_AXIS_STEP);
 
   // One group of dots. Each dot keeps its whole point, so the tooltip and
@@ -32,7 +26,7 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
   const dots = ({ label, countries, color, radius }) => ({
     label,
     data: points.filter(countries),
-    parsing: { xAxisKey: "population", yAxisKey: "mentions" },
+    parsing: { xAxisKey: "reality", yAxisKey: "mentions" },
     backgroundColor: color,
     borderColor: BACKGROUND,
     borderWidth: 2,
@@ -44,7 +38,7 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
 
   // The dashed line runs from the origin until it leaves the chart, through the
   // top edge or the right one, whichever it reaches first.
-  const lineEnd = slope ? Math.min(POPULATION_AXIS_MAX, mentionsAxisMax / slope) : 0;
+  const lineEnd = slope ? Math.min(benchmarkDisplaySettings.axisMax, mentionsAxisMax / slope) : 0;
 
   const scatter = new Chart(document.getElementById("scatter"), {
     type: "scatter",
@@ -81,9 +75,9 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
         x: {
           type: "linear",
           min: 0,
-          max: POPULATION_AXIS_MAX,
-          title: { display: true, text: "Population" },
-          ticks: { stepSize: 100e6, callback: formatPopulation },
+          max: benchmarkDisplaySettings.axisMax,
+          title: { display: true, text: benchmarkDisplaySettings.label },
+          ticks: { stepSize: benchmarkDisplaySettings.axisStep, callback: benchmarkDisplaySettings.format },
         },
         y: {
           type: "linear",
@@ -100,10 +94,10 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
           filter: item => item.raw.name,
           callbacks: {
             title: items => items[0].raw.name,
-            label: ({ raw: { mentions, population } }) => [
+            label: ({ raw: { mentions, reality } }) => [
               `Mentions: ${mentions.toLocaleString()}`,
-              `Population: ${formatPopulation(population)}`,
-              `${mentionsPerMillion(mentions, population)} mentions per million people`,
+              `${benchmarkDisplaySettings.label}: ${benchmarkDisplaySettings.format(reality)}`,
+              benchmarkDisplaySettings.rate(mentions, reality),
             ],
           },
         },
@@ -113,14 +107,14 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
 
   // Widen the chart until the dashed line sits at 45 degrees. That happens
   // when the plot area's width-to-height ratio equals the line's rise over
-  // the whole population axis, divided by the mentions axis. The legend and
+  // the whole benchmark axis, divided by the mentions axis. The legend and
   // axis labels take up fixed space around the plot area, so that is measured
   // from what Chart.js actually laid out and added back on.
   if (slope) {
     const area = scatter.chartArea;
     const plotHeight = area.bottom - area.top;
     const aroundPlot = scatter.width - (area.right - area.left);
-    const plotWidth = plotHeight * ((slope * POPULATION_AXIS_MAX) / mentionsAxisMax);
+    const plotWidth = plotHeight * ((slope * benchmarkDisplaySettings.axisMax) / mentionsAxisMax);
     document.getElementById("scatter-wrap").style.width = `${Math.round(plotWidth + aroundPlot)}px`;
     scatter.resize();
   }

@@ -69,9 +69,11 @@ jobs:
       - name: Fetch GDELT
         run: poetry run python manage.py fetch_gdelt
 
-      # World Bank population barely changes; if the fetch fails, keep the last copy.
+      # World Bank population and GDP barely change; if the fetch fails, keep the last copies.
       - name: Fetch benchmarks
-        run: poetry run python manage.py fetch_benchmarks || test -f var/benchmarks/population.json
+        run: >-
+          poetry run python manage.py fetch_benchmarks
+          || (test -f var/benchmarks/population.json && test -f var/benchmarks/gdp.json)
 
       # Saved even if a later step fails, so a long backfill is never lost.
       - name: Save data cache
