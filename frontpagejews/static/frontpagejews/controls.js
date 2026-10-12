@@ -4,7 +4,7 @@
 // is a link, a benchmark radio button goes to its own URL, and the outlets are
 // a GET form.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
-import { choicesQuery } from "./coverage.js";
+import { choicesQuery } from "./choices.js";
 
 export function setUpControls({ choices, comparison, selectedOutlets, benchmark }) {
   // Country picker: focus opens the full list, typing filters it (anywhere in

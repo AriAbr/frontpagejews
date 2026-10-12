@@ -1,34 +1,12 @@
-// The numbers the page shows, worked out from data.json for the visitor's
-// choice of outlets and comparison country. Nothing here touches the page.
+// The numbers the charts show, worked out from data.json for the visitor's
+// choices (see choices.js). Nothing here touches the page.
 //
 // data.json (see site_data.py) holds, for each of the days shown, each
 // outlet's mentions of each country, plus each benchmark's (population, GDP)
-// figures by country. Coverage is compared with one benchmark at a time, the visitor's
-// choice.
+// figures by country. Coverage is compared with one benchmark at a time, the
+// visitor's choice.
 
 const sum = numbers => numbers.reduce((total, n) => total + n, 0);
-
-// The outlets, comparison country and benchmark in the query string, falling
-// back to all outlets and the defaults.
-export function choicesFromUrl(queryString, data) {
-  const params = new URLSearchParams(queryString);
-  const allOutlets = Object.keys(data.outlets);
-  const outletsInUrl = params.getAll("outlet").filter(slug => allOutlets.includes(slug));
-  const benchmark = params.get("by");
-  return {
-    selectedOutlets: outletsInUrl.length ? outletsInUrl : allOutlets,
-    comparisonCode: params.get("vs") || data.default_comparison,
-    benchmark: benchmark in data.benchmark_figures ? benchmark : data.default_benchmark,
-  };
-}
-
-// The query string for the given choices: the reverse of `choicesFromUrl`. In
-// the same order as the outlet form submits them, so a view has one URL
-// whichever control led to it.
-export function choicesQuery({ selectedOutlets, comparisonCode, benchmark }) {
-  const params = [["vs", comparisonCode], ["by", benchmark], ...selectedOutlets.map(slug => ["outlet", slug])];
-  return `?${new URLSearchParams(params)}`;
-}
 
 export const countryName = (data, code) => data.names[code] ?? code;
 
@@ -50,16 +28,6 @@ export function fractionsOfTotal(countsByCountry) {
   const total = sum(Object.values(countsByCountry));
   if (!total) return {};
   return Object.fromEntries(Object.entries(countsByCountry).map(([code, count]) => [code, count / total]));
-}
-
-// Countries to compare with: mentioned and with a figure for the benchmark,
-// most mentioned first, Israel aside.
-export function comparisonChoices(data, selectedOutlets, benchmark) {
-  const mentions = mentionsByCountry(data.days, selectedOutlets);
-  return Object.keys(mentions)
-    .sort((a, b) => mentions[b] - mentions[a])
-    .filter(code => code in data.benchmark_figures[benchmark] && code !== data.focus)
-    .map(code => ({ code, name: countryName(data, code) }));
 }
 
 // One row per day: both countries' share of mentions that day, and of the

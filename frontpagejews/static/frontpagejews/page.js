@@ -2,14 +2,8 @@
 // fills in the page.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { setUpControls } from "./controls.js";
-import {
-  averageMentionsPerUnit,
-  choicesFromUrl,
-  comparisonChoices,
-  countryName,
-  lineChartRows,
-  scatterPoints,
-} from "./coverage.js";
+import { averageMentionsPerUnit, countryName, lineChartRows, scatterPoints } from "./chart-data.js";
+import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
 

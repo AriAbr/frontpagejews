@@ -6,7 +6,7 @@ const twoFigures = n => (+n.toPrecision(2)).toLocaleString();
 // Log axes cannot show zero, so a day with no mentions is a gap.
 const percentOrGap = value => (value ? 100 * value : null);
 
-// rows: one per day, from `lineChartRows` in coverage.js.
+// rows: one per day, from `lineChartRows` in chart-data.js.
 export function drawLineChart({ rows, focus, comparison }) {
   const line = (label, key, color, dashed) => ({
     label,
