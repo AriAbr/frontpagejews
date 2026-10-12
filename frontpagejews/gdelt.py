@@ -9,9 +9,8 @@ is disposable: deleting it only means re-downloading.
 An article "mentions" a country if any location GDELT found in it lies in that
 country, so "Tel Aviv" counts for Israel. GDELT tags with FIPS 10-4 codes;
 they are converted to ISO3 per article (see `country_codes.py`), so an article that
-mentions both Gaza and the West Bank counts once for Palestine. GDELT does,
-however, file the words "Palestine" and "Palestinian" under Israel's code, so
-Israel's counts include some Palestine coverage.
+mentions both Tel Aviv and Gaza counts once for the combined Israel, West Bank,
+and Gaza.
 
 Only the outlets' domains are kept, so adding an outlet means re-fetching past
 days with `--refresh`.

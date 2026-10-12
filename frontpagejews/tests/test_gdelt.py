@@ -28,8 +28,9 @@ def describe_parse_locations():
         """GDELT's FIPS `IS` is Israel, not Iceland as in ISO2"""
         assert gdelt.parse_locations(f"{TEL_AVIV};{GEORGIA_STATE}") == {"ISR", "USA"}
 
-    def test_maps_gaza_and_the_west_bank_to_palestine():
-        assert gdelt.parse_locations(f"{GAZA};{WEST_BANK}") == {"PSE"}
+    def test_maps_gaza_and_the_west_bank_to_israel():
+        """The dashboard shows the three as one unit"""
+        assert gdelt.parse_locations(f"{GAZA};{WEST_BANK}") == {"ISR"}
 
     def test_drops_locations_that_are_not_countries():
         assert gdelt.parse_locations(INDIAN_OCEAN) == set()
@@ -59,10 +60,10 @@ def describe_summarize():
 
         assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["countries"] == {"ISR": 1}
 
-    def test_counts_an_article_about_gaza_and_the_west_bank_once_for_palestine():
-        raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", f"{GAZA};{WEST_BANK}")
+    def test_counts_an_article_about_israel_and_gaza_once():
+        raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", f"{TEL_AVIV};{GAZA};{WEST_BANK}")
 
-        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["countries"] == {"PSE": 1}
+        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["countries"] == {"ISR": 1}
 
     def test_counts_a_recrawled_url_once():
         """GDELT can see the same page in two 15-minute files"""

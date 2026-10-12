@@ -17,6 +17,10 @@ from django.conf import settings
 # in the world economy rather than its standard of living.
 WORLD_BANK_INDICATORS = {"population": "SP.POP.TOTL", "gdp": "NY.GDP.MKTP.CD"}
 
+# Country -> the country whose figures it is added to, matching how
+# `country_codes.py` buckets GDELT's mentions.
+COMBINED_INTO = {"PSE": "ISR"}
+
 
 def fetch_country_codes():
     """The ISO3 codes of real countries.
@@ -42,11 +46,15 @@ def fetch_figures(benchmark, country_codes):
         params={"format": "json", "per_page": 400, "mrnev": 1},
         timeout=60,
     ).json()[1]
-    return {
+    figures = {
         row["countryiso3code"]: row["value"]
         for row in rows
         if row["countryiso3code"] in country_codes and row["value"]
     }
+    for part, whole in COMBINED_INTO.items():
+        if part in figures and whole in figures:
+            figures[whole] += figures.pop(part)
+    return figures
 
 
 def cache_path(benchmark):

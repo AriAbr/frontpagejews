@@ -59,12 +59,14 @@ jobs:
       # The data cache (var/) lives in the Actions cache, not the repo. Each run
       # restores the newest copy and saves a new one, so only missing days are
       # downloaded. If it is ever evicted, the next run just backfills again.
+      # Changing how days are counted means changing the prefix (here and in
+      # "Save data cache"), so the next run starts empty and refetches them all.
       - name: Restore data cache
         uses: actions/cache/restore@v4
         with:
           path: var
-          key: data-${{ github.run_id }}
-          restore-keys: data-
+          key: data-v2-${{ github.run_id }}
+          restore-keys: data-v2-
 
       - name: Fetch GDELT
         run: poetry run python manage.py fetch_gdelt
@@ -81,7 +83,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: var
-          key: data-${{ github.run_id }}
+          key: data-v2-${{ github.run_id }}
 
       - name: Build site
         run: poetry run python manage.py build_site
