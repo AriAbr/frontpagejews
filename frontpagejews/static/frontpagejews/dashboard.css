@@ -4,8 +4,15 @@
 }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; margin: 0; overflow-x: clip; }
 main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
-h1 { font-size: 1.4rem; margin: 0 0 4px; }
+h1 { font-size: 1.8rem; margin: 0; }
+header { margin-bottom: 28px; }
+header .byline { font-size: 0.85rem; margin: 0 0 10px; }
+header .subtitle { font-size: 1.05rem; margin: 0; }
+.note { margin-bottom: 16px; padding: 8px 12px; border-left: 3px solid var(--muted); background: var(--border); border-radius: 0 6px 6px 0; }
+.note p { color: var(--fg); margin: 0; }
+.note .later { color: var(--muted); margin-top: 6px; }
 p { color: var(--muted); margin: 0 0 16px; }
+a { color: inherit; }
 .picker { position: relative; width: 280px; max-width: 100%; margin-bottom: 16px; }
 .picker input { font: inherit; padding: 6px 10px; width: 100%; box-sizing: border-box;
                 background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
@@ -29,3 +36,4 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart.wide { height: 460px; margin-inline: auto; }
 .empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
 code { font-size: 0.9em; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }

@@ -92,20 +92,6 @@ export function drawScatter({ points, slope, days, focus, comparison }) {
           title: { display: true, text: `Mentions, last ${days} days` },
         },
       },
-      // Dots are links: a pointer over them, and a click compares Israel with
-      // that country instead (clicking Israel itself does nothing).
-      onHover: (event, elements) => {
-        event.native.target.style.cursor = elements.length ? "pointer" : "default";
-      },
-      onClick: (event, elements) => {
-        if (!elements.length) return;
-        const { datasetIndex, index } = elements[0];
-        const { code } = event.chart.data.datasets[datasetIndex].data[index];
-        if (code === focus.code) return;
-        const params = new URLSearchParams(location.search);
-        params.set("vs", code);
-        location.search = params;
-      },
       plugins: {
         // The page's description explains the line, so the legend lists only the dots.
         legend: { labels: { usePointStyle: true, filter: item => item.text !== LINE_LABEL } },

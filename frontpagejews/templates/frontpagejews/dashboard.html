@@ -1,65 +1,127 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Coverage vs Reality</title>
-  <link rel="stylesheet" href="{% static 'frontpagejews/dashboard.css' %}">
-  {% if ga_measurement_id %}
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id }}"></script>
-    <script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ subtitle }}" />
+    <link rel="canonical" href="{{ url }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ url }}" />
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:description" content="{{ subtitle }}" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="stylesheet" href="{% static 'frontpagejews/dashboard.css' %}" />
+    {% if ga_measurement_id %}
+      <script async
+              src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id }}"></script>
+      <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
+      function gtag() {
+        dataLayer.push(arguments);
+      }
       gtag("js", new Date());
       gtag("config", "{{ ga_measurement_id }}");
-    </script>
-  {% endif %}
-</head>
-<body>
-<main>
-  <h1>{{ focus_name }} vs <span id="comparison-name"></span>: coverage and reality</h1>
-  <p>Coverage: each country's share of all country mentions by the selected outlets that day (GDELT location tagging).
-     Reality: share of world population, standing in for the composite score until GDP, conflict deaths and market moves are added.
-     Log scale, fixed range, so the same distance means the same ratio for every country.</p>
-  <p>GDELT files "Palestine" and "Palestinian" under Israel, so Israel's coverage includes some Palestine coverage.</p>
-
-  <div class="controls">
-    <div>
-      <label class="heading" for="country-search">Compare with</label>
-      {# The script fills the list with a link per country. #}
-      <div class="picker">
-        <input id="country-search" placeholder="Filter countries" autocomplete="off" aria-controls="country-list">
-        <ul id="country-list" hidden>
-          <li class="none" hidden>No matches</li>
-        </ul>
+      </script>
+    {% endif %}
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>{{ title }}</h1>
+        <p class="byline">A project by Ari Abramowitz</p>
+        <p class="subtitle">{{ subtitle }}</p>
+      </header>
+      <div class="note">
+        <p>
+          <strong>Data sources</strong>
+        </p>
+        <p>
+          News coverage: <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener">GDELT</a>
+        </p>
+        <p>
+          Population: <a href="https://data.worldbank.org/indicator/SP.POP.TOTL"
+    target="_blank"
+    rel="noopener">World Bank</a>
+        </p>
+        <p class="later">
+          For now, "reality" is measured by population alone. Additional metrics
+          will be added later.
+        </p>
       </div>
-    </div>
-    <form method="get" id="outlet-form">
-      <span class="heading">Outlets</span>
-      <input type="hidden" name="vs">
-      <div class="outlets">
-        {% for slug, name in outlets.items %}
-          <label><input type="checkbox" name="outlet" value="{{ slug }}"> {{ name }}</label>
-        {% endfor %}
+      <div class="controls">
+        <div>
+          <label class="heading" for="country-search">Compare {{ focus_name }} with</label>
+          {# The script fills the list with a link per country. #}
+          <div class="picker">
+            <input id="country-search"
+                   placeholder="Filter countries"
+                   autocomplete="off"
+                   aria-controls="country-list" />
+            <ul id="country-list" hidden>
+              <li class="none" hidden>No matches</li>
+            </ul>
+          </div>
+        </div>
+        <form method="get" id="outlet-form">
+          <span class="heading">News outlets</span>
+          <input type="hidden" name="vs" />
+          <div class="outlets">
+            {% for slug, name in outlets.items %}
+              <label>
+                <input type="checkbox" name="outlet" value="{{ slug }}" />
+                {{ name }}
+              </label>
+            {% endfor %}
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-
-  <div id="charts" hidden>
-    <div class="chart"><canvas id="line-chart"></canvas></div>
-
-    <h2>Every country, last {{ days_shown }} days</h2>
-    <p>One dot per country: how many times the selected outlets mentioned it over the {{ days_shown }} most recent days downloaded, against its population.
-       Dots above the line get more mentions than their population would predict, dots below get fewer.
-       The United States and the United Kingdom are left off: the outlets are American and British, so those two get heavy coverage as home, and they are left out of the line too.
-       Click a dot to compare {{ focus_name }} with it above.</p>
-    <div class="scroll"><div class="chart wide" id="scatter-wrap"><canvas id="scatter"></canvas></div></div>
-  </div>
-  <div class="empty" id="no-data" hidden>No data cached yet. Run <code>python manage.py fetch_gdelt</code>.</div>
-</main>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script type="module" src="{% static 'frontpagejews/page.js' %}"></script>
-</body>
+      <div id="charts" hidden>
+        <h2>
+          {{ focus_name }} vs <span id="comparison-name"></span>: coverage and
+          reality
+        </h2>
+        <p>
+          Coverage: each country's share of all country mentions by the selected
+          outlets that day.
+          <br />
+          Reality: each country's share of the world's population.
+          <br />
+          Log scale, so small shares aren't squashed against the bottom of the
+          chart.
+        </p>
+        <div class="chart">
+          <canvas id="line-chart"></canvas>
+        </div>
+        <h2>Every country, last {{ days_shown }} days</h2>
+        <p>
+          How many times each country was mentioned over the last {{ days_shown }}
+          days, against its population.
+          <br />
+          Dashed line is the average: countries above it get more mentions
+          than their population would predict, countries below get fewer.
+          <br />
+          US and UK are left out: the outlets are American and
+          British, so those two get heavy home coverage.
+        </p>
+        <div class="scroll">
+          <div class="chart wide" id="scatter-wrap">
+            <canvas id="scatter"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="empty" id="no-data" hidden>
+        No data cached yet. Run <code>python manage.py fetch_gdelt</code>.
+      </div>
+      <footer>
+        <a href="mailto:ari.abramowitz1@gmail.com">ari.abramowitz1@gmail.com</a>
+        · <a href="https://github.com/AriAbr/frontpagejews"
+    target="_blank"
+    rel="noopener">Source on GitHub</a>
+      </footer>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script type="module" src="{% static 'frontpagejews/page.js' %}"></script>
+  </body>
 </html>
