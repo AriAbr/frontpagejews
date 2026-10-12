@@ -1,8 +1,12 @@
-// The comparison-country picker and the outlet checkboxes.
+// The comparison-country picker, the benchmark choice and the outlet checkboxes.
 //
-// Both work by reloading the page with new query-string choices: each country
-// is a link, and the outlets are a GET form.
-export function setUpControls({ choices, comparison, selectedOutlets }) {
+// All work by reloading the page with new query-string choices: each country
+// is a link, a benchmark radio button goes to its own URL, and the outlets are
+// a GET form.
+import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
+import { choicesQuery } from "./coverage.js";
+
+export function setUpControls({ choices, comparison, selectedOutlets, benchmark }) {
   // Country picker: focus opens the full list, typing filters it (anywhere in
   // the name), arrows move, Enter follows the highlighted link, Escape closes.
   const search = document.getElementById("country-search");
@@ -10,7 +14,7 @@ export function setUpControls({ choices, comparison, selectedOutlets }) {
   const none = list.querySelector(".none");
   for (const { code, name } of choices) {
     const link = document.createElement("a");
-    link.href = `?${new URLSearchParams([["vs", code], ...selectedOutlets.map(slug => ["outlet", slug])])}`;
+    link.href = choicesQuery({ selectedOutlets, comparisonCode: code, benchmark });
     link.textContent = name;
     const item = document.createElement("li");
     if (code === comparison.code) item.className = "current";
@@ -59,9 +63,24 @@ export function setUpControls({ choices, comparison, selectedOutlets }) {
   list.addEventListener("mousedown", event => event.preventDefault());
   search.addEventListener("blur", close);
 
-  // The outlet form carries the comparison along, and starts with the chosen outlets ticked.
+  // Benchmark choice: one radio button per benchmark, starting on the chosen one.
+  const benchmarkChoice = document.getElementById("benchmark-choice");
+  for (const [benchmarkOption, displaySettings] of Object.entries(BENCHMARK_DISPLAY_SETTINGS)) {
+    const radio = Object.assign(document.createElement("input"), { type: "radio", name: "by", value: benchmarkOption });
+    radio.checked = benchmarkOption === benchmark;
+    radio.addEventListener("change", () => {
+      location.search = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkOption });
+    });
+    const wrapper = document.createElement("label");
+    wrapper.append(radio, ` ${displaySettings.label}`);
+    benchmarkChoice.append(wrapper);
+  }
+
+  // The outlet form carries the comparison and benchmark along, and starts with
+  // the chosen outlets ticked.
   const outletForm = document.getElementById("outlet-form");
   outletForm.elements.vs.value = comparison.code;
+  outletForm.elements.by.value = benchmark;
   for (const box of outletForm.querySelectorAll("input[name=outlet]")) box.checked = selectedOutlets.includes(box.value);
   // Unticking every outlet would mean "all", so keep at least one.
   outletForm.addEventListener("change", event => {

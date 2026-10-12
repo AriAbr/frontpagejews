@@ -26,8 +26,8 @@ a { color: inherit; }
 .controls { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-start; margin-bottom: 16px; }
 .controls .heading { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
 .controls .picker { margin-bottom: 0; }
-.outlets { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.outlets label { white-space: nowrap; }
+.outlets, .benchmark-choice { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.outlets label, .benchmark-choice label { white-space: nowrap; }
 .chart { position: relative; height: 420px; }
 h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 /* Full window width rather than the 1000px column, so the drawn-to-scale

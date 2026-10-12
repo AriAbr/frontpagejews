@@ -46,9 +46,14 @@
     target="_blank"
     rel="noopener">World Bank</a>
         </p>
+        <p>
+          GDP: <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD"
+    target="_blank"
+    rel="noopener">World Bank</a>
+        </p>
         <p class="later">
-          For now, "reality" is measured by population alone. Additional metrics
-          will be added later.
+          For now, "reality" is measured by population or GDP, one at a time.
+          Additional metrics will be added later.
         </p>
       </div>
       <div class="controls">
@@ -65,9 +70,15 @@
             </ul>
           </div>
         </div>
+        <div>
+          <span class="heading">Measure reality by</span>
+          {# The script fills this with a radio button per benchmark. #}
+          <div class="benchmark-choice" id="benchmark-choice"></div>
+        </div>
         <form method="get" id="outlet-form">
           <span class="heading">News outlets</span>
           <input type="hidden" name="vs" />
+          <input type="hidden" name="by" />
           <div class="outlets">
             {% for slug, name in outlets.items %}
               <label>
@@ -87,7 +98,7 @@
           Coverage: each country's share of all country mentions by the selected
           outlets that day.
           <br />
-          Reality: each country's share of the world's population.
+          Reality: each country's <span class="benchmark-share"></span>.
           <br />
           Log scale, so small shares aren't squashed against the bottom of the
           chart.
@@ -98,10 +109,10 @@
         <h2>Every country, last {{ days_shown }} days</h2>
         <p>
           How many times each country was mentioned over the last {{ days_shown }}
-          days, against its population.
+          days, against its <span class="benchmark-noun"></span>.
           <br />
           Dashed line is the average: countries above it get more mentions
-          than their population would predict, countries below get fewer.
+          than their <span class="benchmark-noun"></span> would predict, countries below get fewer.
           <br />
           US and UK are left out: the outlets are American and
           British, so those two get heavy home coverage.

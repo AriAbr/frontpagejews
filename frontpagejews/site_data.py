@@ -12,11 +12,14 @@ from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, men
 
 FOCUS = "ISR"
 DEFAULT_COMPARISON = "CHN"
+DEFAULT_BENCHMARK = "population"
 
 
 def site_data():
     day_summaries = [gdelt.load_day(day) for day in gdelt.cached_days()[-DAYS_SHOWN:]]
-    population = benchmarks.population()
+    figures_by_benchmark = {
+        benchmark: benchmarks.load_figures(benchmark) for benchmark in benchmarks.WORLD_BANK_INDICATORS
+    }
     days = [
         {
             "date": day_summary["date"],
@@ -25,12 +28,14 @@ def site_data():
         for day_summary in day_summaries
     ]
     mentioned = {code for day in days for counts in day["mentions"].values() for code in counts}
+    with_figures = {code for figures in figures_by_benchmark.values() for code in figures}
     return {
         "focus": FOCUS,
         "default_comparison": DEFAULT_COMPARISON,
+        "default_benchmark": DEFAULT_BENCHMARK,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "home_countries": sorted(HOME_COUNTRIES),
-        "names": {code: country_name(code) for code in sorted(mentioned | population.keys())},
-        "population": population,
+        "names": {code: country_name(code) for code in sorted(mentioned | with_figures)},
+        "benchmark_figures": figures_by_benchmark,
         "days": days,
     }
