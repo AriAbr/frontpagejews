@@ -16,17 +16,20 @@ def cache_dir(settings, tmp_path):
 def world_bank(mocker):
     countries = [
         {"id": "ISR", "region": {"value": "Middle East & North Africa"}},
+        {"id": "PSE", "region": {"value": "Middle East & North Africa"}},
         {"id": "UKR", "region": {"value": "Europe & Central Asia"}},
         {"id": "WLD", "region": {"value": "Aggregates"}},
     ]
     population = [
         {"countryiso3code": "ISR", "value": 10},
+        {"countryiso3code": "PSE", "value": 5},
         {"countryiso3code": "UKR", "value": 30},
         {"countryiso3code": "WLD", "value": 40},
     ]
     # Some countries have no figure at all.
     gdp = [
         {"countryiso3code": "ISR", "value": 500},
+        {"countryiso3code": "PSE", "value": 20},
         {"countryiso3code": "UKR", "value": None},
         {"countryiso3code": "WLD", "value": 500},
     ]
@@ -42,8 +45,15 @@ def describe_benchmarks():
         """The "World" aggregate is excluded, or every share would be halved"""
         benchmarks.refresh()
 
-        assert benchmarks.load_figures("population") == {"ISR": 10, "UKR": 30}
-        assert benchmarks.load_figures("gdp") == {"ISR": 500}
+        assert benchmarks.load_figures("population").keys() == {"ISR", "UKR"}
+        assert benchmarks.load_figures("gdp").keys() == {"ISR"}
+
+    def test_add_the_west_bank_and_gaza_to_israel(world_bank):
+        """Mentions of the three are counted as one, so their figures are too"""
+        benchmarks.refresh()
+
+        assert benchmarks.load_figures("population")["ISR"] == 15
+        assert benchmarks.load_figures("gdp")["ISR"] == 520
 
     def test_are_empty_and_do_not_fetch_before_the_first_refresh(mocker):
         get = mocker.patch.object(benchmarks.requests, "get")
@@ -60,7 +70,7 @@ def describe_fetch_benchmarks():
 
         call_command("fetch_benchmarks")
 
-        assert benchmarks.load_figures("population")["ISR"] == 10
+        assert benchmarks.load_figures("population")["UKR"] == 30
 
     def test_keeps_the_old_cache_when_the_fetch_fails(mocker, cache_dir):
         old = {"ISR": 1}

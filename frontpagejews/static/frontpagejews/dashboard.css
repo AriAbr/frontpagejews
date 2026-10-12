@@ -10,7 +10,7 @@ header .byline { font-size: 0.85rem; margin: 0 0 10px; }
 header .subtitle { font-size: 1.05rem; margin: 0; }
 .note { margin-bottom: 16px; padding: 8px 12px; border-left: 3px solid var(--muted); background: var(--border); border-radius: 0 6px 6px 0; }
 .note p { color: var(--fg); margin: 0; }
-.note .later { color: var(--muted); margin-top: 6px; }
+.note .section { margin-top: 18px; }
 p { color: var(--muted); margin: 0 0 16px; }
 a { color: inherit; }
 .picker { position: relative; width: 280px; max-width: 100%; margin-bottom: 16px; }
