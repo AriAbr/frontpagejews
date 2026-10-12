@@ -13,8 +13,13 @@ from frontpagejews.site_data import FOCUS, site_data
 def page_context():
     """The page's fixed parts. Everything that depends on the visitor's choices is
     filled in by the scripts from data.json."""
+    focus_name = country_name(FOCUS)
     return {
-        "focus_name": country_name(FOCUS),
+        # Shown at the top of the page and in link previews.
+        "title": "Front Page Jews",
+        "url": "https://frontpagejews.com/",
+        "subtitle": f"Is {focus_name} over-covered in the news? Let's check the data.",
+        "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,

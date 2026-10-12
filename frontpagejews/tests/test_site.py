@@ -74,6 +74,7 @@ def describe_dashboard():
 
         assert response.status_code == 200
         assert b'value="fox"' in response.content
+        assert b"Fox News" in response.content
 
     def test_includes_google_analytics_when_configured(client, settings):
         settings.GA_MEASUREMENT_ID = "G-TEST123"
