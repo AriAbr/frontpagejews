@@ -1,0 +1,4 @@
+# Prettier reads Django templates as plain HTML and wraps lines inside
+# {{ ... }} tags, which Django then prints literally. djLint formats them
+# instead (see .pre-commit-config.yaml).
+**/templates/**
