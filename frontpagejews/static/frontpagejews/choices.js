@@ -4,15 +4,17 @@
 import { countryName, mentionsByCountry } from "./chart-data.js";
 
 // The outlets, comparison country and benchmark in the query string, falling
-// back to all outlets and the defaults.
+// back to all outlets and the defaults. A country the data doesn't name, like
+// one left out of it, falls back too.
 export function choicesFromUrl(queryString, data) {
   const params = new URLSearchParams(queryString);
   const allOutlets = Object.keys(data.outlets);
   const outletsInUrl = params.getAll("outlet").filter(slug => allOutlets.includes(slug));
+  const comparison = params.get("vs");
   const benchmark = params.get("by");
   return {
     selectedOutlets: outletsInUrl.length ? outletsInUrl : allOutlets,
-    comparisonCode: params.get("vs") || data.default_comparison,
+    comparisonCode: comparison in data.names ? comparison : data.default_comparison,
     benchmark: benchmark in data.benchmark_figures ? benchmark : data.default_benchmark,
   };
 }

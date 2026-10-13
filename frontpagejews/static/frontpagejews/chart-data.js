@@ -10,6 +10,23 @@ const sum = numbers => numbers.reduce((total, n) => total + n, 0);
 
 export const countryName = (data, code) => data.names[code] ?? code;
 
+// data.json without the given countries' mentions, benchmark figures and
+// names. page.js leaves the outlets' home countries (the US and UK) out this
+// way, before anything else sees the data: most of their mentions are home
+// news, a different thing from foreign coverage.
+export function withoutCountries(data, codes) {
+  const without = countsByCountry =>
+    Object.fromEntries(Object.entries(countsByCountry).filter(([code]) => !codes.includes(code)));
+  const mapValues = (object, transform) =>
+    Object.fromEntries(Object.entries(object).map(([key, value]) => [key, transform(value)]));
+  return {
+    ...data,
+    names: without(data.names),
+    benchmark_figures: mapValues(data.benchmark_figures, without),
+    days: data.days.map(day => ({ ...day, mentions: mapValues(day.mentions, without) })),
+  };
+}
+
 // ISO3 -> mentions by the selected outlets, added up over the given days.
 export function mentionsByCountry(days, selectedOutlets) {
   const mentions = {};
@@ -48,12 +65,12 @@ export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) 
 
 // One point per country: its mentions over the days shown, beside its figure
 // for the benchmark. Countries with no figure have no place on the benchmark's
-// axis, and the outlets' home countries are left off.
+// axis.
 export function scatterPoints(data, selectedOutlets, benchmark) {
   const mentions = mentionsByCountry(data.days, selectedOutlets);
   const figures = data.benchmark_figures[benchmark];
   return Object.keys(mentions)
-    .filter(code => code in figures && !data.home_countries.includes(code))
+    .filter(code => code in figures)
     .sort()
     .map(code => ({
       code,
@@ -65,14 +82,9 @@ export function scatterPoints(data, selectedOutlets, benchmark) {
 
 // Mentions per unit of the benchmark (per person, or per dollar of GDP) over
 // the days shown: the slope of the line a country would sit on if mentions
-// followed the benchmark. The outlets' home countries are left out of both
-// sides, so the line is where the countries actually shown would balance.
-// Provisional: the line chart's shares still count them.
+// followed the benchmark.
 export function averageMentionsPerUnit(data, selectedOutlets, benchmark) {
-  const isShown = code => !data.home_countries.includes(code);
-  const totalOverShown = countsByCountry =>
-    sum(Object.entries(countsByCountry).filter(([code]) => isShown(code)).map(([, count]) => count));
-  const totalMentions = totalOverShown(mentionsByCountry(data.days, selectedOutlets));
-  const benchmarkTotal = totalOverShown(data.benchmark_figures[benchmark]);
+  const totalMentions = sum(Object.values(mentionsByCountry(data.days, selectedOutlets)));
+  const benchmarkTotal = sum(Object.values(data.benchmark_figures[benchmark]));
   return benchmarkTotal ? totalMentions / benchmarkTotal : 0;
 }
