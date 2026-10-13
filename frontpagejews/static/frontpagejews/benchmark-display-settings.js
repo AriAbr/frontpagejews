@@ -1,5 +1,5 @@
 // How each benchmark is labelled and drawn. The keys match
-// WORLD_BANK_INDICATORS in benchmarks.py, and data.json's benchmark_figures.
+// BENCHMARKS in benchmarks.py, and data.json's benchmark_figures.
 
 // 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 2 }).format;
@@ -27,5 +27,19 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     axisStep: 1e12,
     format: dollars => `$${compact(dollars)}`,
     rate: (mentions, dollars) => `${oneDecimal((mentions / dollars) * 1e9)} mentions per $1B of GDP`,
+  },
+  conflict_deaths: {
+    label: "Conflict deaths",
+    noun: "conflict deaths",
+    share: "share of the world's conflict deaths",
+    // Just past Ukraine, the most over the 12 months to August 2026 (85K).
+    axisMax: 100e3,
+    axisStep: 10e3,
+    format: compact,
+    // Per 1,000, since per death rounds the worst-covered to 0.0: Sudan, with
+    // 67K deaths and about 100 mentions, is 1.4 per 1,000. Most countries have
+    // no deaths, and a rate means nothing for them.
+    rate: (mentions, deaths) =>
+      deaths ? `${oneDecimal((mentions / deaths) * 1e3)} mentions per 1,000 conflict deaths` : "No conflict deaths recorded",
   },
 };

@@ -35,6 +35,8 @@ def world_bank(mocker):
     ]
     response = mocker.Mock()
     response.json.side_effect = [[{}, countries], [{}, population], [{}, gdp]]
+    # UCDP's files have tests of their own, in test_ucdp.py.
+    mocker.patch.object(benchmarks.ucdp, "fetch_deaths", return_value={"ISR": 7, "PSE": 2})
     return mocker.patch.object(benchmarks.requests, "get", return_value=response)
 
 
@@ -48,12 +50,19 @@ def describe_benchmarks():
         assert benchmarks.load_figures("population").keys() == {"ISR", "UKR"}
         assert benchmarks.load_figures("gdp").keys() == {"ISR"}
 
+    def test_give_countries_without_conflict_deaths_zero(world_bank):
+        """Zero is a real figure, unlike a missing GDP"""
+        benchmarks.refresh()
+
+        assert benchmarks.load_figures("conflict_deaths")["UKR"] == 0
+
     def test_add_the_west_bank_and_gaza_to_israel(world_bank):
         """Mentions of the three are counted as one, so their figures are too"""
         benchmarks.refresh()
 
         assert benchmarks.load_figures("population")["ISR"] == 15
         assert benchmarks.load_figures("gdp")["ISR"] == 520
+        assert benchmarks.load_figures("conflict_deaths") == {"ISR": 9, "UKR": 0}
 
     def test_are_empty_and_do_not_fetch_before_the_first_refresh(mocker):
         get = mocker.patch.object(benchmarks.requests, "get")
