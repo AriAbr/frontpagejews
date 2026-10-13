@@ -7,8 +7,21 @@ import {
   lineChartRows,
   mentionsByCountry,
   scatterPoints,
+  withoutCountries,
 } from "../../static/frontpagejews/chart-data.js";
 import { siteData } from "./site-data.js";
+
+describe("withoutCountries", () => {
+  test("drops the countries' mentions, benchmark figures and names", () => {
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 1, USA: 2 } } }, { population: { ISR: 10, USA: 300 } });
+
+    const without = withoutCountries(data, ["USA", "GBR"]);
+
+    assert.deepEqual(without.days[0].mentions.bbc, { ISR: 1 });
+    assert.deepEqual(without.benchmark_figures.population, { ISR: 10 });
+    assert.deepEqual(without.names, { CHN: "China", ISR: "Israel" });
+  });
+});
 
 describe("mentionsByCountry", () => {
   test("adds up mentions across outlets and days", () => {
@@ -71,12 +84,6 @@ describe("scatterPoints", () => {
     ]);
   });
 
-  test("leaves the outlets' home countries off", () => {
-    const data = siteData({ "2026-09-22": { bbc: { ISR: 1, USA: 1, GBR: 1 } } }, { population: { ISR: 10, USA: 30, GBR: 60 } });
-
-    assert.deepEqual(scatterPoints(data, ["bbc"], "population").map(point => point.code), ["ISR"]);
-  });
-
   test("leaves off countries with no figure for the chosen benchmark", () => {
     const data = siteData(
       { "2026-09-22": { bbc: { ISR: 1, PRK: 1 } } },
@@ -91,16 +98,6 @@ describe("averageMentionsPerUnit", () => {
   test("divides all mentions by all people", () => {
     // 10 mentions over 100 people.
     const data = siteData({ "2026-09-22": { bbc: { ISR: 6, CHN: 4 } } }, { population: { ISR: 10, CHN: 90 } });
-
-    assert.equal(averageMentionsPerUnit(data, ["bbc"], "population"), 10 / 100);
-  });
-
-  test("leaves the outlets' home countries out of both sides", () => {
-    // Only Israel and China count: 10 mentions over 100 people.
-    const data = siteData(
-      { "2026-09-22": { bbc: { ISR: 6, CHN: 4, USA: 50, GBR: 50 } } },
-      { population: { ISR: 10, CHN: 90, USA: 300, GBR: 70 } },
-    );
 
     assert.equal(averageMentionsPerUnit(data, ["bbc"], "population"), 10 / 100);
   });

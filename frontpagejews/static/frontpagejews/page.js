@@ -2,12 +2,13 @@
 // fills in the page.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { setUpControls } from "./controls.js";
-import { averageMentionsPerUnit, countryName, lineChartRows, scatterPoints } from "./chart-data.js";
+import { averageMentionsPerUnit, countryName, lineChartRows, scatterPoints, withoutCountries } from "./chart-data.js";
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
 
-const data = await (await fetch("data.json")).json();
+const allData = await (await fetch("data.json")).json();
+const data = withoutCountries(allData, allData.home_countries);
 const { selectedOutlets, comparisonCode, benchmark } = choicesFromUrl(location.search, data);
 const focus = { code: data.focus, name: countryName(data, data.focus) };
 const comparison = { code: comparisonCode, name: countryName(data, comparisonCode) };

@@ -24,6 +24,10 @@ describe("choicesFromUrl", () => {
     });
   });
 
+  test("uses the default comparison when the country given is unknown", () => {
+    assert.equal(choicesFromUrl("?vs=XKX", data).comparisonCode, "CHN");
+  });
+
   test("uses the default benchmark when the one given is unknown", () => {
     assert.equal(choicesFromUrl("?by=vibes", data).benchmark, "population");
   });
