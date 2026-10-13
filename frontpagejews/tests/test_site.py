@@ -68,6 +68,7 @@ def describe_site_data():
         assert site_data.site_data()["benchmark_figures"] == {
             "population": {"ISR": 10, "CHN": 90},
             "gdp": {},
+            "conflict_deaths": {},
         }
 
 

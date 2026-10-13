@@ -18,7 +18,7 @@ DEFAULT_BENCHMARK = "population"
 def site_data():
     day_summaries = [gdelt.load_day(day) for day in gdelt.cached_days()[-DAYS_SHOWN:]]
     figures_by_benchmark = {
-        benchmark: benchmarks.load_figures(benchmark) for benchmark in benchmarks.WORLD_BANK_INDICATORS
+        benchmark: benchmarks.load_figures(benchmark) for benchmark in benchmarks.BENCHMARKS
     }
     days = [
         {

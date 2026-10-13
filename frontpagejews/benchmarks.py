@@ -1,10 +1,10 @@
 """Real-world data to compare coverage against.
 
-Population and GDP so far, each standing in for the composite score until
-conflict deaths and market moves are added. They are kept separate all the way
-to the browser, which does any combining. They are fetched from the World Bank
-by `manage.py fetch_benchmarks` and read from the cache by everything else, so
-a page request never waits on the World Bank.
+Population, GDP and conflict deaths so far, each standing in for the composite
+score until market moves are added. They are kept separate all the way to the
+browser, which does any combining. They are fetched from the World Bank and
+UCDP by `manage.py fetch_benchmarks` and read from the cache by everything
+else, so a page request never waits on either.
 """
 
 import json
@@ -12,10 +12,14 @@ import json
 import requests
 from django.conf import settings
 
+from frontpagejews import ucdp
+
 # Benchmark -> the World Bank indicator it is fetched from. GDP is in current
 # US dollars, not purchasing power parity, so it measures each country's weight
 # in the world economy rather than its standard of living.
 WORLD_BANK_INDICATORS = {"population": "SP.POP.TOTL", "gdp": "NY.GDP.MKTP.CD"}
+
+BENCHMARKS = [*WORLD_BANK_INDICATORS, "conflict_deaths"]
 
 # Country -> the country whose figures it is added to, matching how
 # `country_codes.py` buckets GDELT's mentions.
@@ -35,8 +39,20 @@ def fetch_country_codes():
 
 
 def fetch_figures(benchmark, country_codes):
-    """Map ISO3 -> the country's latest figure for the benchmark ("population"
-    or "gdp"), for the given countries only.
+    """Map ISO3 -> the country's figure for the benchmark, for the given
+    countries only."""
+    if benchmark == "conflict_deaths":
+        figures = fetch_conflict_deaths(country_codes)
+    else:
+        figures = fetch_world_bank_figures(benchmark, country_codes)
+    for part, whole in COMBINED_INTO.items():
+        if part in figures and whole in figures:
+            figures[whole] += figures.pop(part)
+    return figures
+
+
+def fetch_world_bank_figures(benchmark, country_codes):
+    """Map ISO3 -> the country's latest figure for a World Bank benchmark.
 
     `mrnev=1` gives each country its latest non-empty year, so a few countries'
     figures are years older than the rest (Yemen's GDP is from 2018).
@@ -46,15 +62,19 @@ def fetch_figures(benchmark, country_codes):
         params={"format": "json", "per_page": 400, "mrnev": 1},
         timeout=60,
     ).json()[1]
-    figures = {
+    return {
         row["countryiso3code"]: row["value"]
         for row in rows
         if row["countryiso3code"] in country_codes and row["value"]
     }
-    for part, whole in COMBINED_INTO.items():
-        if part in figures and whole in figures:
-            figures[whole] += figures.pop(part)
-    return figures
+
+
+def fetch_conflict_deaths(country_codes):
+    """Map ISO3 -> deaths in organized violence over the last 12 months UCDP has
+    data for. A country UCDP recorded no deaths in has 0, not no figure: zero is
+    its real figure, and it still belongs on the chart."""
+    deaths = ucdp.fetch_deaths()
+    return {code: deaths.get(code, 0) for code in country_codes}
 
 
 def cache_path(benchmark):
@@ -69,7 +89,7 @@ def refresh():
     """
     country_codes = fetch_country_codes()
     figures_by_benchmark = {}
-    for benchmark in WORLD_BANK_INDICATORS:
+    for benchmark in BENCHMARKS:
         figures = fetch_figures(benchmark, country_codes)
         path = cache_path(benchmark)
         path.parent.mkdir(parents=True, exist_ok=True)
