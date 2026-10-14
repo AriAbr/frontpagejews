@@ -12,13 +12,18 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 16px 24px; }
    their place: kept in view, they'd leave too little room for a chart and its
    description on a laptop, and fill a third of a phone's screen. */
 .masthead { padding: 14px 0 10px; border-bottom: 1px solid var(--border); }
-/* The title, subtitle and byline on one line where they fit, the byline at its end. */
 .title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
 h1 { font-size: 1.4rem; margin: 0; }
 .masthead .subtitle { margin: 0; }
-.masthead .byline { font-size: 0.85rem; margin: 0 0 0 auto; }
-/* On a phone the byline wraps onto its own line, so it goes back to the left. */
-@media (max-width: 699px) { .masthead .byline { margin-left: 0; } }
+.masthead .byline { font-size: 0.85rem; margin: 0; }
+/* Where there's room, the byline moves up beside the title, at the line's end,
+   and the subtitle goes below them on its own line. Title and byline are both
+   short, so they fit together whatever the font. On a phone they stack as
+   written: title, subtitle, byline. */
+@media (min-width: 700px) {
+  .masthead .byline { order: 1; margin-left: auto; }
+  .masthead .subtitle { order: 2; flex-basis: 100%; }
+}
 /* Across the window, with its text lined up with the page's column. */
 .summary-bar { visibility: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 20;
                padding: 8px max(16px, calc((100% - 1000px) / 2)); background: var(--bg);
