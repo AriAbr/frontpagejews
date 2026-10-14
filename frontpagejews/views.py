@@ -15,8 +15,10 @@ def page_context():
     filled in by the scripts from data.json."""
     focus_name = country_name(FOCUS)
     return {
-        # Shown at the top of the page and in link previews.
+        # In the browser tab and link previews, which show the domain beside it.
         "title": "Front Page Jews",
+        # At the top of the page, where it's the address in screenshots of it.
+        "site_name": "FrontPageJews.com",
         "url": "https://frontpagejews.com/",
         "subtitle": f"Measuring {focus_name}'s share of the news against real-world data",
         "focus_name": focus_name,

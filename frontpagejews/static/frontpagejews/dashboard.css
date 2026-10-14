@@ -7,18 +7,39 @@
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; margin: 0; overflow-x: clip; }
-main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
-h1 { font-size: 1.8rem; margin: 0; }
-header { margin-bottom: 28px; }
-header .byline { font-size: 0.85rem; margin: 0 0 10px; }
-header .subtitle { font-size: 1.05rem; margin: 0; }
+main { max-width: 1000px; margin: 0 auto; padding: 0 16px 24px; }
+/* The title and the controls. They scroll away, and the summary bar takes
+   their place: kept in view, they'd leave too little room for a chart and its
+   description on a laptop, and fill a third of a phone's screen. */
+.masthead { padding: 14px 0 10px; border-bottom: 1px solid var(--border); }
+/* The title, subtitle and byline on one line where they fit, the byline at its end. */
+.title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+h1 { font-size: 1.4rem; margin: 0; }
+.masthead .subtitle { margin: 0; }
+.masthead .byline { font-size: 0.85rem; margin: 0 0 0 auto; }
+/* On a phone the byline wraps onto its own line, so it goes back to the left. */
+@media (max-width: 699px) { .masthead .byline { margin-left: 0; } }
+/* Across the window, with its text lined up with the page's column. */
+.summary-bar { visibility: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+               padding: 8px max(16px, calc((100% - 1000px) / 2)); background: var(--bg);
+               border-bottom: 1px solid var(--border); font-size: 0.85rem; line-height: 1.35; }
+.summary-bar.shown { visibility: visible; }
+.summary-bar .title-row { justify-content: space-between; }
+.summary-bar a { color: var(--muted); }
+/* Each part of the summary is a flex item, so it wraps whole. The dot
+   between them sits in the gap to a part's left, and where a part starts a
+   line that gap is outside #summary, which clips it. */
+#summary { color: var(--muted); overflow: hidden; }
+#summary > div { display: flex; flex-wrap: wrap; margin-left: -1em; }
+#summary span { margin-left: 1em; }
+#summary span + span::before { content: "·"; display: inline-block; width: 1em; margin-left: -1em; text-align: center; }
 .methodology p { margin: 0 0 8px; }
 .methodology summary { cursor: pointer; color: var(--muted); }
 .methodology details p { margin: 4px 0 0; }
 p { color: var(--muted); margin: 0 0 16px; }
 a { color: inherit; }
-.picker { position: relative; width: 280px; max-width: 100%; margin-bottom: 16px; }
-.picker input { font: inherit; padding: 6px 10px; width: 100%; box-sizing: border-box;
+.picker { position: relative; width: 200px; max-width: 100%; margin-bottom: 16px; }
+.picker input { font: inherit; padding: 3px 10px; width: 100%; box-sizing: border-box;
                 background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
 .picker ul { position: absolute; z-index: 10; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0;
              list-style: none; max-height: 320px; overflow-y: auto; background: var(--bg);
@@ -27,8 +48,10 @@ a { color: inherit; }
 .picker li.active a, .picker li a:hover { background: var(--border); }
 .picker li.current a { font-weight: 600; }
 .picker .none { padding: 4px 10px; color: var(--muted); }
-.controls { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-start; margin-bottom: 16px; }
-.controls .heading { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+/* Each control's heading beside it rather than above, to keep the masthead short. */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; margin-top: 10px; }
+.controls > * { display: flex; align-items: center; gap: 4px 10px; }
+.controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 .controls .picker { margin-bottom: 0; }
 .outlets, .benchmark-choice { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .outlets label, .benchmark-choice label { white-space: nowrap; }
