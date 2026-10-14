@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
 import {
-  averageMentionsPerUnit,
+  benchmarkTotal,
   lineChartRows,
   mentionsByCountry,
   scatterPoints,
+  withComposite,
   withoutCountries,
 } from "../../static/frontpagejews/chart-data.js";
 import { siteData } from "./site-data.js";
@@ -20,6 +21,25 @@ describe("withoutCountries", () => {
     assert.deepEqual(without.days[0].mentions.bbc, { ISR: 1 });
     assert.deepEqual(without.benchmark_figures.population, { ISR: 10 });
     assert.deepEqual(without.names, { CHN: "China", ISR: "Israel" });
+  });
+});
+
+describe("withComposite", () => {
+  test("averages each country's shares of the benchmarks by weight", () => {
+    // Israel has 10% of the people and 50% of the dollars.
+    const data = siteData({}, { population: { ISR: 10, CHN: 90 }, gdp: { ISR: 5, CHN: 5 } });
+
+    const { composite } = withComposite(data, { population: 0.5, gdp: 0.5 }).benchmark_figures;
+
+    assert.deepEqual(composite, { CHN: 0.7, ISR: 0.3 });
+  });
+
+  test("leaves out a country missing any of the figures", () => {
+    const data = siteData({}, { population: { ISR: 10, CHN: 90 }, gdp: { ISR: 5 } });
+
+    const { composite } = withComposite(data, { population: 0.5, gdp: 0.5 }).benchmark_figures;
+
+    assert.deepEqual(Object.keys(composite), ["ISR"]);
   });
 });
 
@@ -48,10 +68,10 @@ describe("lineChartRows", () => {
     assert.deepEqual(lineChartRows(data, ["bbc"], "CHN", "population"), [
       {
         date: "2026-09-22",
-        focusCoverage: 0.75,
-        focusReality: 0.1,
-        comparisonCoverage: 0.25,
-        comparisonReality: 0.9,
+        focusMentionsPercentage: 0.75,
+        focusBenchmarkPercentage: 0.1,
+        comparisonMentionsPercentage: 0.25,
+        comparisonBenchmarkPercentage: 0.9,
       },
     ]);
   });
@@ -60,7 +80,7 @@ describe("lineChartRows", () => {
     // Fox alone gives Israel 3 of 4 mentions; with the BBC it would be 3 of 8.
     const data = siteData({ "2026-09-22": { fox: { ISR: 3, CHN: 1 }, bbc: { CHN: 4 } } });
 
-    assert.equal(lineChartRows(data, ["fox"], "CHN", "population")[0].focusCoverage, 0.75);
+    assert.equal(lineChartRows(data, ["fox"], "CHN", "population")[0].focusMentionsPercentage, 0.75);
   });
 
   test("measures reality by the chosen benchmark", () => {
@@ -70,17 +90,18 @@ describe("lineChartRows", () => {
       { population: { ISR: 10, CHN: 90 }, gdp: { ISR: 1, CHN: 3 } },
     );
 
-    assert.equal(lineChartRows(data, ["bbc"], "CHN", "gdp")[0].focusReality, 0.25);
+    assert.equal(lineChartRows(data, ["bbc"], "CHN", "gdp")[0].focusBenchmarkPercentage, 0.25);
   });
 });
 
 describe("scatterPoints", () => {
-  test("plots each country's mentions against its population", () => {
+  test("plots each country's share of mentions against its population", () => {
+    // Israel has 3 of the 4 mentions and 10 of the 100 people.
     const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
 
     assert.deepEqual(scatterPoints(data, ["bbc"], "population"), [
-      { code: "CHN", name: "China", mentions: 1, reality: 90 },
-      { code: "ISR", name: "Israel", mentions: 3, reality: 10 },
+      { code: "CHN", name: "China", mentions: 1, mentionsPercentage: 0.25, benchmarkFigure: 90, benchmarkPercentage: 0.9 },
+      { code: "ISR", name: "Israel", mentions: 3, mentionsPercentage: 0.75, benchmarkFigure: 10, benchmarkPercentage: 0.1 },
     ]);
   });
 
@@ -90,15 +111,14 @@ describe("scatterPoints", () => {
       { population: { ISR: 10, PRK: 30 }, gdp: { ISR: 5 } },
     );
 
-    assert.deepEqual(scatterPoints(data, ["bbc"], "gdp"), [{ code: "ISR", name: "Israel", mentions: 1, reality: 5 }]);
+    assert.deepEqual(scatterPoints(data, ["bbc"], "gdp").map(point => point.code), ["ISR"]);
   });
 });
 
-describe("averageMentionsPerUnit", () => {
-  test("divides all mentions by all people", () => {
-    // 10 mentions over 100 people.
-    const data = siteData({ "2026-09-22": { bbc: { ISR: 6, CHN: 4 } } }, { population: { ISR: 10, CHN: 90 } });
+describe("benchmarkTotal", () => {
+  test("adds up every country's figure", () => {
+    const data = siteData({}, { population: { ISR: 10, CHN: 90 } });
 
-    assert.equal(averageMentionsPerUnit(data, ["bbc"], "population"), 10 / 100);
+    assert.equal(benchmarkTotal(data, "population"), 100);
   });
 });

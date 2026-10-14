@@ -5,8 +5,10 @@ const cssVar = name => getComputedStyle(document.documentElement).getPropertyVal
 export const BACKGROUND = cssVar("--bg");
 
 // The scatter colors its two highlighted dots like their coverage lines, so
-// these must match across both charts.
-export const COLORS = { focus: "#1d4ed8", comparison: "#c2410c" };
+// these must match across both charts. Blue and amber rather than blue and
+// red, which would read as a US Democrat/Republican comparison; the pair also
+// stays apart for colorblind readers.
+export const COLORS = { focus: "#1d4ed8", comparison: "#d97706" };
 
 // A short rise from the axis: shows the charts being built without the full
 // second of the default.

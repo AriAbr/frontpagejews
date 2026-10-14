@@ -12,7 +12,9 @@ from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, men
 
 FOCUS = "ISR"
 DEFAULT_COMPARISON = "CHN"
-DEFAULT_BENCHMARK = "population"
+# Worked out in the browser from the other benchmarks (withComposite in
+# chart-data.js), so it has no figures here.
+DEFAULT_BENCHMARK = "composite"
 
 
 def site_data():

@@ -15,16 +15,30 @@ export const countryName = (data, code) => data.names[code] ?? code;
 // way, before anything else sees the data: most of their mentions are home
 // news, a different thing from foreign coverage.
 export function withoutCountries(data, codes) {
-  const without = countsByCountry =>
-    Object.fromEntries(Object.entries(countsByCountry).filter(([code]) => !codes.includes(code)));
-  const mapValues = (object, transform) =>
-    Object.fromEntries(Object.entries(object).map(([key, value]) => [key, transform(value)]));
-  return {
-    ...data,
-    names: without(data.names),
-    benchmark_figures: mapValues(data.benchmark_figures, without),
-    days: data.days.map(day => ({ ...day, mentions: mapValues(day.mentions, without) })),
-  };
+  // A copy of an object keyed by country, without those countries.
+  function without(byCountry) {
+    const kept = {};
+    for (const [code, value] of Object.entries(byCountry)) {
+      if (!codes.includes(code)) kept[code] = value;
+    }
+    return kept;
+  }
+
+  const benchmarkFigures = {};
+  for (const [benchmark, figures] of Object.entries(data.benchmark_figures)) {
+    benchmarkFigures[benchmark] = without(figures);
+  }
+
+  const daysWithoutCountries = [];
+  for (const day of data.days) {
+    const mentions = {};
+    for (const [slug, outletMentions] of Object.entries(day.mentions)) {
+      mentions[slug] = without(outletMentions);
+    }
+    daysWithoutCountries.push({ ...day, mentions });
+  }
+
+  return { ...data, names: without(data.names), benchmark_figures: benchmarkFigures, days: daysWithoutCountries };
 }
 
 // ISO3 -> mentions by the selected outlets, added up over the given days.
@@ -40,51 +54,85 @@ export function mentionsByCountry(days, selectedOutlets) {
   return mentions;
 }
 
-// Each country's count as a fraction of all the counts: {ISR: 1, CHN: 3} -> {ISR: 0.25, CHN: 0.75}.
-export function fractionsOfTotal(countsByCountry) {
+// Each country's count as a percentage of all the counts: {ISR: 1, CHN: 3} -> {ISR: 0.25, CHN: 0.75}.
+export function percentagesOfTotal(countsByCountry) {
   const total = sum(Object.values(countsByCountry));
   if (!total) return {};
-  return Object.fromEntries(Object.entries(countsByCountry).map(([code, count]) => [code, count / total]));
+  const percentages = {};
+  for (const [code, count] of Object.entries(countsByCountry)) {
+    percentages[code] = count / total;
+  }
+  return percentages;
+}
+
+// Each benchmark's weight in the composite. Equal, on Kahneman's point that
+// simple equally weighted formulas are often very good predictors.
+export const COMPOSITE_WEIGHTS = { population: 1 / 3, gdp: 1 / 3, conflict_deaths: 1 / 3 };
+
+// data.json plus a "composite" benchmark: each country's shares of the
+// weighted benchmarks' totals, averaged by weight. Shares are of the countries
+// in the data, so page.js adds it after leaving countries out.
+export function withComposite(data, weights) {
+  const benchmarksAsPercentages = {};
+  for (const benchmark of Object.keys(weights)) {
+    benchmarksAsPercentages[benchmark] = percentagesOfTotal(data.benchmark_figures[benchmark]);
+  }
+
+  const composite = {};
+  for (const code of Object.keys(data.names)) {
+    // A country missing any of the figures (North Korea has no GDP) gets no score.
+    const hasEveryFigure = Object.values(benchmarksAsPercentages).every(benchmark => code in benchmark);
+    if (!hasEveryFigure) continue;
+
+    let score = 0;
+    for (const [benchmark, weight] of Object.entries(weights)) {
+      score += weight * benchmarksAsPercentages[benchmark][code];
+    }
+    composite[code] = score;
+  }
+
+  return { ...data, benchmark_figures: { ...data.benchmark_figures, composite } };
 }
 
 // One row per day: both countries' share of mentions that day, and of the
 // world's total for the benchmark.
 export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) {
-  const realityShares = fractionsOfTotal(data.benchmark_figures[benchmark]);
+  const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
   return data.days.map(day => {
-    const coverageShares = fractionsOfTotal(mentionsByCountry([day], selectedOutlets));
+    const mentionsPercentages = percentagesOfTotal(mentionsByCountry([day], selectedOutlets));
     return {
       date: day.date,
-      focusCoverage: coverageShares[data.focus] ?? 0,
-      focusReality: realityShares[data.focus] ?? null,
-      comparisonCoverage: coverageShares[comparisonCode] ?? 0,
-      comparisonReality: realityShares[comparisonCode] ?? null,
+      focusMentionsPercentage: mentionsPercentages[data.focus] ?? 0,
+      focusBenchmarkPercentage: benchmarkPercentages[data.focus] ?? null,
+      comparisonMentionsPercentage: mentionsPercentages[comparisonCode] ?? 0,
+      comparisonBenchmarkPercentage: benchmarkPercentages[comparisonCode] ?? null,
     };
   });
 }
 
-// One point per country: its mentions over the days shown, beside its figure
-// for the benchmark. Countries with no figure have no place on the benchmark's
-// axis.
+// One point per country: its share of the mentions over the days shown,
+// beside its figure for the benchmark and that figure's share of the total.
+// Countries with no figure have no place on the benchmark's axis.
 export function scatterPoints(data, selectedOutlets, benchmark) {
   const mentions = mentionsByCountry(data.days, selectedOutlets);
-  const figures = data.benchmark_figures[benchmark];
-  return Object.keys(mentions)
-    .filter(code => code in figures)
-    .sort()
-    .map(code => ({
+  const mentionsPercentages = percentagesOfTotal(mentions);
+  const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
+  const points = [];
+  for (const code of Object.keys(mentions).sort()) {
+    if (!(code in benchmarkPercentages)) continue;
+    points.push({
       code,
       name: countryName(data, code),
       mentions: mentions[code],
-      reality: figures[code],
-    }));
+      mentionsPercentage: mentionsPercentages[code],
+      benchmarkFigure: data.benchmark_figures[benchmark][code],
+      benchmarkPercentage: benchmarkPercentages[code],
+    });
+  }
+  return points;
 }
 
-// Mentions per unit of the benchmark (per person, or per dollar of GDP) over
-// the days shown: the slope of the line a country would sit on if mentions
-// followed the benchmark.
-export function averageMentionsPerUnit(data, selectedOutlets, benchmark) {
-  const totalMentions = sum(Object.values(mentionsByCountry(data.days, selectedOutlets)));
-  const benchmarkTotal = sum(Object.values(data.benchmark_figures[benchmark]));
-  return benchmarkTotal ? totalMentions / benchmarkTotal : 0;
+// The benchmark added up over every country in the data.
+export function benchmarkTotal(data, benchmark) {
+  return sum(Object.values(data.benchmark_figures[benchmark]));
 }
