@@ -7,8 +7,9 @@ export const BACKGROUND = cssVar("--bg");
 // The scatter colors its two highlighted dots like their coverage lines, so
 // these must match across both charts. Blue and amber rather than blue and
 // red, which would read as a US Democrat/Republican comparison; the pair also
-// stays apart for colorblind readers.
-export const COLORS = { focus: "#1d4ed8", comparison: "#d97706" };
+// stays apart for colorblind readers. The blue is a shade lighter in dark mode
+// (see --focus in dashboard.css).
+export const COLORS = { focus: cssVar("--focus").trim(), comparison: "#d97706" };
 
 // A short rise from the axis: shows the charts being built without the full
 // second of the default.
