@@ -4,7 +4,7 @@
 // is a link, choosing a benchmark goes to its own URL, and the outlets are a
 // GET form.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
-import { choicesQuery } from "./choices.js";
+import { choicesQuery, countryMatches } from "./choices.js";
 import { describeOutlets } from "./formats.js";
 
 export function setUpControls({ choices, comparison, selectedOutlets, benchmark }) {
@@ -38,8 +38,8 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
     }
   };
   const filter = () => {
-    const typed = search.value.trim().toLowerCase();
-    items.forEach(li => { li.hidden = typed && !li.textContent.toLowerCase().includes(typed); });
+    const typed = search.value.trim();
+    items.forEach(li => { li.hidden = typed && !countryMatches(li.textContent, typed); });
     none.hidden = visible().length > 0;
     highlight(typed ? 0 : -1);
   };

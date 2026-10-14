@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { choicesFromUrl, choicesQuery, comparisonChoices } from "../../static/frontpagejews/choices.js";
+import { choicesFromUrl, choicesQuery, comparisonChoices, countryMatches } from "../../static/frontpagejews/choices.js";
 import { siteData } from "./site-data.js";
 
 describe("choicesFromUrl", () => {
@@ -64,5 +64,17 @@ describe("comparisonChoices", () => {
       { code: "USA", name: "United States" },
       { code: "CHN", name: "China" },
     ]);
+  });
+});
+
+describe("countryMatches", () => {
+  test("finds the typed text anywhere in the name, whatever its case", () => {
+    assert.equal(countryMatches("South Korea", "KOR"), true);
+    assert.equal(countryMatches("South Korea", "japan"), false);
+  });
+
+  test("ignores accents, in the name or the typing", () => {
+    assert.equal(countryMatches("Türkiye", "turk"), true);
+    assert.equal(countryMatches("Cote d'Ivoire", "côte"), true);
   });
 });
