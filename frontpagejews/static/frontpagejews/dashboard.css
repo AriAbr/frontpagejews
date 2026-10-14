@@ -38,10 +38,9 @@ a { color: inherit; }
 .chart { position: relative; height: 420px; }
 h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 /* The scatter's y-axis beside its scrolling plot, so the scrollbar runs only
-   under the plot. Full window width rather than the 1000px column, so the
-   drawn-to-scale scatter only scrolls when the window really is narrower than
-   it; centered when it isn't. */
-.scatter-row { display: flex; justify-content: center; margin-inline: calc(50% - 50vw); padding-inline: 16px; }
+   under the plot. The drawn-to-scale scatter scrolls when it's wider than the
+   column, and is centered when it isn't. */
+.scatter-row { display: flex; justify-content: center; }
 .pinned-axis { flex: none; }
 /* Its width is set by the script, to the plot's; it shrinks to the window. A
    size container, so the axis title can be as wide as what's in view (cqw). */
