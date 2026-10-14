@@ -38,12 +38,24 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
     pointHitRadius: 6,
   });
   const isHighlighted = p => p.code === focus.code || p.code === comparison.code;
+  // A highlighted country's color, as in the legend; other countries have none.
+  const colorOf = p => {
+    if (p.code === focus.code) return COLORS.focus;
+    if (p.code === comparison.code) return COLORS.comparison;
+    return null;
+  };
 
   // The dashed line runs from the origin until it leaves the chart, through the
   // top edge or the right one, whichever it reaches first.
   // A figure's share of the total: the line's height above it.
   const slope = 1 / benchmarkTotal;
   const lineEnd = Math.min(benchmarkDisplaySettings.axisMax, coverageAxisMax / slope);
+
+  // Names the countries scrolled out of view: after every layout of the chart
+  // (including the widening below, which Chart.js applies a moment later),
+  // whenever the scrolling area changes size, and on every scroll.
+  const scrollArea = document.getElementById("scatter-scroll");
+  const showOffscreen = chart => drawOffscreen(chart, scrollArea, points, colorOf);
 
   const scatter = new Chart(document.getElementById("scatter"), {
     type: "scatter",
@@ -122,7 +134,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         },
       },
     },
-    plugins: [pinnedAxis(document.getElementById("scatter-y-axis"))],
+    plugins: [pinnedAxis(document.getElementById("scatter-y-axis")), { id: "offscreen", afterLayout: showOffscreen }],
   });
 
   drawLegend([
@@ -147,7 +159,106 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   document.getElementById("scatter-wrap").style.width = `${chartWidth}px`;
   // The scrolling area shows the chart without its y-axis, which is beside it.
   document.getElementById("scatter-scroll").style.width = `${chartWidth - axisWidth(scatter)}px`;
+  // And the badges above it, over the same span.
+  document.getElementById("scatter-offscreen-spacer").style.width = `${axisWidth(scatter)}px`;
+  document.getElementById("scatter-offscreen").style.width = `${chartWidth - axisWidth(scatter)}px`;
   scatter.resize();
+
+  // The scrolling area's width settles after the chart's layout (it grows when
+  // the y-axis beside it shrinks to size), and changes with the window.
+  new ResizeObserver(() => showOffscreen(scatter)).observe(scrollArea);
+  scrollArea.addEventListener("scroll", () => showOffscreen(scatter), { passive: true });
+}
+
+// Badges over the plot's edges for the countries off the left and right of the
+// visible part of the plot: "China, India, and 1 other →".
+function drawOffscreen(scatter, scrollArea, points, colorOf) {
+  // The visible part of the plot, in the chart's pixels.
+  const leftEdge = scrollArea.scrollLeft + scatter.chartArea.left;
+  const rightEdge = leftEdge + scrollArea.clientWidth;
+
+  const offLeft = [];
+  const offRight = [];
+  for (const point of points) {
+    const x = scatter.scales.x.getPixelForValue(point.benchmarkFigure);
+    if (x < leftEdge) offLeft.push(point);
+    if (x > rightEdge) offRight.push(point);
+  }
+
+  const left = document.getElementById("scatter-offscreen-left");
+  const right = document.getElementById("scatter-offscreen-right");
+  fillBadge(left, offLeft, colorOf, "left");
+  fillBadge(right, offRight, colorOf, "right");
+  // One at a time: narrowing the left one can leave room for the right one.
+  narrowIfWrapped(left);
+  narrowIfWrapped(right);
+
+  // Fade each edge while there's more of the chart beyond it, so dots and labels
+  // cut off there don't end abruptly. Not at the y-axis: that would fade the
+  // countries at zero.
+  const atStart = scrollArea.scrollLeft <= 0;
+  const atEnd = scrollArea.scrollLeft + scrollArea.clientWidth >= scrollArea.scrollWidth - 1;
+  scrollArea.classList.toggle("fade-left", !atStart);
+  scrollArea.classList.toggle("fade-right", !atEnd);
+}
+
+// A badge for the countries off one side. A highlighted country is named, with
+// its legend dot: "Sudan +3 more →". Others are only counted: "174 countries →".
+function fillBadge(badge, points, colorOf, side) {
+  badge.replaceChildren();
+  badge.classList.remove("narrowed");
+  if (points.length === 0) return;
+
+  // Where the text wraps, it breaks between the name and "+3 more", which are
+  // each kept in one piece (a long name can still wrap, but never away from its
+  // dot): "● Sudan / +3 more".
+  const content = [];
+  const highlighted = points.find(point => colorOf(point));
+  if (highlighted) {
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = colorOf(highlighted);
+    const [firstWord, ...restOfName] = highlighted.name.split(" ");
+    content.push(keptTogether(dot, firstWord));
+    if (restOfName.length) content.push(` ${restOfName.join(" ")}`);
+    const others = points.length - 1;
+    if (others > 0) content.push(" ", keptTogether(`+${others} more`));
+  } else {
+    content.push(keptTogether(`${points.length} ${points.length === 1 ? "country" : "countries"}`));
+  }
+
+  // The arrow and the text are separate, so the arrow stays at the badge's
+  // outer edge when the text wraps.
+  const arrow = document.createElement("span");
+  arrow.className = "arrow";
+  const text = document.createElement("span");
+  text.className = "text";
+  text.append(...content);
+  if (side === "left") {
+    arrow.textContent = "←";
+    badge.append(arrow, text);
+  } else {
+    arrow.textContent = "→";
+    badge.append(text, arrow);
+  }
+}
+
+// A wrapped badge stays as wide as the room it was squeezed into, leaving empty
+// space beside its lines. Once its text has wrapped (it's taller than its
+// one-line arrow), narrow it to its wrapped text instead.
+function narrowIfWrapped(badge) {
+  const arrow = badge.querySelector(".arrow");
+  const text = badge.querySelector(".text");
+  if (!arrow) return;
+  if (text.offsetHeight > arrow.offsetHeight * 1.5) badge.classList.add("narrowed");
+}
+
+// Text that never breaks across lines.
+function keptTogether(...parts) {
+  const span = document.createElement("span");
+  span.className = "kept-together";
+  span.append(...parts);
+  return span;
 }
 
 // The legend, as a row of colored dots and labels above the chart. It sits

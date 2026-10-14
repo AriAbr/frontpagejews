@@ -41,17 +41,43 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
    under the plot. The drawn-to-scale scatter scrolls when it's wider than the
    column, and is centered when it isn't. */
 .scatter-row { display: flex; justify-content: center; }
-.pinned-axis { flex: none; }
+/* The badges' spacer is as wide as the axis, so the badges start where the plot does. */
+.pinned-axis, .offscreen-spacer { flex: none; }
 /* Its width is set by the script, to the plot's; it shrinks to the window. A
    size container, so the axis title can be as wide as what's in view (cqw). */
 .scroll { overflow-x: auto; min-width: 0; scrollbar-width: thin; container-type: inline-size; }
+/* The fade the script turns on at an edge with more chart beyond it. */
+.scroll {
+  --fade-left: 0px;
+  --fade-right: 0px;
+  --fade: linear-gradient(to right, transparent, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent);
+  -webkit-mask-image: var(--fade);
+  mask-image: var(--fade);
+}
+.scroll.fade-left { --fade-left: 16px; }
+.scroll.fade-right { --fade-right: 16px; }
 .scroll-content { width: max-content; }
 .chart.wide { height: 460px; }
 .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin: 12px 0 4px; font-size: 0.8rem; color: var(--muted); }
-.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+/* A country's color, in the legend and the badges. */
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 /* As wide as what's in view, and stuck there: it stays centered under the
    visible part of the plot. */
 .axis-title { position: sticky; left: 0; width: 100cqw; text-align: center; margin: 2px 0 8px; font-size: 0.8rem; color: var(--muted); }
+/* The badges' row is sized like the scrolling plot below it (by the script), so
+   each badge sits over one edge of what's in view. */
+/* Side by side always: where both don't fit on one line, their text wraps
+   inside them instead. A smaller radius than a pill, which looks odd at two
+   lines tall. */
+.offscreen-badges { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; min-width: 0; margin-bottom: 4px; }
+.badge { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 2px 10px; border-radius: 10px; background: var(--border); color: var(--fg); font-size: 0.75rem; font-weight: 600; }
+.badge .arrow { flex: none; }
+.badge .kept-together { white-space: nowrap; }
+/* See narrowIfWrapped in scatter.js. */
+.badge.narrowed { width: min-content; }
+/* Each badge's text sits against its arrow, so spare room is between them. */
+#scatter-offscreen-right .text { text-align: right; }
+.badge:empty { visibility: hidden; }
 .empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
 code { font-size: 0.9em; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }

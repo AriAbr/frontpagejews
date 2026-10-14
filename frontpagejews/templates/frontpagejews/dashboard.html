@@ -94,6 +94,14 @@
         </p>
         {# The script fills this, outside the scrolling area so it stays in view. #}
         <div class="legend" id="scatter-legend"></div>
+        {# Badges for the countries scrolled out of view, lined up with the plot's edges. #}
+        <div class="scatter-row">
+          <div class="offscreen-spacer" id="scatter-offscreen-spacer"></div>
+          <div class="offscreen-badges" id="scatter-offscreen">
+            <span class="badge" id="scatter-offscreen-left"></span>
+            <span class="badge" id="scatter-offscreen-right"></span>
+          </div>
+        </div>
         <div class="scatter-row">
           {# The y-axis, copied here by the script, beside the scrolling plot rather than in it. #}
           <canvas class="pinned-axis" id="scatter-y-axis" aria-hidden="true"></canvas>
