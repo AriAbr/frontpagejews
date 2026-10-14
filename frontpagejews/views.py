@@ -18,7 +18,7 @@ def page_context():
         # Shown at the top of the page and in link previews.
         "title": "Front Page Jews",
         "url": "https://frontpagejews.com/",
-        "subtitle": f"Is {focus_name} over-covered in the news? Let's check the data.",
+        "subtitle": f"Measuring {focus_name}'s share of the news against real-world data",
         "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,

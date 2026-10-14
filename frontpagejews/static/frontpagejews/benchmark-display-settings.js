@@ -1,45 +1,56 @@
 // How each benchmark is labelled and drawn. The keys match
-// BENCHMARKS in benchmarks.py, and data.json's benchmark_figures.
-
-// 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 2 }).format;
-const oneDecimal = n => n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+// BENCHMARKS in benchmarks.py, and data.json's benchmark_figures, plus
+// "composite", which withComposite (chart-data.js) works out in the browser.
+//
+// The scatter's benchmark axis shows the benchmark's own figures (people,
+// dollars, deaths, or for the composite score, shares). Its maximum is fixed
+// so the axis never rescales: just past the largest figure in the 12 months
+// to August 2026, with the US and UK left out.
+import { compact, percent } from "./formats.js";
 
 export const BENCHMARK_DISPLAY_SETTINGS = {
+  composite: {
+    label: "Composite score",
+    // Fills in the page's descriptions: "against its composite score".
+    noun: "composite score",
+    share: "composite score: the average of its shares of population, GDP and conflict deaths",
+    // A country's share, as the headline puts it after its share of mentions.
+    // The composite score is already a share, so "0.9% of the composite score"
+    // would read as a share of a share.
+    describeShare: share => `${percent(share)} composite score`,
+    // China, 13.9%.
+    axisMax: 0.15,
+    axisStep: 0.01,
+    format: percent,
+  },
   population: {
     label: "Population",
-    // Fills in the page's descriptions: "against its population".
     noun: "population",
     share: "share of the world's population",
-    // Fixed, so the scatter's axis never rescales: just past India, the most populous country.
+    describeShare: share => `${percent(share)} of the world's population`,
+    // India, 1.46B.
     axisMax: 1.5e9,
     axisStep: 100e6,
     format: compact,
-    // 1549 mentions over 10.1M people → "153.0 mentions per million people".
-    rate: (mentions, people) => `${oneDecimal((mentions / people) * 1e6)} mentions per million people`,
   },
   gdp: {
     label: "GDP",
     noun: "GDP",
     share: "share of world GDP",
-    // Just past China, the largest economy shown (the US is left off the scatter).
+    describeShare: share => `${percent(share)} of world GDP`,
+    // China, $18.7T.
     axisMax: 20e12,
     axisStep: 1e12,
     format: dollars => `$${compact(dollars)}`,
-    rate: (mentions, dollars) => `${oneDecimal((mentions / dollars) * 1e9)} mentions per $1B of GDP`,
   },
   conflict_deaths: {
     label: "Conflict deaths",
     noun: "conflict deaths",
     share: "share of the world's conflict deaths",
-    // Just past Ukraine, the most over the 12 months to August 2026 (85K).
+    describeShare: share => `${percent(share)} of the world's conflict deaths`,
+    // Ukraine, 85K.
     axisMax: 100e3,
     axisStep: 10e3,
     format: compact,
-    // Per 1,000, since per death rounds the worst-covered to 0.0: Sudan, with
-    // 67K deaths and about 100 mentions, is 1.4 per 1,000. Most countries have
-    // no deaths, and a rate means nothing for them.
-    rate: (mentions, deaths) =>
-      deaths ? `${oneDecimal((mentions / deaths) * 1e3)} mentions per 1,000 conflict deaths` : "No conflict deaths recorded",
   },
 };
