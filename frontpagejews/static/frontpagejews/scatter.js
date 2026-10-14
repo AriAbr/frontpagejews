@@ -83,8 +83,13 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           max: benchmarkDisplaySettings.axisMax,
           ticks: {
             stepSize: benchmarkDisplaySettings.axisStep,
-            // No zero: the pinned y-axis covers it, and the y-axis's "0%" marks the origin.
-            callback: value => (value === 0 ? "" : benchmarkDisplaySettings.format(value)),
+            callback: value => {
+              // No zero: the pinned y-axis covers it, and the y-axis's "0%" marks the origin.
+              if (value === 0) return "";
+              const labelStep = benchmarkDisplaySettings.labelStep;
+              if (labelStep && value % labelStep !== 0) return "";
+              return benchmarkDisplaySettings.format(value);
+            },
           },
         },
         y: {

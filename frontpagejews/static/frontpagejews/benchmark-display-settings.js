@@ -5,7 +5,10 @@
 // The scatter's benchmark axis shows the benchmark's own figures (people,
 // dollars, deaths, or for the composite score, shares). Its maximum is fixed
 // so the axis never rescales: just past the largest figure in the 12 months
-// to August 2026, with the US and UK left out.
+// to August 2026, with the US and UK left out. Its grid lines are axisStep
+// apart, about 1% of the benchmark's total, which makes the grid's cells near
+// square, since the chart is sized for a 45-degree line. Only the lines at
+// multiples of labelStep get a label, where there is one.
 import { compact, percent } from "./formats.js";
 
 export const BENCHMARK_DISPLAY_SETTINGS = {
@@ -50,7 +53,9 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     describeShare: share => `${percent(share)} of the world's conflict deaths`,
     // Ukraine, 85K.
     axisMax: 100e3,
-    axisStep: 10e3,
+    // 1% of the total is about 2,350.
+    axisStep: 2.5e3,
+    labelStep: 5e3,
     format: compact,
   },
 };
