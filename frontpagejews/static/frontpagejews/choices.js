@@ -36,3 +36,15 @@ export function comparisonChoices(data, selectedOutlets, benchmark) {
     .filter(code => code in data.benchmark_figures[benchmark] && code !== data.focus)
     .map(code => ({ code, name: countryName(data, code) }));
 }
+
+// Whether a country's name contains what the visitor typed, anywhere in it,
+// ignoring case and accents, so "turk" finds Türkiye.
+export function countryMatches(countryName, typed) {
+  return withoutAccents(countryName).includes(withoutAccents(typed));
+}
+
+// "Türkiye" → "turkiye": each accented letter split into the letter and its
+// accent, and the accent dropped.
+function withoutAccents(text) {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
