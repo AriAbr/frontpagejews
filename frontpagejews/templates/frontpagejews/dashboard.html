@@ -12,6 +12,14 @@
     <meta property="og:title" content="{{ title }}" />
     <meta property="og:description" content="{{ subtitle }}" />
     <meta name="twitter:card" content="summary" />
+    <link rel="icon"
+          href="{% static 'frontpagejews/favicon.svg' %}"
+          type="image/svg+xml" />
+    <link rel="icon"
+          href="{% static 'frontpagejews/favicon-32.png' %}"
+          sizes="32x32" />
+    <link rel="apple-touch-icon"
+          href="{% static 'frontpagejews/apple-touch-icon.png' %}" />
     <link rel="stylesheet" href="{% static 'frontpagejews/dashboard.css' %}" />
     {% if ga_measurement_id %}
       <script async
