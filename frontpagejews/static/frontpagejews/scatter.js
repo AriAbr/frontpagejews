@@ -11,7 +11,6 @@ import { multiple, percent } from "./formats.js";
 // Rounded up to this, so the coverage axis ends on a round number.
 const COVERAGE_AXIS_STEP = 0.01;
 const OTHER_COUNTRIES_COLOR = "#a8a29e99";
-const LINE_LABEL = "Proportionate coverage";
 
 const roundUp = (n, step) => Math.ceil(n / step) * step;
 // Axis ticks fall on whole percents: 0.05 → "5%".
@@ -53,7 +52,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
       datasets: [
         {
           type: "line",
-          label: LINE_LABEL,
+          label: "Proportionate coverage",
           data: [{ x: 0, y: 0 }, { x: lineEnd, y: lineEnd * slope }],
           borderColor: Chart.defaults.color,
           borderDash: [4, 4],
@@ -82,8 +81,11 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           type: "linear",
           min: 0,
           max: benchmarkDisplaySettings.axisMax,
-          title: { display: true, text: benchmarkDisplaySettings.label },
-          ticks: { stepSize: benchmarkDisplaySettings.axisStep, callback: benchmarkDisplaySettings.format },
+          ticks: {
+            stepSize: benchmarkDisplaySettings.axisStep,
+            // No zero: the pinned y-axis covers it, and the y-axis's "0%" marks the origin.
+            callback: value => (value === 0 ? "" : benchmarkDisplaySettings.format(value)),
+          },
         },
         y: {
           type: "linear",
@@ -94,8 +96,9 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         },
       },
       plugins: {
-        // The page's description explains the line, so the legend lists only the dots.
-        legend: { labels: { usePointStyle: true, filter: item => item.text !== LINE_LABEL } },
+        // The legend is drawn in the page instead, above the scrolling chart, so it
+        // stays in view. See drawLegend.
+        legend: { display: false },
         tooltip: {
           // Only dots get a tooltip; the line's points have no name.
           filter: item => item.raw.name,
@@ -114,7 +117,17 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         },
       },
     },
+    plugins: [pinnedAxis(document.getElementById("scatter-y-axis"))],
   });
+
+  drawLegend([
+    { label: "Other countries", color: OTHER_COUNTRIES_COLOR },
+    { label: comparison.name, color: COLORS.comparison },
+    { label: focus.name, color: COLORS.focus },
+  ]);
+  // The x-axis title is in the page too, below the scrolling chart, so it stays
+  // centered in view.
+  document.getElementById("scatter-x-title").textContent = benchmarkDisplaySettings.label;
 
   // Widen the chart until the dashed line sits at 45 degrees. That happens
   // when the plot area's width-to-height ratio equals the line's rise over the
@@ -125,6 +138,58 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   const plotHeight = area.bottom - area.top;
   const aroundPlot = scatter.width - (area.right - area.left);
   const plotWidth = plotHeight * ((slope * benchmarkDisplaySettings.axisMax) / coverageAxisMax);
-  document.getElementById("scatter-wrap").style.width = `${Math.round(plotWidth + aroundPlot)}px`;
+  const chartWidth = Math.round(plotWidth + aroundPlot);
+  document.getElementById("scatter-wrap").style.width = `${chartWidth}px`;
+  // The scrolling area shows the chart without its y-axis, which is beside it.
+  document.getElementById("scatter-scroll").style.width = `${chartWidth - axisWidth(scatter)}px`;
   scatter.resize();
+}
+
+// The legend, as a row of colored dots and labels above the chart. It sits
+// outside the scrolling area, so it stays centered when the chart is wider than
+// the window.
+function drawLegend(items) {
+  const legend = document.getElementById("scatter-legend");
+  for (const { label, color } of items) {
+    const item = document.createElement("span");
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = color;
+    item.append(dot, label);
+    legend.append(item);
+  }
+}
+
+// The y-axis's width: everything left of the plot area, through the axis line.
+const axisWidth = chart => Math.ceil(chart.chartArea.left) + 1;
+
+// A Chart.js plugin keeping the y-axis in view when the chart scrolls sideways.
+// On every draw it copies the y-axis (its title, tick labels and line) onto
+// `axisCanvas`, which sits beside the scrolling area, and shifts the chart left
+// by as much so its own copy is cut off. It copies after the axes are drawn but
+// before the dots, so the edges of dots at zero don't come along.
+function pinnedAxis(axisCanvas) {
+  return {
+    id: "pinnedAxis",
+    beforeDatasetsDraw(chart) {
+      const ratio = chart.currentDevicePixelRatio;
+      const width = axisWidth(chart);
+      const height = chart.height;
+      // Only down far enough to keep the "0%" label whole. Below that is the
+      // x-axis labels' row, which is left blank: a copy of it would stay put
+      // while the labels it shows scroll away.
+      const copiedHeight = Math.ceil(chart.chartArea.bottom) + 8;
+
+      axisCanvas.width = width * ratio;
+      axisCanvas.height = height * ratio;
+      axisCanvas.style.width = `${width}px`;
+      axisCanvas.style.height = `${height}px`;
+      chart.canvas.parentElement.style.marginLeft = `-${width}px`;
+
+      const copiedWidthPx = width * ratio;
+      const copiedHeightPx = copiedHeight * ratio;
+      const ctx = axisCanvas.getContext("2d");
+      ctx.drawImage(chart.canvas, 0, 0, copiedWidthPx, copiedHeightPx, 0, 0, copiedWidthPx, copiedHeightPx);
+    },
+  };
 }

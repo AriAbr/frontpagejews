@@ -92,9 +92,19 @@
           Dashed line is what the benchmark would predict. Countries above it are "over-covered"
           by this metric, countries below it are "under-covered".
         </p>
-        <div class="scroll">
-          <div class="chart wide" id="scatter-wrap">
-            <canvas id="scatter"></canvas>
+        {# The script fills this, outside the scrolling area so it stays in view. #}
+        <div class="legend" id="scatter-legend"></div>
+        <div class="scatter-row">
+          {# The y-axis, copied here by the script, beside the scrolling plot rather than in it. #}
+          <canvas class="pinned-axis" id="scatter-y-axis" aria-hidden="true"></canvas>
+          <div class="scroll" id="scatter-scroll">
+            <div class="scroll-content">
+              <div class="chart wide" id="scatter-wrap">
+                <canvas id="scatter"></canvas>
+              </div>
+              {# The x-axis title, filled by the script and kept in view while the chart scrolls. #}
+              <p class="axis-title" id="scatter-x-title"></p>
+            </div>
           </div>
         </div>
       </div>

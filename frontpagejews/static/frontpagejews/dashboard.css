@@ -1,4 +1,5 @@
-:root { --bg: #fafaf9; --fg: #1c1917; --muted: #78716c; --border: #e7e5e4; }
+/* Native controls and scrollbars follow the theme too. */
+:root { color-scheme: light dark; --bg: #fafaf9; --fg: #1c1917; --muted: #78716c; --border: #e7e5e4; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --border: #44403c; }
 }
@@ -36,10 +37,22 @@ a { color: inherit; }
 .headline .detail { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
 .chart { position: relative; height: 420px; }
 h2 { font-size: 1.1rem; margin: 40px 0 4px; }
-/* Full window width rather than the 1000px column, so the drawn-to-scale
-   scatter only scrolls when the window really is narrower than it. */
-.scroll { overflow-x: auto; margin-inline: calc(50% - 50vw); padding-inline: 16px; }
-.chart.wide { height: 460px; margin-inline: auto; }
+/* The scatter's y-axis beside its scrolling plot, so the scrollbar runs only
+   under the plot. Full window width rather than the 1000px column, so the
+   drawn-to-scale scatter only scrolls when the window really is narrower than
+   it; centered when it isn't. */
+.scatter-row { display: flex; justify-content: center; margin-inline: calc(50% - 50vw); padding-inline: 16px; }
+.pinned-axis { flex: none; }
+/* Its width is set by the script, to the plot's; it shrinks to the window. A
+   size container, so the axis title can be as wide as what's in view (cqw). */
+.scroll { overflow-x: auto; min-width: 0; scrollbar-width: thin; container-type: inline-size; }
+.scroll-content { width: max-content; }
+.chart.wide { height: 460px; }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin: 12px 0 4px; font-size: 0.8rem; color: var(--muted); }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+/* As wide as what's in view, and stuck there: it stays centered under the
+   visible part of the plot. */
+.axis-title { position: sticky; left: 0; width: 100cqw; text-align: center; margin: 2px 0 8px; font-size: 0.8rem; color: var(--muted); }
 .empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
 code { font-size: 0.9em; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
