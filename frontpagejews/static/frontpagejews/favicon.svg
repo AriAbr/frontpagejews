@@ -4,7 +4,8 @@
        drawn from it, for browsers without SVG icons and for iOS, which rounds
        the corners itself and so gets a plain square:
        convert -background none -density 1200 favicon.svg -resize 32x32 favicon-32.png
-       sed 's/ rx="6"//' favicon.svg | convert -density 1200 svg:- -resize 180x180 -background '#1c1917' -flatten apple-touch-icon.png -->
+       sed 's/ rx="6"//' favicon.svg | convert -density 1200 svg:- -resize 180x180 -background '#1c1917' -flatten apple-touch-icon.png
+       og-image.svg has a copy of the marks, so change them there too. -->
   <rect width="32" height="32" rx="6" fill="#1c1917"/>
   <path d="M7 25L25 7" stroke="#a8a29e" stroke-width="2.5" stroke-linecap="round"/>
   <circle cx="9.5" cy="9.5" r="3.75" fill="#3b82f6"/>

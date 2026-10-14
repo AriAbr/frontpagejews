@@ -3,6 +3,7 @@ built to static files by `manage.py build_site`."""
 
 from django.conf import settings
 from django.http import JsonResponse
+from django.templatetags.static import static
 from django.views.generic import TemplateView
 
 from frontpagejews.countries import country_name
@@ -14,12 +15,15 @@ def page_context():
     """The page's fixed parts. Everything that depends on the visitor's choices is
     filled in by the scripts from data.json."""
     focus_name = country_name(FOCUS)
+    url = "https://frontpagejews.com/"
     return {
         # In the browser tab and link previews, which show the domain beside it.
         "title": "Front Page Jews",
         # At the top of the page, where it's the address in screenshots of it.
         "site_name": "FrontPageJews.com",
-        "url": "https://frontpagejews.com/",
+        "url": url,
+        # Link previews need the image's full address.
+        "preview_image_url": url.rstrip("/") + static("frontpagejews/og-image.png"),
         "subtitle": f"Measuring {focus_name}'s share of the news against real-world data",
         "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
