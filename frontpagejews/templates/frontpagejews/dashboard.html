@@ -38,7 +38,7 @@
         </div>
         <div class="controls">
           <div>
-            <label class="heading" for="country-search">Compare {{ focus_name }} with</label>
+            <label class="heading" for="country-search">{{ focus_name }} vs</label>
             {# The script fills the list with a link per country. #}
             <div class="picker">
               <input id="country-search"
@@ -51,21 +51,30 @@
             </div>
           </div>
           <div>
-            <span class="heading">Measure reality by</span>
-            {# The script fills this with a radio button per benchmark. #}
-            <div class="benchmark-choice" id="benchmark-choice"></div>
+            <label class="heading" for="benchmark-choice">Coverage vs</label>
+            {# The script fills this with an option per benchmark. #}
+            <select id="benchmark-choice"></select>
           </div>
           <form method="get" id="outlet-form">
-            <span class="heading">News outlets</span>
+            <span class="heading" id="outlets-heading">News outlets</span>
             <input type="hidden" name="vs" />
             <input type="hidden" name="by" />
-            <div class="outlets">
-              {% for slug, name in outlets.items %}
-                <label>
-                  <input type="checkbox" name="outlet" value="{{ slug }}" />
-                  {{ name }}
-                </label>
-              {% endfor %}
+            {# A button that opens the checkboxes. It starts with the default, every outlet, so it has its height before the script fills in the outlets chosen. #}
+            <div class="outlets-dropdown">
+              <button type="button"
+                      id="outlets-toggle"
+                      aria-expanded="false"
+                      aria-controls="outlet-list"
+                      aria-describedby="outlets-heading">All {{ outlets|length }} outlets</button>
+              <div class="outlets" id="outlet-list" hidden>
+                {% for slug, name in outlets.items %}
+                  <label>
+                    <input type="checkbox" name="outlet" value="{{ slug }}" />
+                    {{ name }}
+                  </label>
+                {% endfor %}
+                <button type="button" class="done">Done</button>
+              </div>
             </div>
           </form>
         </div>
@@ -82,8 +91,8 @@
         {# The script fills this with a line for each of the two countries. #}
         <div class="headline" id="headline"></div>
         <h2>
-          {{ focus_name }} vs <span id="comparison-name"></span>: coverage and
-          reality, last {{ days_shown }} days
+          {{ focus_name }} vs <span id="comparison-name"></span>: coverage vs
+          <span class="benchmark-noun"></span>, last {{ days_shown }} days
         </h2>
         <p>
           Solid: each country's share of the selected outlets' country mentions
