@@ -87,6 +87,26 @@ a { color: inherit; }
 .headline p { color: var(--fg); font-size: 1.35rem; line-height: 1.3; margin: 0 0 8px; }
 .headline .detail { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
 .chart { position: relative; height: 420px; }
+/* Until the data loads: a spinner in the headline's place, the first thing
+   below the controls, so it's in view even on a phone. The space is held for
+   everything the script fills in: the headline, about two lines on a laptop
+   and on a phone, the charts, the scatter's legend and axis title, and on a
+   phone, where the scatter is wider than the screen, its offscreen badges. */
+#charts.loading .headline { position: relative; min-height: 64px; }
+/* Their headings and descriptions too, but hidden: half filled in, they read
+   "Israel vs : coverage vs , last 30 days". */
+#charts.loading > h2, #charts.loading > p { visibility: hidden; }
+#charts.loading .legend, #charts.loading .axis-title { min-height: 1lh; }
+@media (max-width: 699px) {
+  #charts.loading .headline { min-height: 176px; }
+  #charts.loading .offscreen-badges { min-height: 22px; }
+}
+#charts.loading .headline::after { content: ""; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -16px;
+                                   border: 3px solid var(--border); border-top-color: var(--muted); border-radius: 50%;
+                                   animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* The scatter gets its width from the script, so until then it fills the column. */
+#charts.loading .scroll, #charts.loading .scroll-content, #charts.loading .chart.wide { width: 100%; }
 h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 /* The scatter's y-axis beside its scrolling plot, so the scrollbar runs only
    under the plot. The drawn-to-scale scatter scrolls when it's wider than the
