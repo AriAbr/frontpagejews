@@ -43,7 +43,14 @@
     <main>
       <header class="masthead">
         <div class="title-row">
-          <h1>{{ site_name }}</h1>
+          <h1>
+            <img class="logo"
+                 src="{% static 'frontpagejews/favicon.svg' %}"
+                 width="25"
+                 height="25"
+                 alt="" />
+            {{ site_name }}
+          </h1>
           <p class="subtitle">{{ subtitle }}</p>
           <p class="byline">
             A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#methodology">How this works</a>
@@ -95,7 +102,14 @@
       {# In place of the masthead once it scrolls away, so what's compared stays in view beside every chart, and in screenshots of it. The script fills in the summary. #}
       <div class="summary-bar" id="summary-bar">
         <div class="title-row">
-          <strong>{{ site_name }}</strong>
+          <strong>
+            <img class="logo"
+                 src="{% static 'frontpagejews/favicon.svg' %}"
+                 width="15"
+                 height="15"
+                 alt="" />
+            {{ site_name }}
+          </strong>
           <a href="#">Change</a>
         </div>
         <div id="summary"></div>

@@ -18,6 +18,14 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 16px 24px; }
 .masthead { padding: 14px 0 10px; border-bottom: 1px solid var(--border); }
 .title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
 h1 { font-size: 1.4rem; margin: 0; }
+/* The favicon before the site's name, in the masthead and the summary bar,
+   its marks running from the top of the name's capitals to its baseline.
+   They fill 5.75 to 26.25 of its 32 units each way; the rest is its tile,
+   the page's own color, so the sizes and offsets here are in those terms:
+   1.12em makes the marks 0.72em tall, Noto Sans's cap height, the margins
+   put them flush with the column's edge and 0.35em from the name, and
+   vertical-align puts their foot on the baseline. */
+.logo { width: 1.12em; height: 1.12em; vertical-align: -0.2em; margin: 0 -0.05em 0 -0.2em; }
 .masthead .subtitle { margin: 0; }
 .masthead .byline { font-size: 0.85rem; margin: 0; }
 /* Where there's room, the byline moves up beside the title, at the line's end,
