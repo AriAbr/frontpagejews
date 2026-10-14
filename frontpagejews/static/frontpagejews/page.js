@@ -15,6 +15,7 @@ import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { drawHeadline } from "./headline.js";
 import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
+import { drawSummaryBar } from "./summary-bar.js";
 
 const allData = await (await fetch("data.json")).json();
 const shownData = withoutCountries(allData, allData.home_countries);
@@ -28,6 +29,13 @@ document.getElementById("comparison-name").textContent = comparison.name;
 for (const span of document.querySelectorAll(".benchmark-noun")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].noun;
 for (const span of document.querySelectorAll(".benchmark-share")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].share;
 setUpControls({ choices: comparisonChoices(data, selectedOutlets, benchmark), comparison, selectedOutlets, benchmark });
+drawSummaryBar({
+  focus,
+  comparison,
+  benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
+  selectedOutlets,
+  outletCount: Object.keys(data.outlets).length,
+});
 
 if (data.days.length) {
   // Shown before drawing, since Chart.js sizes charts from their containers.

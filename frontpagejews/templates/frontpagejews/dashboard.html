@@ -28,45 +28,55 @@
   </head>
   <body>
     <main>
-      <header>
-        <h1>{{ title }}</h1>
-        <p class="byline">
-          A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#methodology">How this works</a>
-        </p>
-        <p class="subtitle">{{ subtitle }}</p>
+      <header class="masthead">
+        <div class="title-row">
+          <h1>{{ site_name }}</h1>
+          <p class="subtitle">{{ subtitle }}</p>
+          <p class="byline">
+            A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#methodology">How this works</a>
+          </p>
+        </div>
+        <div class="controls">
+          <div>
+            <label class="heading" for="country-search">Compare {{ focus_name }} with</label>
+            {# The script fills the list with a link per country. #}
+            <div class="picker">
+              <input id="country-search"
+                     placeholder="Filter countries"
+                     autocomplete="off"
+                     aria-controls="country-list" />
+              <ul id="country-list" hidden>
+                <li class="none" hidden>No matches</li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <span class="heading">Measure reality by</span>
+            {# The script fills this with a radio button per benchmark. #}
+            <div class="benchmark-choice" id="benchmark-choice"></div>
+          </div>
+          <form method="get" id="outlet-form">
+            <span class="heading">News outlets</span>
+            <input type="hidden" name="vs" />
+            <input type="hidden" name="by" />
+            <div class="outlets">
+              {% for slug, name in outlets.items %}
+                <label>
+                  <input type="checkbox" name="outlet" value="{{ slug }}" />
+                  {{ name }}
+                </label>
+              {% endfor %}
+            </div>
+          </form>
+        </div>
       </header>
-      <div class="controls">
-        <div>
-          <label class="heading" for="country-search">Compare {{ focus_name }} with</label>
-          {# The script fills the list with a link per country. #}
-          <div class="picker">
-            <input id="country-search"
-                   placeholder="Filter countries"
-                   autocomplete="off"
-                   aria-controls="country-list" />
-            <ul id="country-list" hidden>
-              <li class="none" hidden>No matches</li>
-            </ul>
-          </div>
+      {# In place of the masthead once it scrolls away, so what's compared stays in view beside every chart, and in screenshots of it. The script fills in the summary. #}
+      <div class="summary-bar" id="summary-bar">
+        <div class="title-row">
+          <strong>{{ site_name }}</strong>
+          <a href="#">Change</a>
         </div>
-        <div>
-          <span class="heading">Measure reality by</span>
-          {# The script fills this with a radio button per benchmark. #}
-          <div class="benchmark-choice" id="benchmark-choice"></div>
-        </div>
-        <form method="get" id="outlet-form">
-          <span class="heading">News outlets</span>
-          <input type="hidden" name="vs" />
-          <input type="hidden" name="by" />
-          <div class="outlets">
-            {% for slug, name in outlets.items %}
-              <label>
-                <input type="checkbox" name="outlet" value="{{ slug }}" />
-                {{ name }}
-              </label>
-            {% endfor %}
-          </div>
-        </form>
+        <div id="summary"></div>
       </div>
       <div id="charts" hidden>
         {# The script fills this with a line for each of the two countries. #}
