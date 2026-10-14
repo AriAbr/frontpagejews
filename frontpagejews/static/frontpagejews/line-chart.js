@@ -9,8 +9,8 @@ import { ANIMATION, COLORS } from "./chart-common.js";
 import { percent } from "./formats.js";
 
 // Just past the highest daily coverage share in the 30 days to October 12,
-// 2026 (Iran, 10.7%).
-const AXIS_MAX = 0.15;
+// 2026 (Iran, 10.7%). Even, so the axis ends on one of its 2% ticks.
+const AXIS_MAX = 0.14;
 
 // Two significant figures, written out: 150 rather than toPrecision's "1.5e+2".
 const twoFigures = n => (+n.toPrecision(2)).toLocaleString();
@@ -82,7 +82,8 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
         y: {
           type: "linear",
           min: 0,
-          max: 100 * AXIS_MAX,
+          // Rounded: 100 * 0.14 is 14.000000000000002, which would be the top label.
+          max: Math.round(100 * AXIS_MAX),
           ticks: { callback: v => `${v}%` },
         },
       },
