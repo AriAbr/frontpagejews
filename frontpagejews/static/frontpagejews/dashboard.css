@@ -3,6 +3,10 @@
    --focus is Israel's color in the charts, light enough to read as text on
    the background (4.75:1). */
 :root { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --border: #44403c; --focus: #3b82f6; }
+/* The arrow on each control that opens a list: the country picker, the
+   benchmark and the outlets. A background, since a select can't have an
+   ::after, so its color is --muted written out. */
+:root { --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a8a29e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 /* The header's "How this works" link scrolls down to the methodology. */
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
@@ -43,9 +47,9 @@ h1 { font-size: 1.4rem; margin: 0; }
 .methodology details p { margin: 4px 0 0; }
 p { color: var(--muted); margin: 0 0 16px; }
 a { color: inherit; }
-.picker { position: relative; width: 200px; max-width: 100%; margin-bottom: 16px; }
-.picker input { font: inherit; padding: 3px 10px; width: 100%; box-sizing: border-box;
-                background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
+.picker { position: relative; width: 180px; max-width: 100%; margin-bottom: 16px; }
+.picker input { font: inherit; padding: 3px 28px 3px 10px; width: 100%; box-sizing: border-box;
+                background: var(--bg) var(--chevron) no-repeat right 10px center; color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
 .picker ul { position: absolute; z-index: 10; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0;
              list-style: none; max-height: 320px; overflow-y: auto; background: var(--bg);
              border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
@@ -53,13 +57,32 @@ a { color: inherit; }
 .picker li.active a, .picker li a:hover { background: var(--border); }
 .picker li.current a { font-weight: 600; }
 .picker .none { padding: 4px 10px; color: var(--muted); }
-/* Each control's heading beside it rather than above, to keep the masthead short. */
-.controls { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; margin-top: 10px; }
+/* Each control's heading beside it rather than above, to keep the masthead
+   short. Every control is a box of the same width, so on a phone, where they
+   stack, they line up: headings in one column, boxes in the other. */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; margin-top: 10px; }
 .controls > * { display: flex; align-items: center; gap: 4px 10px; }
 .controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 .controls .picker { margin-bottom: 0; }
-.outlets, .benchmark-choice { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.outlets label, .benchmark-choice label { white-space: nowrap; }
+/* The select and the outlets' button, both drawn with the chevron rather than
+   the select's own arrow, which differs by browser. */
+#benchmark-choice, #outlets-toggle { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
+                                     appearance: none; color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
+                                     background: var(--bg) var(--chevron) no-repeat right 10px center; }
+@media (max-width: 699px) {
+  .controls { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 12px; }
+  .controls > * { display: contents; }
+  .controls .picker, #benchmark-choice, #outlets-toggle { width: 100%; }
+}
+/* The outlets' checkboxes, under their button, like the country list. */
+.outlets-dropdown { position: relative; }
+.outlets { position: absolute; z-index: 10; left: 0; min-width: 100%; box-sizing: border-box; margin-top: 2px; padding: 6px 12px;
+           display: flex; flex-direction: column; gap: 4px; background: var(--bg);
+           border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
+.outlets[hidden] { display: none; }
+.outlets label { white-space: nowrap; }
+.outlets .done { align-self: flex-end; margin-top: 4px; font: inherit; font-size: 0.85rem; padding: 2px 12px; cursor: pointer;
+                 background: var(--border); color: var(--fg); border: 0; border-radius: 6px; }
 .headline { margin: 24px 0 8px; }
 .headline p { color: var(--fg); font-size: 1.35rem; line-height: 1.3; margin: 0 0 8px; }
 .headline .detail { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }

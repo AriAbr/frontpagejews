@@ -1,10 +1,11 @@
 // The comparison-country picker, the benchmark choice and the outlet checkboxes.
 //
 // All work by reloading the page with new query-string choices: each country
-// is a link, a benchmark radio button goes to its own URL, and the outlets are
-// a GET form.
+// is a link, choosing a benchmark goes to its own URL, and the outlets are a
+// GET form.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { choicesQuery } from "./choices.js";
+import { describeOutlets } from "./formats.js";
 
 export function setUpControls({ choices, comparison, selectedOutlets, benchmark }) {
   // Country picker: focus opens the full list, typing filters it (anywhere in
@@ -63,28 +64,70 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   list.addEventListener("mousedown", event => event.preventDefault());
   search.addEventListener("blur", close);
 
-  // Benchmark choice: one radio button per benchmark, starting on the chosen one.
+  // Benchmark choice: an option per benchmark, starting on the chosen one.
   const benchmarkChoice = document.getElementById("benchmark-choice");
   for (const [benchmarkOption, displaySettings] of Object.entries(BENCHMARK_DISPLAY_SETTINGS)) {
-    const radio = Object.assign(document.createElement("input"), { type: "radio", name: "by", value: benchmarkOption });
-    radio.checked = benchmarkOption === benchmark;
-    radio.addEventListener("change", () => {
-      location.search = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkOption });
-    });
-    const wrapper = document.createElement("label");
-    wrapper.append(radio, ` ${displaySettings.label}`);
-    benchmarkChoice.append(wrapper);
+    const option = new Option(displaySettings.label, benchmarkOption, false, benchmarkOption === benchmark);
+    benchmarkChoice.append(option);
   }
+  // Picked from the open list, a choice applies at once. With the list closed,
+  // arrow keys change the choice too, and applying each would reload the page
+  // before the visitor reaches the one they want, so a choice made from the
+  // keyboard waits for Enter or for focus to leave.
+  const applyBenchmark = () => {
+    if (benchmarkChoice.value === benchmark) return;
+    location.search = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkChoice.value });
+  };
+  let choosingByKeyboard = false;
+  benchmarkChoice.addEventListener("pointerdown", () => { choosingByKeyboard = false; });
+  benchmarkChoice.addEventListener("keydown", event => {
+    if (event.key === "Enter") applyBenchmark();
+    else choosingByKeyboard = true;
+  });
+  benchmarkChoice.addEventListener("change", () => { if (!choosingByKeyboard) applyBenchmark(); });
+  benchmarkChoice.addEventListener("blur", applyBenchmark);
 
-  // The outlet form carries the comparison and benchmark along, and starts with
-  // the chosen outlets ticked.
+  // Outlets: a button that opens the checkboxes. Ticking doesn't reload the
+  // page, which would close the list after every click; closing it does, if
+  // the outlets ticked have changed. The form carries the comparison and
+  // benchmark along, and starts with the chosen outlets ticked.
   const outletForm = document.getElementById("outlet-form");
   outletForm.elements.vs.value = comparison.code;
   outletForm.elements.by.value = benchmark;
-  for (const box of outletForm.querySelectorAll("input[name=outlet]")) box.checked = selectedOutlets.includes(box.value);
+  const boxes = [...outletForm.querySelectorAll("input[name=outlet]")];
+  for (const box of boxes) box.checked = selectedOutlets.includes(box.value);
+  const toggle = document.getElementById("outlets-toggle");
+  const outletList = document.getElementById("outlet-list");
+  const dropdown = outletList.parentElement;
+
+  const tickedOutlets = () => boxes.filter(box => box.checked).map(box => box.value);
+  const describeTicked = () => {
+    const description = describeOutlets(tickedOutlets().length, boxes.length);
+    toggle.textContent = description[0].toUpperCase() + description.slice(1);
+  };
+  const openOutlets = () => {
+    outletList.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+  };
+  const closeOutlets = () => {
+    if (outletList.hidden) return;
+    outletList.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+    const ticked = tickedOutlets();
+    const changed = ticked.length !== selectedOutlets.length || ticked.some(outlet => !selectedOutlets.includes(outlet));
+    if (changed) outletForm.submit();
+  };
+
+  describeTicked();
+  toggle.addEventListener("click", () => { if (outletList.hidden) openOutlets(); else closeOutlets(); });
+  outletList.querySelector(".done").addEventListener("click", () => { closeOutlets(); toggle.focus(); });
+  dropdown.addEventListener("keydown", event => {
+    if (event.key === "Escape") { closeOutlets(); toggle.focus(); }
+  });
+  document.addEventListener("click", event => { if (!dropdown.contains(event.target)) closeOutlets(); });
   // Unticking every outlet would mean "all", so keep at least one.
   outletForm.addEventListener("change", event => {
-    if (!outletForm.querySelector("input[name=outlet]:checked")) { event.target.checked = true; return; }
-    outletForm.submit();
+    if (!tickedOutlets().length) event.target.checked = true;
+    describeTicked();
   });
 }

@@ -2,6 +2,7 @@
 // is too tall to keep in view, so this says in a line what's being compared,
 // beside every chart and in screenshots of it.
 import { COLORS } from "./chart-common.js";
+import { describeOutlets } from "./formats.js";
 
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
 // outletCount: how many outlets there are to choose from.
@@ -13,8 +14,7 @@ export function drawSummaryBar({ focus, comparison, benchmarkDisplaySettings, se
   const countries = document.createElement("span");
   countries.append(focusName, " vs ", comparisonName);
 
-  let outlets = `all ${outletCount} outlets`;
-  if (selectedOutlets.length < outletCount) outlets = `${selectedOutlets.length} of ${outletCount} outlets`;
+  const outlets = describeOutlets(selectedOutlets.length, outletCount);
   const measures = element("span", `by ${benchmarkDisplaySettings.noun} · ${outlets}`);
 
   // In two parts, so the second moves to the next line whole where both don't fit.

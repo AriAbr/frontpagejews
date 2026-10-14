@@ -1,5 +1,6 @@
 // Number formats shared by the headline, the scatter and the benchmark
-// display settings.
+// display settings, and the outlets chosen, shared by the controls and the
+// summary bar.
 
 // 0.139 → "13.9%", and small shares to two decimals: 0.0004 → "0.04%".
 export function percent(fraction) {
@@ -15,4 +16,10 @@ export const compact = new Intl.NumberFormat("en-US", { notation: "compact", max
 const twoFigures = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 2 }).format;
 export function multiple(mentionsPercentage, benchmarkPercentage) {
   return `${twoFigures(mentionsPercentage / benchmarkPercentage)}×`;
+}
+
+// "all 7 outlets", or where some are left out, "3 of 7 outlets".
+export function describeOutlets(selectedCount, outletCount) {
+  if (selectedCount < outletCount) return `${selectedCount} of ${outletCount} outlets`;
+  return `all ${outletCount} outlets`;
 }
