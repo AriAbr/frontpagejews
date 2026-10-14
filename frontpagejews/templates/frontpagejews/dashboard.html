@@ -87,7 +87,8 @@
         </div>
         <div id="summary"></div>
       </div>
-      <div id="charts" hidden>
+      {# Shown while the data loads, with a spinner in the headline's place, so what's below doesn't jump down when the charts are drawn. #}
+      <div id="charts" class="loading">
         {# The script fills this with a line for each of the two countries. #}
         <div class="headline" id="headline"></div>
         <h2>

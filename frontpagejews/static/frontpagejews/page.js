@@ -38,8 +38,7 @@ drawSummaryBar({
 });
 
 if (data.days.length) {
-  // Shown before drawing, since Chart.js sizes charts from their containers.
-  document.getElementById("charts").hidden = false;
+  document.getElementById("charts").classList.remove("loading");
   drawLineChart({
     rows: lineChartRows(data, selectedOutlets, comparison.code, benchmark),
     benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
@@ -57,5 +56,6 @@ if (data.days.length) {
     comparison,
   });
 } else {
+  document.getElementById("charts").hidden = true;
   document.getElementById("no-data").hidden = false;
 }
