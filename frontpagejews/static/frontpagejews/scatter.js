@@ -205,27 +205,37 @@ function drawOffscreen(scatter, scrollArea, points, colorOf) {
   scrollArea.classList.toggle("fade-right", !atEnd);
 }
 
-// A badge for the countries off one side. A highlighted country is named, with
-// its legend dot: "Sudan +3 more →". Others are only counted: "174 countries →".
+// A badge for the countries off one side. The highlighted countries are named,
+// each with its legend dot: "● Sudan ● Israel +3 more →". Others are only
+// counted: "174 countries →".
 function fillBadge(badge, points, colorOf, side) {
   badge.replaceChildren();
   badge.classList.remove("narrowed");
   if (points.length === 0) return;
 
-  // Where the text wraps, it breaks between the name and "+3 more", which are
+  // Where the text wraps, it breaks between the names and "+3 more", which are
   // each kept in one piece (a long name can still wrap, but never away from its
-  // dot): "● Sudan / +3 more".
+  // dot): "● Sudan / +3 more". With two names, "+3 more" stays with the second,
+  // so it takes two lines rather than three: "● Sudan / ● Israel +3 more".
   const content = [];
-  const highlighted = points.find(point => colorOf(point));
-  if (highlighted) {
-    const dot = document.createElement("span");
-    dot.className = "dot";
-    dot.style.background = colorOf(highlighted);
-    const [firstWord, ...restOfName] = highlighted.name.split(" ");
-    content.push(keptTogether(dot, firstWord));
-    if (restOfName.length) content.push(` ${restOfName.join(" ")}`);
-    const others = points.length - 1;
-    if (others > 0) content.push(" ", keptTogether(`+${others} more`));
+  const highlighted = points.filter(point => colorOf(point));
+  // In the legend's order: the comparison country, then Israel.
+  const legendOrder = [COLORS.comparison, COLORS.focus];
+  highlighted.sort((a, b) => legendOrder.indexOf(colorOf(a)) - legendOrder.indexOf(colorOf(b)));
+  if (highlighted.length > 0) {
+    for (const [index, country] of highlighted.entries()) {
+      // A wider space than usual, so the names don't run into the next dot.
+      if (index > 0) content.push(wideSpace());
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = colorOf(country);
+      const [firstWord, ...restOfName] = country.name.split(" ");
+      content.push(keptTogether(dot, firstWord));
+      if (restOfName.length) content.push(` ${restOfName.join(" ")}`);
+    }
+    const others = points.length - highlighted.length;
+    // A non-breaking space keeps "+3 more" on the last name's line.
+    if (others > 0) content.push(highlighted.length > 1 ? " " : " ", keptTogether(`+${others} more`));
   } else {
     content.push(keptTogether(`${points.length} ${points.length === 1 ? "country" : "countries"}`));
   }
@@ -254,6 +264,15 @@ function narrowIfWrapped(badge) {
   const text = badge.querySelector(".text");
   if (!arrow) return;
   if (text.offsetHeight > arrow.offsetHeight * 1.5) badge.classList.add("narrowed");
+}
+
+// A space wider than usual. Where the line breaks there, it disappears like any
+// space, so the dot after it still lines up with the line above.
+function wideSpace() {
+  const span = document.createElement("span");
+  span.className = "wide-space";
+  span.textContent = " ";
+  return span;
 }
 
 // Text that never breaks across lines.

@@ -176,6 +176,8 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .badge { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 2px 10px; border-radius: 10px; background: var(--border); color: var(--fg); font-size: 0.75rem; font-weight: 600; }
 .badge .arrow { flex: none; }
 .badge .kept-together { white-space: nowrap; }
+/* Between two countries' names, so the second dot sits a little further off. */
+.badge .wide-space { word-spacing: 4px; }
 /* See narrowIfWrapped in scatter.js. */
 .badge.narrowed { width: min-content; }
 /* Each badge's text sits against its arrow, so spare room is between them. */
