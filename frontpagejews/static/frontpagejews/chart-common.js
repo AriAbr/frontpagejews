@@ -19,3 +19,17 @@ Chart.defaults.color = cssVar("--muted");
 // 80): seen but not noticed. Chart.js's default is a faint black, which all but
 // disappears in dark mode.
 Chart.defaults.borderColor = `${cssVar("--border").trim()}80`;
+
+// Hide the chart's tooltip when a press lands anywhere else on the page.
+// Chart.js only hears events on its canvas, and hides the tooltip on the
+// mouseout a phone sends the canvas when a later tap lands elsewhere. A phone
+// sends that only after a tap on the canvas, not a drag, which it takes for a
+// scroll: so a tooltip opened by dragging across the chart would stay open.
+export function hideTooltipOnPressElsewhere(chart) {
+  document.addEventListener("pointerdown", event => {
+    if (event.target === chart.canvas || chart.getActiveElements().length === 0) return;
+    chart.setActiveElements([]);
+    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    chart.update();
+  });
+}

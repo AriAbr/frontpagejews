@@ -5,7 +5,7 @@
 // chart is made as wide as it needs to be for the dashed line to sit at 45
 // degrees, and scrolls sideways. Most countries sit near the origin, because a
 // few countries are huge and most are small.
-import { ANIMATION, BACKGROUND, COLORS } from "./chart-common.js";
+import { ANIMATION, BACKGROUND, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
 import { multiple, percent } from "./formats.js";
 
 // Rounded up to this, so the coverage axis ends on a round number.
@@ -136,6 +136,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
     },
     plugins: [pinnedAxis(document.getElementById("scatter-y-axis")), { id: "offscreen", afterLayout: showOffscreen }],
   });
+  hideTooltipOnPressElsewhere(scatter);
 
   drawLegend([
     { label: "Other countries", color: OTHER_COUNTRIES_COLOR },
