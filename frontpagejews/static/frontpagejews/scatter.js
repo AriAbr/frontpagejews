@@ -60,8 +60,18 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   const scatter = new Chart(document.getElementById("scatter"), {
     type: "scatter",
     data: {
-      // Later datasets draw on top, so the two highlighted countries come last.
+      // Chart.js draws the datasets from last to first, so earlier ones land on
+      // top: the comparison country first, so the dots crowded near the origin
+      // never bury it, and the dashed line last, under every dot.
       datasets: [
+        dots({
+          label: comparison.name,
+          countries: p => p.code === comparison.code,
+          color: COLORS.comparison,
+          radius: 7,
+        }),
+        dots({ label: focus.name, countries: p => p.code === focus.code, color: COLORS.focus, radius: 7 }),
+        dots({ label: "Other countries", countries: p => !isHighlighted(p), color: OTHER_COUNTRIES_COLOR, radius: 4 }),
         {
           type: "line",
           label: "Proportionate coverage",
@@ -72,14 +82,6 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           pointRadius: 0,
           pointHitRadius: 0,
         },
-        dots({ label: "Other countries", countries: p => !isHighlighted(p), color: OTHER_COUNTRIES_COLOR, radius: 4 }),
-        dots({
-          label: comparison.name,
-          countries: p => p.code === comparison.code,
-          color: COLORS.comparison,
-          radius: 7,
-        }),
-        dots({ label: focus.name, countries: p => p.code === focus.code, color: COLORS.focus, radius: 7 }),
       ],
     },
     options: {
