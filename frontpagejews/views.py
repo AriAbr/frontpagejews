@@ -17,8 +17,11 @@ def page_context():
     focus_name = country_name(FOCUS)
     url = "https://frontpagejews.com/"
     return {
-        # The address, so screenshots of the page carry it. The same in the
-        # browser tab and link previews, so the site has one name everywhere.
+        # Two names on purpose. The browser tab and link previews show the
+        # domain beside this one, so it reads as a name rather than repeat it.
+        "title": "Front Page Jews",
+        # The page itself and its preview image carry no address of their own,
+        # so this one is the address, and screenshots of the page carry it.
         "site_name": "FrontPageJews.com",
         "url": url,
         # Link previews need the image's full address.
