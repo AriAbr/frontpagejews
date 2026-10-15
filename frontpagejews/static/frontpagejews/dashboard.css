@@ -9,6 +9,9 @@
 :root { --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a8a29e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 /* The header's "How this works" link scrolls down to the methodology. */
 html { scroll-behavior: smooth; }
+/* And stops with the heading below the summary bar, which is in view by then
+   (its height is set by the script, as it wraps on a phone). */
+html { scroll-padding-top: calc(var(--summary-bar-height, 0px) + 12px); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; margin: 0; overflow-x: clip; }
 main { max-width: 1000px; margin: 0 auto; padding: 0 16px 24px; }
@@ -66,8 +69,15 @@ h1 { font-size: 1.4rem; margin: 0; }
 #summary span { margin-left: 1em; }
 #summary span + span::before { content: "·"; display: inline-block; width: 1em; margin-left: -1em; text-align: center; }
 .methodology p { margin: 0 0 8px; }
-.methodology summary { cursor: pointer; color: var(--muted); }
-.methodology details p { margin: 4px 0 0; }
+/* The opening paragraphs, the section's argument, in full color and a little
+   larger, so the notes after them read as fine print. */
+.methodology .lede { color: var(--fg); font-size: 1.05rem; margin-bottom: 12px; }
+.methodology .lede + p:not(.lede) { margin-top: 20px; }
+.methodology h3 { font-size: 1rem; margin: 20px 0 6px; }
+/* Each term on its own line, its definition under it. */
+.methodology dl { margin: 0 0 16px; }
+.methodology dt { font-weight: 600; }
+.methodology dd { color: var(--muted); margin: 0 0 8px; }
 /* The quote under the heading, set off by a rule on its left. */
 .epigraph { margin: 8px 0 20px; padding-left: 14px; border-left: 2px solid var(--border); }
 .epigraph blockquote { margin: 0; }
