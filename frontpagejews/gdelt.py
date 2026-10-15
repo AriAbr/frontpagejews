@@ -171,3 +171,13 @@ def cached_days():
     if not directory.exists():
         return []
     return sorted(date.fromisoformat(path.stem) for path in directory.glob("*.json"))
+
+
+def last_fetched():
+    """When a day was last fetched: the newest cache file's modification time,
+    or None if nothing is cached."""
+    directory = settings.GDELT_CACHE_DIR
+    times = [path.stat().st_mtime for path in directory.glob("*.json")] if directory.exists() else []
+    if not times:
+        return None
+    return datetime.fromtimestamp(max(times), UTC)

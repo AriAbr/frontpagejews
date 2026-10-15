@@ -23,3 +23,15 @@ export function describeOutlets(selectedCount, outletCount) {
   if (selectedCount < outletCount) return `${selectedCount} of ${outletCount} outlets`;
   return `all ${outletCount} outlets`;
 }
+
+// How long ago a moment was, in the largest whole unit that reads naturally:
+// "just now", "5 minutes ago", "2 hours ago", and from two days on, "3 days ago".
+const relativeTime = new Intl.RelativeTimeFormat("en-US", { numeric: "always" });
+export function timeAgo(then, now) {
+  const minutes = Math.floor((now - then) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return relativeTime.format(-minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return relativeTime.format(-hours, "hour");
+  return relativeTime.format(-Math.floor(hours / 24), "day");
+}

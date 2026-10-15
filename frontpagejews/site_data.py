@@ -29,6 +29,7 @@ def site_data():
         }
         for day_summary in day_summaries
     ]
+    last_fetched = gdelt.last_fetched()
     mentioned = {code for day in days for counts in day["mentions"].values() for code in counts}
     with_figures = {code for figures in figures_by_benchmark.values() for code in figures}
     return {
@@ -40,4 +41,6 @@ def site_data():
         "names": {code: country_name(code) for code in sorted(mentioned | with_figures)},
         "benchmark_figures": figures_by_benchmark,
         "days": days,
+        # For "Data updated 2 hours ago", worked out in the browser.
+        "last_fetched": last_fetched.isoformat(timespec="seconds") if last_fetched else None,
     }

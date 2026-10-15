@@ -54,6 +54,8 @@
           <p class="subtitle">{{ subtitle }}</p>
           <p class="byline">
             A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#methodology">How this works</a>
+            {# The script fills in how long ago and shows it, once the data has loaded. #}
+            <span id="last-fetched" hidden><span class="separator">·</span> Data updated <time id="last-fetched-time"></time></span>
           </p>
         </div>
         <div class="controls">

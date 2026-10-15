@@ -1,6 +1,7 @@
 import io
 import json
-from datetime import date
+import os
+from datetime import date, datetime
 
 import pytest
 from django.core.management import call_command
@@ -25,6 +26,15 @@ def cache_day(day, mentions_by_domain):
         for domain, mentions in mentions_by_domain.items()
     }
     gdelt.cache_path(date.fromisoformat(day)).write_text(json.dumps({"date": day, "domains": domains}))
+
+
+def set_fetch_time(day, fetched_at):
+    """Make a cached day look fetched at `fetched_at`, e.g. "2026-09-23T01:35:00+00:00".
+
+    `gdelt.last_fetched` reads the file's modification time, which os.utime sets
+    (along with its access time, which nothing reads)."""
+    timestamp = datetime.fromisoformat(fetched_at).timestamp()
+    os.utime(gdelt.cache_path(date.fromisoformat(day)), (timestamp, timestamp))
 
 
 def cache_figures(benchmark, **figures):
@@ -60,6 +70,19 @@ def describe_site_data():
         cache_figures("gdp", UKR=5)
 
         assert site_data.site_data()["names"] == {"CHN": "China", "ISR": "Israel", "UKR": "Ukraine"}
+
+    def test_gives_when_a_day_was_last_fetched():
+        """The latest fetch of any day, not the latest day's fetch: an older day
+        is fetched again with --refresh"""
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+        cache_day("2026-09-23", {"bbc.co.uk": {"ISR": 1}})
+        set_fetch_time("2026-09-22", "2026-10-01T09:00:00+00:00")
+        set_fetch_time("2026-09-23", "2026-09-24T01:35:00+00:00")
+
+        assert site_data.site_data()["last_fetched"] == "2026-10-01T09:00:00+00:00"
+
+    def test_gives_no_fetch_time_with_nothing_cached():
+        assert site_data.site_data()["last_fetched"] is None
 
     def test_includes_each_benchmarks_figures():
         """A benchmark not fetched yet is there but empty"""
