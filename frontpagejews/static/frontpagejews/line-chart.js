@@ -5,7 +5,7 @@
 // the coverage lines always look the same. A benchmark share above the axis
 // gets no line, which would read as a value on the axis: it is written inside
 // the top of the chart instead ("▲ China GDP: 23.6%, above the chart").
-import { ANIMATION, COLORS } from "./chart-common.js";
+import { ANIMATION, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
 import { percent } from "./formats.js";
 
 // Just past the highest daily coverage share in the 30 days to October 12,
@@ -60,7 +60,7 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
     }
   }
 
-  new Chart(document.getElementById("line-chart"), {
+  const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: { labels: rows.map(row => row.date), datasets },
     plugins: [aboveAxisNotes(aboveAxis)],
@@ -104,6 +104,7 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
       },
     },
   });
+  hideTooltipOnPressElsewhere(lineChart);
 }
 
 // A Chart.js plugin writing each note inside the top left of the plot area,
