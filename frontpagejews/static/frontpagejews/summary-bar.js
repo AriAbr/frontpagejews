@@ -26,6 +26,8 @@ export function drawSummaryBar({ focus, comparison, benchmarkDisplaySettings, se
   // below the masthead, the headline first, shows just below the bar rather
   // than behind it. Not before, since until then they say the same.
   const bar = document.getElementById("summary-bar");
+  // For the CSS, so a jump to a heading stops below the bar, not behind it.
+  document.documentElement.style.setProperty("--summary-bar-height", `${bar.offsetHeight}px`);
   new IntersectionObserver(([masthead]) => {
     bar.classList.toggle("shown", !masthead.isIntersecting);
   }, { rootMargin: `-${bar.offsetHeight}px 0px 0px 0px` }).observe(document.querySelector(".masthead"));
