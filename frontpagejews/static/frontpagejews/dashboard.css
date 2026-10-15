@@ -68,6 +68,11 @@ h1 { font-size: 1.4rem; margin: 0; }
 .methodology p { margin: 0 0 8px; }
 .methodology summary { cursor: pointer; color: var(--muted); }
 .methodology details p { margin: 4px 0 0; }
+/* The quote under the heading, set off by a rule on its left. */
+.epigraph { margin: 8px 0 20px; padding-left: 14px; border-left: 2px solid var(--border); }
+.epigraph blockquote { margin: 0; }
+.epigraph blockquote p { font-style: italic; margin: 0 0 4px; }
+.epigraph figcaption { color: var(--muted); font-size: 0.85rem; }
 p { color: var(--muted); margin: 0 0 16px; }
 a { color: inherit; }
 .picker { position: relative; width: 180px; max-width: 100%; margin-bottom: 16px; }
