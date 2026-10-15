@@ -26,15 +26,30 @@ h1 { font-size: 1.4rem; margin: 0; }
    put them flush with the column's edge and 0.35em from the name, and
    vertical-align puts their foot on the baseline. */
 .logo { width: 1.12em; height: 1.12em; vertical-align: -0.2em; margin: 0 -0.05em 0 -0.2em; }
-.masthead .subtitle { margin: 0; }
+/* Always on a line of its own, under the title. */
+.masthead .subtitle { margin: 0; flex-basis: 100%; }
 .masthead .byline { font-size: 0.85rem; margin: 0; }
-/* Where there's room, the byline moves up beside the title, at the line's end,
-   and the subtitle goes below them on its own line. Title and byline are both
-   short, so they fit together whatever the font. On a phone they stack as
-   written: title, subtitle, byline. */
-@media (min-width: 700px) {
+/* The widths below are for the longest byline, "... Data updated 59 minutes
+   ago" (485px in the system font on Linux), with about 12% to spare for wider
+   system fonts. */
+/* Where the byline won't fit on one line, "Data updated" gets a line of its
+   own, with no dot to start it; where it fits, it follows the links after a
+   dot. (Not while hidden: display would override that.) */
+#last-fetched:not([hidden]) { display: block; }
+#last-fetched .separator { display: none; }
+@media (min-width: 580px) {
+  #last-fetched:not([hidden]) { display: inline; }
+  #last-fetched .separator { display: inline; }
+}
+/* Where there's room for the title and the byline side by side (781px for
+   the longest byline), the byline moves up beside the title, at the line's
+   end, and the subtitle goes below them on its own line. Narrower, they stack
+   as written: title, subtitle, byline. Moved up any sooner, the byline would
+   wrap onto a line of its own, between the title and the subtitle. The same
+   width as the controls' one row, below, so the masthead changes all at once. */
+@media (min-width: 960px) {
   .masthead .byline { order: 1; margin-left: auto; }
-  .masthead .subtitle { order: 2; flex-basis: 100%; }
+  .masthead .subtitle { order: 2; }
 }
 /* Across the window, with its text lined up with the page's column. */
 .summary-bar { visibility: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 20;
@@ -66,8 +81,9 @@ a { color: inherit; }
 .picker li.current a { font-weight: 600; }
 .picker .none { padding: 4px 10px; color: var(--muted); }
 /* Each control's heading beside it rather than above, to keep the masthead
-   short. Every control is a box of the same width, so on a phone, where they
-   stack, they line up: headings in one column, boxes in the other. */
+   short. In one row where they fit, and otherwise stacked, never two on one
+   line and one on the next. Every control is a box of the same width, so
+   where they stack they line up: headings in one column, boxes in the other. */
 .controls { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; margin-top: 10px; }
 .controls > * { display: flex; align-items: center; gap: 4px 10px; }
 .controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
@@ -77,8 +93,11 @@ a { color: inherit; }
 #benchmark-choice, #outlets-toggle { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
                                      appearance: none; color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
                                      background: var(--bg) var(--chevron) no-repeat right 10px center; }
-@media (max-width: 699px) {
-  .controls { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 12px; }
+/* One row is 832px in the system font on Linux, plus the page's padding and
+   about 12% to spare for wider system fonts. Stacked, the boxes fill the
+   column on a phone, up to a width that still reads as a box on a tablet. */
+@media (max-width: 959px) {
+  .controls { display: grid; grid-template-columns: max-content minmax(0, 320px); gap: 8px 12px; }
   .controls > * { display: contents; }
   .controls .picker, #benchmark-choice, #outlets-toggle { width: 100%; }
 }

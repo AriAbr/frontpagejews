@@ -12,6 +12,7 @@ import {
   withoutCountries,
 } from "./chart-data.js";
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
+import { timeAgo } from "./formats.js";
 import { drawHeadline } from "./headline.js";
 import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
@@ -28,6 +29,7 @@ const comparison = { code: comparisonCode, name: countryName(data, comparisonCod
 document.getElementById("comparison-name").textContent = comparison.name;
 for (const span of document.querySelectorAll(".benchmark-noun")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].noun;
 for (const span of document.querySelectorAll(".benchmark-share")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].share;
+if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({ choices: comparisonChoices(data, selectedOutlets, benchmark), comparison, selectedOutlets, benchmark });
 drawSummaryBar({
   focus,
@@ -58,4 +60,13 @@ if (data.days.length) {
 } else {
   document.getElementById("charts").hidden = true;
   document.getElementById("no-data").hidden = false;
+}
+
+// "Data updated 2 hours ago" in the byline, with the exact time on hover.
+function showLastFetched(lastFetched) {
+  const time = document.getElementById("last-fetched-time");
+  time.dateTime = lastFetched.toISOString();
+  time.title = lastFetched.toLocaleString();
+  time.textContent = timeAgo(lastFetched, new Date());
+  document.getElementById("last-fetched").hidden = false;
 }
