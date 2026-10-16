@@ -125,16 +125,44 @@ a { color: inherit; }
 .outlets label { white-space: nowrap; }
 .outlets .done { align-self: flex-end; margin-top: 4px; font: inherit; font-size: 0.85rem; padding: 2px 12px; cursor: pointer;
                  background: var(--border); color: var(--fg); border: 0; border-radius: 6px; }
-.headline { margin: 24px 0 8px; }
-.headline p { color: var(--fg); font-size: 1.35rem; line-height: 1.3; margin: 0 0 8px; }
-.headline .detail { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+/* The two countries one above the other, so their multiples line up, each
+   with the shares it comes from under it. Where there's room (the same width
+   as the controls' one row, so the masthead and the headline change at once),
+   the shares move up beside it instead, in a column of their own, so the
+   headline stays two lines: a table, its rows the countries. The shares'
+   column is against the right edge, as wide as they are, so it starts in the
+   same place whichever countries are chosen. */
+.headline { display: grid; gap: 12px 24px; align-items: start; margin: 24px 0 16px; }
+.headline p { color: var(--fg); font-size: 1.35rem; line-height: 1.3; margin: 0; }
+/* A dot between the two shares, dropped where they break onto two lines:
+   the same as #summary's parts. */
+.headline .detail { overflow: hidden; color: var(--muted); font-size: 0.9rem; }
+.headline .detail > div { display: flex; flex-wrap: wrap; margin-left: -1em; }
+.headline .detail span { margin-left: 1em; white-space: nowrap; }
+.headline .detail span + span::before { content: "·"; display: inline-block; width: 1em; margin-left: -1em; text-align: center; }
+@media (min-width: 960px) {
+  .headline { grid-template-columns: 1fr auto; gap: 8px 24px; align-items: baseline; }
+  .headline > div { display: contents; }
+  .headline p { grid-column: 1; }
+  .headline .detail { grid-column: 2; }
+  /* Flush with the right edge, so the dot trick above is mirrored: the dot
+     hangs off the first share's right, and goes past the right edge where
+     the two break onto two lines. */
+  .headline .detail > div { justify-content: flex-end; margin: 0 -1em 0 0; }
+  .headline .detail span { margin: 0 1em 0 0; }
+  .headline .detail span + span::before { content: none; }
+  .headline .detail span:not(:last-child)::after { content: "·"; display: inline-block; width: 1em; margin-right: -1em; text-align: center; }
+}
 .chart { position: relative; height: 420px; }
 /* Until the data loads: a spinner in the headline's place, the first thing
    below the controls, so it's in view even on a phone. The space is held for
-   everything the script fills in: the headline, about two lines on a laptop
-   and on a phone, the charts, the scatter's legend and axis title, and on a
-   phone, where the scatter is wider than the screen, its offscreen badges. */
+   everything the script fills in: the headline (two lines on a laptop, four
+   narrower, where the shares go under each country, and more where those
+   wrap on a phone), the charts, the scatter's legend and axis
+   title, and on a phone, where the scatter is wider than the screen, its
+   offscreen badges. */
 #charts.loading .headline { position: relative; min-height: 64px; }
+@media (max-width: 959px) { #charts.loading .headline { min-height: 111px; } }
 /* Their headings and descriptions too, but hidden: half filled in, they read
    "Israel vs : coverage vs , last 30 days". */
 #charts.loading > h2, #charts.loading > p { visibility: hidden; }
