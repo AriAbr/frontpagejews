@@ -12,28 +12,41 @@ export function drawHeadline({ points, benchmarkDisplaySettings, focus, comparis
   headline.append(...headlineLine(comparison, COLORS.comparison, points, benchmarkDisplaySettings));
 }
 
-// The country's line, as a list of one paragraph, or of none if the country
-// wasn't mentioned or has no figure for the benchmark.
+// The country's part, as a list of one block, or of none if the country
+// wasn't mentioned: its line, and under it the two shares the multiple comes
+// from, or only its line where it has no figure for the benchmark.
 function headlineLine(country, color, points, benchmarkDisplaySettings) {
   const point = points.find(p => p.code === country.code);
   if (!point) return [];
 
+  const part = document.createElement("div");
   const line = document.createElement("p");
   const name = element("strong", country.name);
   name.style.color = color;
+  part.append(line);
 
   // A multiple of nothing means nothing.
   if (!point.benchmarkPercentage) {
-    line.append(name, ` gets ${percent(point.mentionsPercentage)} of mentions, with no ${benchmarkDisplaySettings.noun} recorded`);
-    return [line];
+    line.append(name, ` gets ${percent(point.mentionsPercentage)} of country mentions, with no ${benchmarkDisplaySettings.noun} recorded`);
+    return [part];
   }
 
   const times = element("strong", multiple(point.mentionsPercentage, point.benchmarkPercentage));
-  const shares = `${percent(point.mentionsPercentage)} of mentions, ${benchmarkDisplaySettings.describeShare(point.benchmarkPercentage)}`;
-  const detail = element("span", `(${shares})`);
+  line.append(name, " gets ", times, " expected coverage");
+
+  // Each share is kept in one piece, with a dot between them, so where the two
+  // don't fit on one line they break between them, and the dot goes:
+  // "6.0% of country mentions · 0.89% composite score".
+  const shares = document.createElement("div");
+  shares.append(
+    element("span", `${percent(point.mentionsPercentage)} of country mentions`),
+    element("span", benchmarkDisplaySettings.describeShare(point.benchmarkPercentage)),
+  );
+  const detail = document.createElement("div");
   detail.className = "detail";
-  line.append(name, " gets ", times, " expected coverage ", detail);
-  return [line];
+  detail.append(shares);
+  part.append(detail);
+  return [part];
 }
 
 function element(tag, text) {
