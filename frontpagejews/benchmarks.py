@@ -8,6 +8,7 @@ else, so a page request never waits on either.
 """
 
 import json
+from datetime import datetime
 
 import requests
 from django.conf import settings
@@ -72,13 +73,23 @@ def fetch_world_bank_figures(benchmark, country_codes):
 def fetch_conflict_deaths(country_codes):
     """Map ISO3 -> deaths in organized violence over the last 12 months UCDP has
     data for. A country UCDP recorded no deaths in has 0, not no figure: zero is
-    its real figure, and it still belongs on the chart."""
-    deaths = ucdp.fetch_deaths()
+    its real figure, and it still belongs on the chart.
+
+    Also caches which months those are, as "Sep 2025–Aug 2026", for the page."""
+    months, deaths = ucdp.fetch_deaths()
+    first, last = (
+        datetime.strptime(month, "%Y-%m").strftime("%b %Y") for month in (months[0], months[-1])
+    )
+    conflict_deaths_months_path().write_text(f"{first}–{last}")
     return {code: deaths.get(code, 0) for code in country_codes}
 
 
 def cache_path(benchmark):
     return settings.BENCHMARK_CACHE_DIR / f"{benchmark}.json"
+
+
+def conflict_deaths_months_path():
+    return settings.BENCHMARK_CACHE_DIR / "conflict_deaths_months.txt"
 
 
 def refresh():
@@ -107,3 +118,10 @@ def load_figures(benchmark):
     if not path.exists():
         return {}
     return json.loads(path.read_text())
+
+
+def load_conflict_deaths_months():
+    """Which months the cached conflict deaths cover, or None if they have not
+    been fetched."""
+    path = conflict_deaths_months_path()
+    return path.read_text() if path.exists() else None
