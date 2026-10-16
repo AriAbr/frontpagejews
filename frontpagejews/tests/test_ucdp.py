@@ -99,7 +99,7 @@ def describe_fetch_deaths():
             ]
         )
 
-        deaths = ucdp.fetch_deaths(today=TODAY)
+        _, deaths = ucdp.fetch_deaths(today=TODAY)
 
         assert deaths["ISR"] == 5
         assert deaths["UKR"] == 9
@@ -111,7 +111,9 @@ def describe_fetch_deaths():
             older=[("ID-3", "2026-03-01", ISRAEL, 100)],
         )
 
-        assert ucdp.fetch_deaths(today=TODAY)["ISR"] == 111
+        _, deaths = ucdp.fetch_deaths(today=TODAY)
+
+        assert deaths["ISR"] == 111
 
     def test_sums_only_the_12_months_up_to_the_newest_one(mock_ucdp_files):
         """The newest is August 2026, so August 2025 is left out"""
@@ -124,7 +126,18 @@ def describe_fetch_deaths():
             ]
         )
 
-        assert ucdp.fetch_deaths(today=TODAY)["ISR"] == 5
+        _, deaths = ucdp.fetch_deaths(today=TODAY)
+
+        assert deaths["ISR"] == 5
+
+    def test_gives_the_months_it_summed(mock_ucdp_files):
+        mock_ucdp_files(newest=filler_events())
+
+        months, _ = ucdp.fetch_deaths(today=TODAY)
+
+        assert months[0] == "2025-09"
+        assert months[-1] == "2026-08"
+        assert len(months) == 12
 
     def test_counts_a_revised_event_once_from_the_newest_file(mock_ucdp_files):
         mock_ucdp_files(
@@ -132,7 +145,9 @@ def describe_fetch_deaths():
             older=[("ID-1", "2026-03-02", ISRAEL, 2283)],
         )
 
-        assert ucdp.fetch_deaths(today=TODAY)["ISR"] == 2236
+        _, deaths = ucdp.fetch_deaths(today=TODAY)
+
+        assert deaths["ISR"] == 2236
 
     def test_refuses_a_window_with_a_month_missing(mock_ucdp_files):
         """Without this, a missing file would quietly shrink everyone's deaths"""

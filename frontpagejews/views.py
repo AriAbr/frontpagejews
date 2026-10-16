@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 from django.views.generic import TemplateView
 
+from frontpagejews import benchmarks
 from frontpagejews.countries import country_name
 from frontpagejews.news_coverage import DAYS_SHOWN, OUTLETS
 from frontpagejews.site_data import FOCUS, site_data
@@ -30,6 +31,7 @@ def page_context():
         "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
+        "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
     }
 

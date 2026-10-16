@@ -115,6 +115,11 @@ def describe_dashboard():
 
         assert b"googletagmanager" not in client.get("/").content
 
+    def test_names_the_months_the_conflict_deaths_cover(client):
+        benchmarks.conflict_deaths_months_path().write_text("Aug 2025–Jul 2026")
+
+        assert "12 months it has data for (Aug 2025–Jul 2026)." in client.get("/").content.decode()
+
     def test_serves_the_data(client):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
 

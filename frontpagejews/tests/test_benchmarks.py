@@ -5,6 +5,8 @@ from django.core.management import call_command
 
 from frontpagejews import benchmarks
 
+MONTHS = [f"2025-{m:02}" for m in range(8, 13)] + [f"2026-{m:02}" for m in range(1, 8)]
+
 
 @pytest.fixture(autouse=True)
 def cache_dir(settings, tmp_path):
@@ -36,7 +38,7 @@ def world_bank(mocker):
     response = mocker.Mock()
     response.json.side_effect = [[{}, countries], [{}, population], [{}, gdp]]
     # UCDP's files have tests of their own, in test_ucdp.py.
-    mocker.patch.object(benchmarks.ucdp, "fetch_deaths", return_value={"ISR": 7, "PSE": 2})
+    mocker.patch.object(benchmarks.ucdp, "fetch_deaths", return_value=(MONTHS, {"ISR": 7, "PSE": 2}))
     return mocker.patch.object(benchmarks.requests, "get", return_value=response)
 
 
@@ -63,6 +65,12 @@ def describe_benchmarks():
         assert benchmarks.load_figures("population")["ISR"] == 15
         assert benchmarks.load_figures("gdp")["ISR"] == 520
         assert benchmarks.load_figures("conflict_deaths") == {"ISR": 9, "UKR": 0}
+
+    def test_cache_the_first_and_last_month_of_the_conflict_deaths(world_bank):
+        """For the page to say which 12 months they cover"""
+        benchmarks.refresh()
+
+        assert benchmarks.load_conflict_deaths_months() == "Aug 2025–Jul 2026"
 
     def test_are_empty_and_do_not_fetch_before_the_first_refresh(mocker):
         get = mocker.patch.object(benchmarks.requests, "get")

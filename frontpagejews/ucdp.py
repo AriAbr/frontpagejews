@@ -212,7 +212,8 @@ def months_back(month, count):
 
 
 def fetch_deaths(today=None):
-    """Map ISO3 -> deaths over the last `MONTHS_SUMMED` months UCDP has data for.
+    """The last `MONTHS_SUMMED` months UCDP has data for, oldest first, and a map
+    of ISO3 -> deaths over them.
 
     An event revised in a later release appears in more than one file; the
     first file listed (the checked GED, else the newest candidate file) wins.
@@ -244,4 +245,4 @@ def fetch_deaths(today=None):
             raise ValueError(f"No ISO code for UCDP country {country_id}; add it to GW_TO_ISO3")
         code = GW_TO_ISO3[country_id]
         deaths[code] = deaths.get(code, 0) + best
-    return deaths
+    return months_summed, deaths
