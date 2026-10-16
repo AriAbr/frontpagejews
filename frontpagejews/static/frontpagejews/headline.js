@@ -32,7 +32,7 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
   const shares = `${percent(point.mentionsPercentage)} of mentions, ${benchmarkDisplaySettings.describeShare(point.benchmarkPercentage)}`;
   const detail = element("span", `(${shares})`);
   detail.className = "detail";
-  line.append(name, " gets ", times, " its share of coverage ", detail);
+  line.append(name, " gets ", times, " expected coverage ", detail);
   return [line];
 }
 
