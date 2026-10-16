@@ -8,9 +8,11 @@
 import { ANIMATION, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
 import { percent } from "./formats.js";
 
-// Just past the highest daily coverage share in the 30 days to October 12,
-// 2026 (Iran, 10.7%). Even, so the axis ends on one of its 2% ticks.
-const AXIS_MAX = 0.14;
+// Just past the highest daily coverage share at any one outlet in the 30 days
+// to October 11, 2026 (Israel at the New York Post, 14.1%), so a visitor who
+// ticks a single outlet still sees its whole line. Even, so the axis ends on
+// one of its 2% ticks.
+const AXIS_MAX = 0.16;
 
 // Two significant figures, written out: 150 rather than toPrecision's "1.5e+2".
 const twoFigures = n => (+n.toPrecision(2)).toLocaleString();
