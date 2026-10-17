@@ -226,14 +226,32 @@
           Conflict deaths: <a href="https://ucdp.uu.se/" target="_blank" rel="noopener">UCDP</a>
         </p>
       </section>
+      <section class="signup" id="signup">
+        {% include "frontpagejews/signup_form.html" %}
+      </section>
       <footer>
         <a href="mailto:ari.abramowitz1@gmail.com">ari.abramowitz1@gmail.com</a>
         · <a href="https://github.com/AriAbr/frontpagejews"
     target="_blank"
     rel="noopener">Source on GitHub</a>
       </footer>
+      {# Slides up once, after the visitor scrolls half a screen (see signup.js). #}
+      <aside class="floating-card signup signup-card" id="signup-card" hidden>
+        <button type="button" class="close" aria-label="Close">×</button>
+        {% include "frontpagejews/signup_form.html" %}
+      </aside>
+      {# Shown when Brevo sends someone back here after they confirm by email (see signup.js). #}
+      <aside class="floating-card subscribed-notice"
+             id="subscribed-notice"
+             role="status"
+             hidden>
+        <button type="button" class="close" aria-label="Close">×</button>
+        <h2>You're on the list</h2>
+        <p>Thanks for signing up.</p>
+      </aside>
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script type="module" src="{% static 'frontpagejews/page.js' %}"></script>
+    <script type="module" src="{% static 'frontpagejews/signup.js' %}"></script>
   </body>
 </html>
