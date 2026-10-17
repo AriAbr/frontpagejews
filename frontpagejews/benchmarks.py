@@ -27,6 +27,10 @@ BENCHMARKS = [*WORLD_BANK_INDICATORS, "conflict_deaths"]
 COMBINED_INTO = {"PSE": "ISR"}
 
 
+class IncompleteFetch(Exception):
+    """A fetch came back with too few countries to replace the cache with."""
+
+
 def fetch_country_codes():
     """The ISO3 codes of real countries.
 
@@ -58,16 +62,23 @@ def fetch_world_bank_figures(benchmark, country_codes):
     `mrnev=1` gives each country its latest non-empty year, so a few countries'
     figures are years older than the rest (Yemen's GDP is from 2018).
     """
-    rows = requests.get(
+    page_info, rows = requests.get(
         f"https://api.worldbank.org/v2/country/all/indicator/{WORLD_BANK_INDICATORS[benchmark]}",
         params={"format": "json", "per_page": 400, "mrnev": 1},
         timeout=60,
-    ).json()[1]
-    return {
+    ).json()
+    figures = {
         row["countryiso3code"]: row["value"]
-        for row in rows
+        for row in rows or []
         if row["countryiso3code"] in country_codes and row["value"]
     }
+    if not figures:
+        # What the World Bank sent, for the log: it has answered GitHub's
+        # runners with no figures while answering elsewhere as normal.
+        raise IncompleteFetch(
+            f"No {benchmark} figures from the World Bank: {page_info}, first rows {(rows or [])[:3]}"
+        )
+    return figures
 
 
 def fetch_conflict_deaths(country_codes):
@@ -96,12 +107,19 @@ def refresh():
     """Refetch every benchmark's figures and replace its cache.
 
     Each new file is written beside the old one and renamed over it, so a failed
-    fetch or write leaves the last good copy in place.
+    fetch or write leaves the last good copy in place. So does a fetch with
+    under half the countries the cache has: a source answering with less than
+    it should, not countries vanishing.
     """
     country_codes = fetch_country_codes()
     figures_by_benchmark = {}
     for benchmark in BENCHMARKS:
         figures = fetch_figures(benchmark, country_codes)
+        cached = load_figures(benchmark)
+        if len(figures) < len(cached) / 2:
+            raise IncompleteFetch(
+                f"{benchmark}: {len(figures)} countries, against {len(cached)} in the cache"
+            )
         path = cache_path(benchmark)
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
