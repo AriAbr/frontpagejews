@@ -14,29 +14,35 @@ def cache_dir(settings, tmp_path):
     return tmp_path
 
 
+WORLD_BANK_COUNTRIES = [
+    {"id": "ISR", "region": {"value": "Middle East & North Africa"}},
+    {"id": "PSE", "region": {"value": "Middle East & North Africa"}},
+    {"id": "UKR", "region": {"value": "Europe & Central Asia"}},
+    {"id": "WLD", "region": {"value": "Aggregates"}},
+]
+WORLD_BANK_POPULATION = [
+    {"countryiso3code": "ISR", "value": 10},
+    {"countryiso3code": "PSE", "value": 5},
+    {"countryiso3code": "UKR", "value": 30},
+    {"countryiso3code": "WLD", "value": 40},
+]
+# Some countries have no figure at all.
+WORLD_BANK_GDP = [
+    {"countryiso3code": "ISR", "value": 500},
+    {"countryiso3code": "PSE", "value": 20},
+    {"countryiso3code": "UKR", "value": None},
+    {"countryiso3code": "WLD", "value": 500},
+]
+
+
 @pytest.fixture
 def world_bank(mocker):
-    countries = [
-        {"id": "ISR", "region": {"value": "Middle East & North Africa"}},
-        {"id": "PSE", "region": {"value": "Middle East & North Africa"}},
-        {"id": "UKR", "region": {"value": "Europe & Central Asia"}},
-        {"id": "WLD", "region": {"value": "Aggregates"}},
-    ]
-    population = [
-        {"countryiso3code": "ISR", "value": 10},
-        {"countryiso3code": "PSE", "value": 5},
-        {"countryiso3code": "UKR", "value": 30},
-        {"countryiso3code": "WLD", "value": 40},
-    ]
-    # Some countries have no figure at all.
-    gdp = [
-        {"countryiso3code": "ISR", "value": 500},
-        {"countryiso3code": "PSE", "value": 20},
-        {"countryiso3code": "UKR", "value": None},
-        {"countryiso3code": "WLD", "value": 500},
-    ]
     response = mocker.Mock()
-    response.json.side_effect = [[{}, countries], [{}, population], [{}, gdp]]
+    response.json.side_effect = [
+        [{}, WORLD_BANK_COUNTRIES],
+        [{}, WORLD_BANK_POPULATION],
+        [{}, WORLD_BANK_GDP],
+    ]
     # UCDP's files have tests of their own, in test_ucdp.py.
     mocker.patch.object(benchmarks.ucdp, "fetch_deaths", return_value=(MONTHS, {"ISR": 7, "PSE": 2}))
     return mocker.patch.object(benchmarks.requests, "get", return_value=response)
@@ -95,6 +101,30 @@ def describe_fetch_benchmarks():
         mocker.patch.object(benchmarks.requests, "get", side_effect=benchmarks.requests.ConnectionError)
 
         with pytest.raises(benchmarks.requests.ConnectionError):
+            call_command("fetch_benchmarks")
+
+        assert benchmarks.load_figures("population") == old
+
+    def test_keeps_the_old_cache_when_the_world_bank_sends_no_figures(world_bank, cache_dir):
+        """As it did to GitHub's runners on 2026-10-17, while answering elsewhere"""
+        old = {"ISR": 500}
+        (cache_dir / "gdp.json").write_text(json.dumps(old))
+        world_bank.return_value.json.side_effect = [
+            [{}, WORLD_BANK_COUNTRIES],
+            [{}, WORLD_BANK_POPULATION],
+            [{"page": 0, "pages": 0, "total": 0}, None],
+        ]
+
+        with pytest.raises(benchmarks.IncompleteFetch):
+            call_command("fetch_benchmarks")
+
+        assert benchmarks.load_figures("gdp") == old
+
+    def test_keeps_the_old_cache_when_the_fetch_has_under_half_its_countries(world_bank, cache_dir):
+        old = {"ISR": 1, "UKR": 2, "FRA": 3, "DEU": 4, "ITA": 5}
+        (cache_dir / "population.json").write_text(json.dumps(old))
+
+        with pytest.raises(benchmarks.IncompleteFetch):
             call_command("fetch_benchmarks")
 
         assert benchmarks.load_figures("population") == old
