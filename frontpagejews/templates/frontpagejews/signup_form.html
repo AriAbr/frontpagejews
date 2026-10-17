@@ -1,0 +1,23 @@
+{# The signup, in the card that slides up and at the bottom of the page. Sent in the background by signup.js, so the visitor stays on the page. Without the script it still posts, and Brevo shows its own page. #}
+<h2>Join the mailing list</h2>
+<p>Occasional emails from Ari, who built this.</p>
+<form method="post" action="{{ signup_form_url }}" class="signup-form">
+  <input type="email"
+         name="EMAIL"
+         required
+         placeholder="Your email address"
+         aria-label="Email address"
+         autocomplete="email" />
+  <button type="submit">Sign up</button>
+  {# Brevo's trap for bots, which fill in every field: hidden from people, and a signup with it filled in is dropped. #}
+  <input type="text"
+         name="email_address_check"
+         value=""
+         class="trap"
+         tabindex="-1"
+         autocomplete="off"
+         aria-hidden="true" />
+  <input type="hidden" name="locale" value="en" />
+  <input type="hidden" name="html_type" value="simple" />
+</form>
+<p class="signup-status" role="status"></p>

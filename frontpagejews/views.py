@@ -33,6 +33,11 @@ def page_context():
         "days_shown": DAYS_SHOWN,
         "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
+        # Brevo's "frontpagejews signup" form. Brevo emails each address a
+        # link, and adds it to the frontpagejews list once that's clicked. The
+        # page posts to it rather than embedding Brevo's own form, whose
+        # styles are light-only.
+        "signup_form_url": "https://3ead2a26.sibforms.com/serve/MUIFADPICovsgy7uhFfh8e7bqGT5itGQLqeMjFYPYhC7kjVgsTz2dwvO9YBSIxXIMLkSjM-SBft9bOTgIl2WlebpbdFzMtSw4fcJnjYxQ2CVLVxXmOan-wcFRq15cBzEE2pawXBZf0xSrux7pgJOkbDNUC21x00P4l88e7QzyIYc21LySGD_qtXFuls7l0x89zMnIIPq0TQPvYfdzg==",
     }
 
 
