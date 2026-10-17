@@ -8,7 +8,7 @@ else, so a page request never waits on either.
 """
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 
 import requests
 from django.conf import settings
@@ -59,22 +59,27 @@ def fetch_figures(benchmark, country_codes):
 def fetch_world_bank_figures(benchmark, country_codes):
     """Map ISO3 -> the country's latest figure for a World Bank benchmark.
 
-    `mrnev=1` gives each country its latest non-empty year, so a few countries'
-    figures are years older than the rest (Yemen's GDP is from 2018).
+    Each country's latest non-empty year since 2000, so a few countries'
+    figures are years older than the rest (Yemen's GDP is from 2018). Worked out
+    here from every year's figures rather than with the World Bank's own option
+    for it, `mrnev=1`, which it ignored for GitHub's runners on 2026-10-17 and
+    sent every year instead.
     """
     page_info, rows = requests.get(
         f"https://api.worldbank.org/v2/country/all/indicator/{WORLD_BANK_INDICATORS[benchmark]}",
-        params={"format": "json", "per_page": 400, "mrnev": 1},
+        params={"format": "json", "per_page": 20000, "date": f"2000:{date.today().year}"},
         timeout=60,
     ).json()
-    figures = {
-        row["countryiso3code"]: row["value"]
-        for row in rows or []
-        if row["countryiso3code"] in country_codes and row["value"]
-    }
+    if page_info.get("pages", 1) > 1:
+        raise IncompleteFetch(f"The World Bank split {benchmark} into pages: {page_info}")
+    figures = {}
+    # Newest year first, so each country keeps the first figure it has.
+    for row in sorted(rows or [], key=lambda row: row["date"], reverse=True):
+        country = row["countryiso3code"]
+        if country in country_codes and row["value"] and country not in figures:
+            figures[country] = row["value"]
     if not figures:
-        # What the World Bank sent, for the log: it has answered GitHub's
-        # runners with no figures while answering elsewhere as normal.
+        # What the World Bank sent, for the log.
         raise IncompleteFetch(
             f"No {benchmark} figures from the World Bank: {page_info}, first rows {(rows or [])[:3]}"
         )

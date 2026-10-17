@@ -21,17 +21,20 @@ WORLD_BANK_COUNTRIES = [
     {"id": "WLD", "region": {"value": "Aggregates"}},
 ]
 WORLD_BANK_POPULATION = [
-    {"countryiso3code": "ISR", "value": 10},
-    {"countryiso3code": "PSE", "value": 5},
-    {"countryiso3code": "UKR", "value": 30},
-    {"countryiso3code": "WLD", "value": 40},
+    {"countryiso3code": "ISR", "date": "2025", "value": 10},
+    {"countryiso3code": "PSE", "date": "2025", "value": 5},
+    {"countryiso3code": "UKR", "date": "2025", "value": 30},
+    {"countryiso3code": "WLD", "date": "2025", "value": 40},
 ]
-# Some countries have no figure at all.
 WORLD_BANK_GDP = [
-    {"countryiso3code": "ISR", "value": 500},
-    {"countryiso3code": "PSE", "value": 20},
-    {"countryiso3code": "UKR", "value": None},
-    {"countryiso3code": "WLD", "value": 500},
+    # Israel's newest year has no figure yet, so the one before it counts.
+    {"countryiso3code": "ISR", "date": "2023", "value": 450},
+    {"countryiso3code": "ISR", "date": "2024", "value": 500},
+    {"countryiso3code": "ISR", "date": "2025", "value": None},
+    {"countryiso3code": "PSE", "date": "2025", "value": 20},
+    # Some countries have no figure at all.
+    {"countryiso3code": "UKR", "date": "2025", "value": None},
+    {"countryiso3code": "WLD", "date": "2025", "value": 500},
 ]
 
 
@@ -57,6 +60,12 @@ def describe_benchmarks():
 
         assert benchmarks.load_figures("population").keys() == {"ISR", "UKR"}
         assert benchmarks.load_figures("gdp").keys() == {"ISR"}
+
+    def test_take_each_countrys_latest_year_with_a_figure(world_bank):
+        """Israel's 2024 GDP, its 2025 one not being in yet (plus the West Bank and Gaza's 20)"""
+        benchmarks.refresh()
+
+        assert benchmarks.load_figures("gdp")["ISR"] == 520
 
     def test_give_countries_without_conflict_deaths_zero(world_bank):
         """Zero is a real figure, unlike a missing GDP"""
@@ -128,3 +137,20 @@ def describe_fetch_benchmarks():
             call_command("fetch_benchmarks")
 
         assert benchmarks.load_figures("population") == old
+
+    def test_keeps_the_old_cache_when_the_world_bank_splits_the_figures_into_pages(
+        world_bank, cache_dir
+    ):
+        """Only the first page would be read, so most countries would be missing"""
+        old = {"ISR": 500}
+        (cache_dir / "gdp.json").write_text(json.dumps(old))
+        world_bank.return_value.json.side_effect = [
+            [{}, WORLD_BANK_COUNTRIES],
+            [{}, WORLD_BANK_POPULATION],
+            [{"page": 1, "pages": 2}, WORLD_BANK_GDP],
+        ]
+
+        with pytest.raises(benchmarks.IncompleteFetch):
+            call_command("fetch_benchmarks")
+
+        assert benchmarks.load_figures("gdp") == old
