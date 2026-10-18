@@ -106,7 +106,9 @@ async function submitSignup(form) {
     rememberSignupCardDismissed();
     // The signup card stays long enough to read that before it goes.
     fadeOut(signupCard, signupCard.contains(form) ? 5000 : 0);
-  } catch {
+  } catch (error) {
+    // Sentry, where the page has it, so a broken signup doesn't go unnoticed.
+    window.Sentry?.captureException(error);
     signupStatus.textContent = "That didn't go through. Please try again.";
   } finally {
     button.disabled = false;

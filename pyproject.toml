@@ -79,6 +79,7 @@ python = "^3.12"
 Django = "^5.0"
 python-dotenv = "^1.0"
 requests = "^2.34.2"
+sentry-sdk = "^2.70"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

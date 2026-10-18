@@ -33,6 +33,7 @@ def page_context():
         "days_shown": DAYS_SHOWN,
         "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
+        "sentry_dsn": settings.SENTRY_DSN,
         # Brevo's "frontpagejews signup" form. Brevo emails each address a
         # link, and adds it to the frontpagejews list once that's clicked. The
         # page posts to it rather than embedding Brevo's own form, whose

@@ -9,6 +9,7 @@ import os
 from os.path import dirname, join
 from pathlib import Path
 
+import sentry_sdk
 from dotenv import load_dotenv
 
 dotenv_path = join(dirname(__file__), "../.env")
@@ -29,6 +30,13 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", False) == "True"
 DJANGO_ENV = os.environ.get("DJANGO_ENV", "prod")
+
+# Sentry, for errors on the live page and in the deploy's fetches. Set only by
+# the deploy workflow, so local runs and tests report nothing. The page gets
+# the same DSN for the browser's errors; it isn't secret.
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN and not DEBUG:
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=0)
 
 ALLOWED_HOSTS = []
 
