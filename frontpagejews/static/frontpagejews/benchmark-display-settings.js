@@ -1,5 +1,7 @@
-// How each benchmark is labelled and drawn. The keys match
-// BENCHMARKS in benchmarks.py, and data.json's benchmark_figures, plus
+// How each benchmark is labelled and drawn. Its description says in a few
+// words what it is, under its label in the benchmark choice. It has to fit on
+// one line of the button, which has 192px for it (see dashboard.css). The keys
+// match BENCHMARKS in benchmarks.py, and data.json's benchmark_figures, plus
 // "composite", which withComposite (chart-data.js) works out in the browser.
 //
 // The scatter's benchmark axis shows the benchmark's own figures (people,
@@ -14,6 +16,7 @@ import { compact, percent } from "./formats.js";
 export const BENCHMARK_DISPLAY_SETTINGS = {
   composite: {
     label: "Composite score",
+    description: "Population + GDP + deaths",
     // Fills in the page's descriptions: "against its composite score".
     noun: "composite score",
     share: "composite score: the average of its shares of population, GDP and conflict deaths",
@@ -28,6 +31,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
   },
   population: {
     label: "Population",
+    description: "Share of world's people",
     noun: "population",
     share: "share of the world's population",
     describeShare: share => `${percent(share)} of the world's population`,
@@ -38,6 +42,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
   },
   gdp: {
     label: "GDP",
+    description: "Share of world economy",
     noun: "GDP",
     share: "share of world GDP",
     describeShare: share => `${percent(share)} of world GDP`,
@@ -48,6 +53,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
   },
   conflict_deaths: {
     label: "Conflict deaths",
+    description: "Share of armed conflict deaths",
     noun: "conflict deaths",
     share: "share of the world's conflict deaths",
     describeShare: share => `${percent(share)} of the world's conflict deaths`,

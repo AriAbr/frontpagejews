@@ -73,9 +73,17 @@
             </div>
           </div>
           <div>
-            <label class="heading" for="benchmark-choice">Coverage vs</label>
-            {# The script fills this with an option per benchmark. #}
-            <select id="benchmark-choice"></select>
+            <span class="heading" id="benchmark-heading">Coverage vs</span>
+            {# A button that opens a link per benchmark, each with a line on what it is. The script fills both in. #}
+            <div class="benchmark-dropdown">
+              <button type="button"
+                      id="benchmark-toggle"
+                      aria-expanded="false"
+                      aria-controls="benchmark-list"
+                      aria-describedby="benchmark-heading"></button>
+              <ul id="benchmark-list" hidden>
+              </ul>
+            </div>
           </div>
           <form method="get" id="outlet-form">
             <span class="heading" id="outlets-heading">News outlets</span>
@@ -201,7 +209,7 @@
           </dd>
           <dt>Conflict deaths</dt>
           <dd>
-            UCDP's count for the most recent 12 months it has data for ({{ conflict_deaths_months }}).
+            Deaths in wars and armed conflicts involving a government, in fighting between armed groups, and in deliberate killings of civilians by either. UCDP's count for the most recent 12 months it has data for ({{ conflict_deaths_months }}).
           </dd>
           <dt>Israel</dt>
           <dd>

@@ -64,28 +64,69 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   list.addEventListener("mousedown", event => event.preventDefault());
   search.addEventListener("blur", close);
 
-  // Benchmark choice: an option per benchmark, starting on the chosen one.
-  const benchmarkChoice = document.getElementById("benchmark-choice");
-  for (const [benchmarkOption, displaySettings] of Object.entries(BENCHMARK_DISPLAY_SETTINGS)) {
-    const option = new Option(displaySettings.label, benchmarkOption, false, benchmarkOption === benchmark);
-    benchmarkChoice.append(option);
-  }
-  // Picked from the open list, a choice applies at once. With the list closed,
-  // arrow keys change the choice too, and applying each would reload the page
-  // before the visitor reaches the one they want, so a choice made from the
-  // keyboard waits for Enter or for focus to leave.
-  const applyBenchmark = () => {
-    if (benchmarkChoice.value === benchmark) return;
-    location.search = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkChoice.value });
+  // Benchmark choice: a button that opens a link per benchmark, each with its
+  // label and, under it, what it is. The button shows the chosen one the same
+  // way. Arrow keys move between the links, Escape closes the list.
+  const benchmarkToggle = document.getElementById("benchmark-toggle");
+  const benchmarkList = document.getElementById("benchmark-list");
+  const benchmarkDropdown = benchmarkList.parentElement;
+  const describeBenchmark = (element, displaySettings) => {
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = displaySettings.label;
+    const description = document.createElement("span");
+    description.className = "description";
+    description.textContent = displaySettings.description;
+    element.append(label, description);
   };
-  let choosingByKeyboard = false;
-  benchmarkChoice.addEventListener("pointerdown", () => { choosingByKeyboard = false; });
-  benchmarkChoice.addEventListener("keydown", event => {
-    if (event.key === "Enter") applyBenchmark();
-    else choosingByKeyboard = true;
+  for (const [benchmarkOption, displaySettings] of Object.entries(BENCHMARK_DISPLAY_SETTINGS)) {
+    const link = document.createElement("a");
+    link.href = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkOption });
+    describeBenchmark(link, displaySettings);
+    const item = document.createElement("li");
+    if (benchmarkOption === benchmark) {
+      item.className = "current";
+      link.setAttribute("aria-current", "true");
+    }
+    item.append(link);
+    benchmarkList.append(item);
+  }
+  describeBenchmark(benchmarkToggle, BENCHMARK_DISPLAY_SETTINGS[benchmark]);
+  const benchmarkLinks = [...benchmarkList.querySelectorAll("a")];
+
+  const openBenchmarks = () => {
+    benchmarkList.hidden = false;
+    benchmarkToggle.setAttribute("aria-expanded", "true");
+  };
+  const closeBenchmarks = () => {
+    benchmarkList.hidden = true;
+    benchmarkToggle.setAttribute("aria-expanded", "false");
+  };
+  benchmarkToggle.addEventListener("click", () => {
+    if (benchmarkList.hidden) openBenchmarks();
+    else closeBenchmarks();
   });
-  benchmarkChoice.addEventListener("change", () => { if (!choosingByKeyboard) applyBenchmark(); });
-  benchmarkChoice.addEventListener("blur", applyBenchmark);
+  benchmarkDropdown.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeBenchmarks();
+      benchmarkToggle.focus();
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      openBenchmarks();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      const current = benchmarkLinks.indexOf(document.activeElement);
+      // From the button, down goes to the first link and up to the last.
+      const next = current === -1 ? (step === 1 ? 0 : benchmarkLinks.length - 1) : current + step;
+      benchmarkLinks[(next + benchmarkLinks.length) % benchmarkLinks.length].focus();
+    }
+  });
+  // Closes when a click or focus lands anywhere else.
+  document.addEventListener("click", event => {
+    if (!benchmarkDropdown.contains(event.target)) closeBenchmarks();
+  });
+  benchmarkDropdown.addEventListener("focusout", event => {
+    if (!benchmarkDropdown.contains(event.relatedTarget)) closeBenchmarks();
+  });
 
   // Outlets: a button that opens the checkboxes. Ticking doesn't reload the
   // page, which would close the list after every click; closing it does, if
