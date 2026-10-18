@@ -21,18 +21,18 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
 
   const part = document.createElement("div");
   const line = document.createElement("p");
-  const name = element("strong", country.name);
+  const name = element("strong", `${country.name}:`);
   name.style.color = color;
   part.append(line);
 
   // A multiple of nothing means nothing.
   if (!point.benchmarkPercentage) {
-    line.append(name, ` gets ${percent(point.mentionsPercentage)} of country mentions, with no ${benchmarkDisplaySettings.noun} recorded`);
+    line.append(name, ` ${percent(point.mentionsPercentage)} of country mentions, no ${benchmarkDisplaySettings.noun} recorded`);
     return [part];
   }
 
   const times = element("strong", multiple(point.mentionsPercentage, point.benchmarkPercentage));
-  line.append(name, " gets ", times, " expected coverage");
+  line.append(name, " ", times, " expected coverage");
 
   // Each share is kept in one piece, with a dot between them, so where the two
   // don't fit on one line they break between them, and the dot goes:
