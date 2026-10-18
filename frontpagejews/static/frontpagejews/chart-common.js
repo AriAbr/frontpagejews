@@ -1,5 +1,5 @@
 // What both charts need to agree on. Importing this also sets Chart.js's
-// default font and text and grid colors, at the bottom.
+// default font, text and grid colors, and tooltip, at the bottom.
 
 const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name);
 export const BACKGROUND = cssVar("--bg");
@@ -22,6 +22,84 @@ Chart.defaults.color = cssVar("--muted");
 // 80): seen but not noticed. Chart.js's default is a faint black, which all but
 // disappears in dark mode.
 Chart.defaults.borderColor = `${cssVar("--border").trim()}80`;
+
+// Both charts' tooltips, as an element in the page rather than drawn on the
+// canvas: canvas text is drawn at the dot's fractional position, without the
+// browser's subpixel smoothing, and looks soft beside the page's own text. It
+// goes in the body, not by the chart, so the scatter's scrolling box neither
+// clips it nor fades it at its edges.
+Chart.defaults.plugins.tooltip.enabled = false;
+Chart.defaults.plugins.tooltip.external = drawTooltip;
+
+// Room between the tooltip and the window's edge.
+const TOOLTIP_GAP = 12;
+// From the point to the tooltip's edge: room for its caret (6px) and for the
+// tip to clear the scatter's biggest dot, hovered (11px across the middle).
+const POINT_GAP = 18;
+// The caret stays this far inside the tooltip's top and bottom, clear of the
+// rounded corners.
+const CARET_INSET = 10;
+
+let tooltipElement;
+
+function drawTooltip({ chart, tooltip }) {
+  if (!tooltipElement) {
+    tooltipElement = document.createElement("div");
+    tooltipElement.className = "chart-tooltip";
+    document.body.append(tooltipElement);
+  }
+  if (tooltip.opacity === 0) {
+    tooltipElement.hidden = true;
+    return;
+  }
+
+  const title = document.createElement("div");
+  title.className = "title";
+  title.textContent = tooltip.title.join(" ");
+  const rows = [title];
+  tooltip.body.forEach((bodyItem, i) => {
+    bodyItem.lines.forEach((text, lineIndex) => {
+      const row = document.createElement("div");
+      // A short line in the series' color and dash, as in the legend, on the
+      // first line of each item only.
+      if (tooltip.options.displayColors && lineIndex === 0) {
+        // The dash from the dataset: labelColors takes its styles from the
+        // hovered point, which has none.
+        const { borderColor, borderDash } = tooltip.dataPoints[i].dataset;
+        const swatch = document.createElement("span");
+        swatch.className = "swatch";
+        swatch.style.borderTopColor = borderColor;
+        if (borderDash?.length) swatch.style.borderTopStyle = "dashed";
+        row.append(swatch);
+      }
+      row.append(text);
+      rows.push(row);
+    });
+  });
+  tooltipElement.replaceChildren(...rows);
+  tooltipElement.hidden = false;
+
+  // To the right of the point, or to its left where it would run off the
+  // window; centered on it vertically, but kept inside the window. The caret
+  // is on the side facing the point, level with it.
+  const canvas = chart.canvas.getBoundingClientRect();
+  const pointX = canvas.left + tooltip.caretX;
+  const pointY = canvas.top + tooltip.caretY;
+  const { width, height } = tooltipElement.getBoundingClientRect();
+  // The window less any scrollbar, which innerWidth and innerHeight include.
+  const { clientWidth: windowWidth, clientHeight: windowHeight } = document.documentElement;
+  let left = pointX + POINT_GAP;
+  const flipped = left + width > windowWidth - TOOLTIP_GAP;
+  if (flipped) left = pointX - POINT_GAP - width;
+  left = Math.max(TOOLTIP_GAP, left);
+  const top = Math.min(Math.max(TOOLTIP_GAP, pointY - height / 2), windowHeight - TOOLTIP_GAP - height);
+  const caretY = Math.min(Math.max(CARET_INSET, pointY - top), height - CARET_INSET);
+  tooltipElement.classList.toggle("caret-right", flipped);
+  // Whole pixels, so the text stays sharp.
+  tooltipElement.style.left = `${Math.round(left + window.scrollX)}px`;
+  tooltipElement.style.top = `${Math.round(top + window.scrollY)}px`;
+  tooltipElement.style.setProperty("--caret-y", `${Math.round(caretY)}px`);
+}
 
 // Hide the chart's tooltip when a press lands anywhere else on the page.
 // Chart.js only hears events on its canvas, and hides the tooltip on the

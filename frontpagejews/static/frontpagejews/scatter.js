@@ -121,6 +121,8 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         tooltip: {
           // Only dots get a tooltip; the line's points have no name.
           filter: item => item.raw.name,
+          // One country, whose dot is right there: a color swatch adds nothing.
+          displayColors: false,
           callbacks: {
             title: items => items[0].raw.name,
             label: ({ raw: { mentions, mentionsPercentage, benchmarkFigure, benchmarkPercentage } }) => {
