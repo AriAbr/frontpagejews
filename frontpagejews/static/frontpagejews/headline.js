@@ -32,7 +32,7 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
   }
 
   const times = element("strong", multiple(point.mentionsPercentage, point.benchmarkPercentage));
-  line.append(name, " ", times, " expected coverage");
+  line.append(name, " ", times, " predicted coverage");
 
   // Each share is kept in one piece, with a dot between them, so where the two
   // don't fit on one line they break between them, and the dot goes:
