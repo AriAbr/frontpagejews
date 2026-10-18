@@ -1,5 +1,5 @@
 // What both charts need to agree on. Importing this also sets Chart.js's
-// default text and grid colors, at the bottom.
+// default font and text and grid colors, at the bottom.
 
 const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name);
 export const BACKGROUND = cssVar("--bg");
@@ -14,6 +14,9 @@ export const COLORS = { focus: cssVar("--focus").trim(), comparison: "#d97706" }
 // second of the default.
 export const ANIMATION = { duration: 500, easing: "easeOutCubic" };
 
+// The page's font rather than Chart.js's Helvetica, so the ticks, tooltips and
+// notes on the canvas match the HTML legend and captions around them.
+Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 Chart.defaults.color = cssVar("--muted");
 // Grid lines and axes in the page's border color at half strength (hex alpha
 // 80): seen but not noticed. Chart.js's default is a faint black, which all but
