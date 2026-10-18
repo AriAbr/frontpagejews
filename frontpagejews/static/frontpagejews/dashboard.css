@@ -245,10 +245,16 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
    under the summary bar as the charts are. Its width is its content's, not
    the room left where it last was, so the script can measure it before
    moving it. */
-.chart-tooltip { position: absolute; z-index: 15; pointer-events: none; padding: 7px 10px;
+.chart-tooltip { position: absolute; z-index: 15; top: 0; left: 0; pointer-events: none; padding: 7px 10px;
                  width: max-content; max-width: min(280px, calc(100vw - 24px)); box-sizing: border-box;
                  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
                  box-shadow: 0 4px 12px rgb(0 0 0 / 0.4); font-size: 0.8rem; line-height: 1.45; }
+/* Moved by its transform, set by the script: it fades in and out, and glides
+   from one point to the next. */
+.chart-tooltip { opacity: 0; transition: opacity 0.15s; }
+.chart-tooltip.shown { opacity: 1; }
+.chart-tooltip.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .chart-tooltip, .chart-tooltip.gliding { transition: none; } }
 .chart-tooltip .title { font-weight: 600; margin-bottom: 2px; }
 /* The caret pointing at the point: a square with two of its borders, turned
    so their corner sticks out of the tooltip's left edge, or its right where

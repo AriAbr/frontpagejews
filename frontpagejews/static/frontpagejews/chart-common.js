@@ -46,10 +46,13 @@ function drawTooltip({ chart, tooltip }) {
   if (!tooltipElement) {
     tooltipElement = document.createElement("div");
     tooltipElement.className = "chart-tooltip";
+    tooltipElement.addEventListener("transitionend", parkTooltip);
     document.body.append(tooltipElement);
   }
   if (tooltip.opacity === 0) {
-    tooltipElement.hidden = true;
+    tooltipElement.classList.remove("shown");
+    // With no fade, there's no transitionend to wait for.
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) parkTooltip();
     return;
   }
 
@@ -77,7 +80,6 @@ function drawTooltip({ chart, tooltip }) {
     });
   });
   tooltipElement.replaceChildren(...rows);
-  tooltipElement.hidden = false;
 
   // To the right of the point, or to its left where it would run off the
   // window; centered on it vertically, but kept inside the window. The caret
@@ -95,10 +97,22 @@ function drawTooltip({ chart, tooltip }) {
   const top = Math.min(Math.max(TOOLTIP_GAP, pointY - height / 2), windowHeight - TOOLTIP_GAP - height);
   const caretY = Math.min(Math.max(CARET_INSET, pointY - top), height - CARET_INSET);
   tooltipElement.classList.toggle("caret-right", flipped);
-  // Whole pixels, so the text stays sharp.
-  tooltipElement.style.left = `${Math.round(left + window.scrollX)}px`;
-  tooltipElement.style.top = `${Math.round(top + window.scrollY)}px`;
+  // It glides from one point to the next, but where it was hidden, it fades
+  // in at the new point rather than gliding over from where it last was.
+  tooltipElement.classList.toggle("gliding", tooltipElement.classList.contains("shown"));
+  tooltipElement.classList.add("shown");
+  // Whole pixels, so the text is sharp once it stops.
+  const pageX = Math.round(left + window.scrollX);
+  const pageY = Math.round(top + window.scrollY);
+  tooltipElement.style.transform = `translate(${pageX}px, ${pageY}px)`;
   tooltipElement.style.setProperty("--caret-y", `${Math.round(caretY)}px`);
+}
+
+// Once faded out, back to the page's top left corner. Left where it was, near
+// the right edge, it would widen the page once the window narrowed, since it
+// is in the body but not clipped by it.
+function parkTooltip() {
+  if (!tooltipElement.classList.contains("shown")) tooltipElement.style.transform = "";
 }
 
 // Hide the chart's tooltip when a press lands anywhere else on the page.
