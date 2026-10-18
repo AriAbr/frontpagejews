@@ -26,6 +26,13 @@
     <link rel="apple-touch-icon"
           href="{% static 'frontpagejews/apple-touch-icon.png' %}" />
     <link rel="stylesheet" href="{% static 'frontpagejews/dashboard.css' %}" />
+    {% if sentry_dsn %}
+      {# Reports the page's errors to Sentry. Before the page's own scripts, so it catches theirs. Where an ad blocker stops it loading, the page runs without it. #}
+      <script src="https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+              integrity="sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz"
+              crossorigin="anonymous"></script>
+      <script>window.Sentry?.init({ dsn: "{{ sentry_dsn }}" });</script>
+    {% endif %}
     {% if ga_measurement_id %}
       <script async
               src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id }}"></script>
