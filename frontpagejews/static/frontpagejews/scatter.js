@@ -128,10 +128,10 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
             label: ({ raw: { mentions, mentionsPercentage, benchmarkFigure, benchmarkPercentage } }) => {
               const lines = [
                 `${percent(mentionsPercentage)} of mentions (${mentions.toLocaleString()})`,
-                `${benchmarkDisplaySettings.label}: ${benchmarkDisplaySettings.format(benchmarkFigure)}`,
+                benchmarkDisplaySettings.describeFigure(benchmarkFigure, benchmarkPercentage),
               ];
               // A multiple of nothing means nothing.
-              if (benchmarkPercentage) lines.push(`${multiple(mentionsPercentage, benchmarkPercentage)} its share`);
+              if (benchmarkPercentage) lines.push(`${multiple(mentionsPercentage, benchmarkPercentage)} expected share`);
               return lines;
             },
           },

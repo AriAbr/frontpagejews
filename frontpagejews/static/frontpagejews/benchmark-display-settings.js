@@ -24,6 +24,10 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     // The composite score is already a share, so "0.9% of the composite score"
     // would read as a share of a share.
     describeShare: share => `${percent(share)} composite score`,
+    // A country's share and figure, as the scatter's tooltip puts them, like
+    // its mentions: "1.0% of the world's population (84M)". The composite
+    // score's figure is its share, so it's given once.
+    describeFigure: (score, share) => `${percent(share)} composite score`,
     // China, 13.9%.
     axisMax: 0.15,
     axisStep: 0.01,
@@ -39,6 +43,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     axisMax: 1.5e9,
     axisStep: 100e6,
     format: compact,
+    describeFigure: (people, share) => `${percent(share)} of the world's population (${compact(people)})`,
   },
   gdp: {
     label: "GDP",
@@ -50,6 +55,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     axisMax: 20e12,
     axisStep: 1e12,
     format: dollars => `$${compact(dollars)}`,
+    describeFigure: (dollars, share) => `${percent(share)} of world GDP ($${compact(dollars)})`,
   },
   conflict_deaths: {
     label: "Conflict deaths",
@@ -63,5 +69,6 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     axisStep: 2.5e3,
     labelStep: 5e3,
     format: compact,
+    describeFigure: (deaths, share) => `${percent(share)} of the world's conflict deaths (${compact(deaths)})`,
   },
 };
