@@ -30,7 +30,6 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
     backgroundColor: color,
     borderWidth: 2.5,
     pointRadius: 2,
-    tension: 0.25,
   });
   // The benchmark is the same every day, so its share is a flat line.
   const benchmarkLine = (label, share, color) => ({
