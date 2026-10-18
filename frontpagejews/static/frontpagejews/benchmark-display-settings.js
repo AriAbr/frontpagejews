@@ -19,7 +19,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     description: "Population + GDP + deaths",
     // Fills in the page's descriptions: "against its composite score".
     noun: "composite score",
-    share: "composite score: the average of its shares of population, GDP and conflict deaths",
+    share: "composite score — the average of its shares of population, GDP and conflict deaths",
     // A country's share, as the headline puts it after its share of mentions.
     // The composite score is already a share, so "0.9% of the composite score"
     // would read as a share of a share.
