@@ -85,6 +85,10 @@ h1 { font-size: 1.4rem; margin: 0; }
 .epigraph figcaption { color: var(--muted); font-size: 0.85rem; }
 p { color: var(--muted); margin: 0 0 16px; }
 a { color: inherit; }
+/* Links to a term's definition in the methodology: dotted, as defined terms
+   are, and quieter than a link that goes somewhere. */
+a.definition { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+a.definition:hover { text-decoration-style: solid; }
 .picker { position: relative; width: 180px; max-width: 100%; margin-bottom: 16px; }
 .picker input { font: inherit; padding: 3px 28px 3px 10px; width: 100%; box-sizing: border-box;
                 background: var(--bg) var(--chevron) no-repeat right 10px center; color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
@@ -256,6 +260,10 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart-tooltip.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
 @media (prefers-reduced-motion: reduce) { .chart-tooltip, .chart-tooltip.gliding { transition: none; } }
 .chart-tooltip .title { font-weight: 600; margin-bottom: 2px; }
+/* A heading over the lines that belong together, a country's in the line
+   chart, in its color. */
+.chart-tooltip .group { font-weight: 600; }
+.chart-tooltip .group ~ .group { margin-top: 4px; }
 /* The caret pointing at the point: a square with two of its borders, turned
    so their corner sticks out of the tooltip's left edge, or its right where
    the tooltip is to the point's left. --caret-y is set by the script. */

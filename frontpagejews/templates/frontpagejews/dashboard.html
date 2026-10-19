@@ -140,18 +140,19 @@
           <span class="benchmark-noun"></span>, last {{ days_shown }} days
         </h2>
         <p>
-          Solid: each country's share of the selected outlets' country mentions
-          that day.
+          Solid: each country's <a class="definition" href="#share-of-coverage">share of coverage</a>
+          in the selected outlets for that day.
           <br />
-          Dashed: each country's <span class="benchmark-share"></span>.
+          {# The script fills it in, with the benchmark's noun linked to its definition where it has one. #}
+          Dashed: each country's <span class="benchmark-share benchmark-definition"></span>.
         </p>
         <div class="chart">
           <canvas id="line-chart"></canvas>
         </div>
         <h2>Every country, last {{ days_shown }} days</h2>
         <p>
-          Each country's share of mentions over the last {{ days_shown }} days,
-          against its <span class="benchmark-noun"></span>.
+          Each country's <a class="definition" href="#share-of-coverage">share of coverage</a> over the last {{ days_shown }} days,
+          against its <span class="benchmark-noun benchmark-definition"></span>.
           <br />
           Dashed line is what the benchmark would predict. Countries above it are "over-covered",
           countries below it are "under-covered".
@@ -209,19 +210,19 @@
         </p>
         <h3>Definitions</h3>
         <dl>
-          <dt>Israel</dt>
+          <dt id="israel">Israel</dt>
           <dd>
             Includes the West Bank and Gaza across all metrics. Different sources categorize them differently, so combining them keeps the comparison consistent.
           </dd>
-          <dt>Share of coverage</dt>
+          <dt id="share-of-coverage">Share of coverage</dt>
           <dd>
             Each article counts once toward the "total mentions" for every country it mentions. A country's share of coverage is the number of articles that mention it, divided by the total mentions. For example, if one article mentions Israel, Jordan and Iran, and another mentions only China, that would be four mentions in all, and each of the four countries would have a 25% share of coverage.
           </dd>
-          <dt>Composite score</dt>
+          <dt id="composite-score">Composite score</dt>
           <dd>
             The equally weighted average of a country's shares of the total population, GDP and conflict deaths, as a percentage.
           </dd>
-          <dt>Conflict deaths</dt>
+          <dt id="conflict-deaths">Conflict deaths</dt>
           <dd>
             Deaths in wars and armed conflicts involving a government, in fighting between armed groups, and in deliberate killings of civilians by either. UCDP's count for the most recent 12 months it has data for ({{ conflict_deaths_months }}).
           </dd>
