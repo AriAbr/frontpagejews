@@ -110,7 +110,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           type: "linear",
           min: 0,
           max: coverageAxisMax,
-          title: { display: true, text: `Share of mentions, last ${days} days` },
+          title: { display: true, text: `Share of coverage, last ${days} days` },
           ticks: { stepSize: COVERAGE_AXIS_STEP, callback: tickPercent },
         },
       },
@@ -126,9 +126,11 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           callbacks: {
             title: items => items[0].raw.name,
             label: ({ raw: { mentions, mentionsPercentage, benchmarkFigure, benchmarkPercentage } }) => {
+              // The benchmark, then coverage, as the axes go, so the share
+              // of coverage sits next to its multiple of the benchmark.
               const lines = [
-                `${percent(mentionsPercentage)} of mentions (${mentions.toLocaleString()})`,
                 benchmarkDisplaySettings.describeFigure(benchmarkFigure, benchmarkPercentage),
+                `${percent(mentionsPercentage)} share of coverage (${mentions.toLocaleString()} mentions)`,
               ];
               // A multiple of nothing means nothing.
               if (benchmarkPercentage) lines.push(`${multiple(mentionsPercentage, benchmarkPercentage)} expected share`);

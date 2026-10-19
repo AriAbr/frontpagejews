@@ -3,6 +3,8 @@
 // one line of the button, which has 192px for it (see dashboard.css). The keys
 // match BENCHMARKS in benchmarks.py, and data.json's benchmark_figures, plus
 // "composite", which withComposite (chart-data.js) works out in the browser.
+// Its definition, where it has one, is the id of its entry in the
+// methodology's definitions, which the charts' descriptions link to.
 //
 // The scatter's benchmark axis shows the benchmark's own figures (people,
 // dollars, deaths, or for the composite score, shares). Its maximum is fixed
@@ -19,8 +21,9 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     description: "Population + GDP + deaths",
     // Fills in the page's descriptions: "against its composite score".
     noun: "composite score",
+    definition: "composite-score",
     share: "composite score — the average of its shares of population, GDP and conflict deaths",
-    // A country's share, as the headline puts it after its share of mentions.
+    // A country's share, as the headline puts it after its share of coverage.
     // The composite score is already a share, so "0.9% of the composite score"
     // would read as a share of a share.
     describeShare: share => `${percent(share)} composite score`,
@@ -61,6 +64,7 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     label: "Conflict deaths",
     description: "Share of armed conflict deaths",
     noun: "conflict deaths",
+    definition: "conflict-deaths",
     share: "share of the world's conflict deaths",
     describeShare: share => `${percent(share)} of the world's conflict deaths`,
     // Ukraine, 85K.

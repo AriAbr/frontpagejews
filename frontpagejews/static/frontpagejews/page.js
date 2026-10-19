@@ -12,6 +12,7 @@ import {
   withoutCountries,
 } from "./chart-data.js";
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
+import { withBenchmarkLinked } from "./definitions.js";
 import { timeAgo } from "./formats.js";
 import { drawHeadline } from "./headline.js";
 import { drawLineChart } from "./line-chart.js";
@@ -27,8 +28,8 @@ const focus = { code: data.focus, name: countryName(data, data.focus) };
 const comparison = { code: comparisonCode, name: countryName(data, comparisonCode) };
 
 document.getElementById("comparison-name").textContent = comparison.name;
-for (const span of document.querySelectorAll(".benchmark-noun")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].noun;
-for (const span of document.querySelectorAll(".benchmark-share")) span.textContent = BENCHMARK_DISPLAY_SETTINGS[benchmark].share;
+fillBenchmarkSpans(".benchmark-noun", BENCHMARK_DISPLAY_SETTINGS[benchmark].noun);
+fillBenchmarkSpans(".benchmark-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].share);
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({ choices: comparisonChoices(data, selectedOutlets, benchmark), comparison, selectedOutlets, benchmark });
 drawSummaryBar({
@@ -69,4 +70,14 @@ function showLastFetched(lastFetched) {
   time.title = lastFetched.toLocaleString();
   time.textContent = timeAgo(lastFetched, new Date());
   document.getElementById("last-fetched").hidden = false;
+}
+
+// Fills each span of the class with the benchmark's text. In the charts'
+// descriptions (marked benchmark-definition), the benchmark's noun links to
+// its definition, where it has one; in the headings it's plain text.
+function fillBenchmarkSpans(selector, text) {
+  for (const span of document.querySelectorAll(selector)) {
+    if (span.classList.contains("benchmark-definition")) span.replaceChildren(...withBenchmarkLinked(text, BENCHMARK_DISPLAY_SETTINGS[benchmark]));
+    else span.textContent = text;
+  }
 }

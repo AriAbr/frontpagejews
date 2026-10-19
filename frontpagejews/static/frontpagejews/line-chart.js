@@ -23,8 +23,12 @@ const percentOrGap = value => (value == null ? null : 100 * value);
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS,
 // which names the benchmark lines: "Israel population".
 export function drawLineChart({ rows, benchmarkDisplaySettings, focus, comparison }) {
-  const coverageLine = (country, key, color) => ({
+  // The tooltip lists each country's lines under its name, so their labels
+  // there leave it out.
+  const coverageLine = (country, key, color, tooltipGroup) => ({
     label: `${country.name} coverage`,
+    tooltipLabel: "share of coverage",
+    tooltipGroup,
     data: rows.map(row => percentOrGap(row[key])),
     borderColor: color,
     backgroundColor: color,
@@ -32,8 +36,11 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
     pointRadius: 2,
   });
   // The benchmark is the same every day, so its share is a flat line.
-  const benchmarkLine = (label, share, color) => ({
+  const benchmarkLine = (label, share, color, tooltipGroup) => ({
     label: `${label} (${share == null ? "no figure" : percent(share)})`,
+    // The tooltip gives the share as the coverage lines do: "population: 0.12%".
+    tooltipLabel: `${benchmarkDisplaySettings.noun}: ${share == null ? "no figure" : percent(share)}`,
+    tooltipGroup,
     data: rows.map(() => percentOrGap(share)),
     isBenchmark: true,
     borderColor: color,
@@ -51,13 +58,14 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
     { country: comparison, color: COLORS.comparison, mentionsPercentageKey: "comparisonMentionsPercentage", benchmarkPercentageKey: "comparisonBenchmarkPercentage" },
   ];
   for (const { country, color, mentionsPercentageKey, benchmarkPercentageKey } of countries) {
-    datasets.push(coverageLine(country, mentionsPercentageKey, color));
+    const tooltipGroup = { name: country.name, color };
+    datasets.push(coverageLine(country, mentionsPercentageKey, color, tooltipGroup));
     const label = `${country.name} ${benchmarkDisplaySettings.noun}`;
     const share = rows[0][benchmarkPercentageKey];
     if (share > AXIS_MAX) {
       aboveAxis.push({ text: `▲ ${label}: ${percent(share)}, above the chart`, color });
     } else {
-      datasets.push(benchmarkLine(label, share, color));
+      datasets.push(benchmarkLine(label, share, color, tooltipGroup));
     }
   }
 
@@ -95,11 +103,11 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
         legend: { labels: { boxWidth: 32, boxHeight: 0 } },
         tooltip: {
           callbacks: {
-            // Benchmark lines' labels already give their share.
+            // Benchmark lines' tooltip labels already give their share.
             label: ({ dataset, parsed }) =>
               dataset.isBenchmark
-                ? dataset.label
-                : `${dataset.label}: ${parsed.y == null ? "none" : twoFigures(parsed.y) + "%"}`,
+                ? dataset.tooltipLabel
+                : `${dataset.tooltipLabel}: ${parsed.y == null ? "none" : twoFigures(parsed.y) + "%"}`,
           },
         },
       },

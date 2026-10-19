@@ -61,6 +61,17 @@ function drawTooltip({ chart, tooltip }) {
   title.textContent = tooltip.title.join(" ");
   const rows = [title];
   tooltip.body.forEach((bodyItem, i) => {
+    // A dataset's tooltipGroup, {name, color}, puts its line under a heading
+    // shared with the datasets next to it in the same group: the country, in
+    // the line chart.
+    const { tooltipGroup } = tooltip.dataPoints[i].dataset;
+    if (tooltipGroup && tooltipGroup !== tooltip.dataPoints[i - 1]?.dataset.tooltipGroup) {
+      const heading = document.createElement("div");
+      heading.className = "group";
+      heading.style.color = tooltipGroup.color;
+      heading.textContent = tooltipGroup.name;
+      rows.push(heading);
+    }
     bodyItem.lines.forEach((text, lineIndex) => {
       const row = document.createElement("div");
       // A short line in the series' color and dash, as in the legend, on the

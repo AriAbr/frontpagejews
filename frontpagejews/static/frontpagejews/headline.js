@@ -2,6 +2,7 @@
 // two countries gets in coverage, in big type above the charts, so the gist
 // is there at a glance and in a screenshot.
 import { COLORS } from "./chart-common.js";
+import { definitionLink, withBenchmarkLinked } from "./definitions.js";
 import { multiple, percent } from "./formats.js";
 
 // points: the scatter's points, {code, coverage, reality} with shares.
@@ -27,7 +28,7 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
 
   // A multiple of nothing means nothing.
   if (!point.benchmarkPercentage) {
-    line.append(name, ` ${percent(point.mentionsPercentage)} of country mentions, no ${benchmarkDisplaySettings.noun} recorded`);
+    line.append(name, ` ${percent(point.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"), `, no ${benchmarkDisplaySettings.noun} recorded`);
     return [part];
   }
 
@@ -36,11 +37,15 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
 
   // Each share is kept in one piece, with a dot between them, so where the two
   // don't fit on one line they break between them, and the dot goes:
-  // "6.0% of country mentions · 0.89% composite score".
+  // "6.0% share of coverage · 0.89% composite score".
+  const coverageShare = document.createElement("span");
+  coverageShare.append(`${percent(point.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"));
+  const benchmarkShare = document.createElement("span");
+  benchmarkShare.append(...withBenchmarkLinked(benchmarkDisplaySettings.describeShare(point.benchmarkPercentage), benchmarkDisplaySettings));
   const shares = document.createElement("div");
   shares.append(
-    element("span", `${percent(point.mentionsPercentage)} of country mentions`),
-    element("span", benchmarkDisplaySettings.describeShare(point.benchmarkPercentage)),
+    coverageShare,
+    benchmarkShare,
   );
   const detail = document.createElement("div");
   detail.className = "detail";
