@@ -6,7 +6,7 @@
 // gets no line, which would read as a value on the axis: it is written inside
 // the top of the chart instead ("▲ China GDP: 23.6%, above the chart").
 import { ANIMATION, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
-import { percent } from "./formats.js";
+import { multiple, percent } from "./formats.js";
 
 // Just past the highest daily coverage share at any one outlet in the 30 days
 // to October 11, 2026 (Israel at the New York Post, 14.1%), so a visitor who
@@ -14,8 +14,6 @@ import { percent } from "./formats.js";
 // one of its 2% ticks.
 const AXIS_MAX = 0.16;
 
-// Two significant figures, written out: 150 rather than toPrecision's "1.5e+2".
-const twoFigures = n => (+n.toPrecision(2)).toLocaleString();
 // A share as a percentage, or a gap where there is no figure.
 const percentOrGap = value => (value == null ? null : 100 * value);
 
@@ -38,8 +36,9 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
   // The benchmark is the same every day, so its share is a flat line.
   const benchmarkLine = (label, share, color, tooltipGroup) => ({
     label: `${label} (${share == null ? "no figure" : percent(share)})`,
-    // The tooltip gives the share as the coverage lines do: "population: 0.12%".
-    tooltipLabel: `${benchmarkDisplaySettings.noun}: ${share == null ? "no figure" : percent(share)}`,
+    // The tooltip gives the share as the coverage lines do, and as the
+    // headline does: "0.12% population".
+    tooltipLabel: share == null ? `no ${benchmarkDisplaySettings.noun} recorded` : `${percent(share)} ${benchmarkDisplaySettings.noun}`,
     tooltipGroup,
     data: rows.map(() => percentOrGap(share)),
     isBenchmark: true,
@@ -58,7 +57,11 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
     { country: comparison, color: COLORS.comparison, mentionsPercentageKey: "comparisonMentionsPercentage", benchmarkPercentageKey: "comparisonBenchmarkPercentage" },
   ];
   for (const { country, color, mentionsPercentageKey, benchmarkPercentageKey } of countries) {
-    const tooltipGroup = { name: country.name, color };
+    const tooltipGroup = {
+      name: country.name,
+      color,
+      footer: dayIndex => expectedCoverage(rows[dayIndex][mentionsPercentageKey], rows[dayIndex][benchmarkPercentageKey]),
+    };
     datasets.push(coverageLine(country, mentionsPercentageKey, color, tooltipGroup));
     const label = `${country.name} ${benchmarkDisplaySettings.noun}`;
     const share = rows[0][benchmarkPercentageKey];
@@ -102,18 +105,38 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
         // dataset's dash. (Point-style legends ignore the dash.)
         legend: { labels: { boxWidth: 32, boxHeight: 0 } },
         tooltip: {
+          // Each country's benchmark before its coverage, as in the scatter's
+          // tooltip; the countries stay in the datasets' order.
+          itemSort(a, b) {
+            if (a.dataset.tooltipGroup !== b.dataset.tooltipGroup) return a.datasetIndex - b.datasetIndex;
+            return Boolean(b.dataset.isBenchmark) - Boolean(a.dataset.isBenchmark);
+          },
           callbacks: {
-            // Benchmark lines' tooltip labels already give their share.
+            // Number first, as in the headline: "6.0% share of coverage". The
+            // swatch, not the words, ties the row to its line. Benchmark lines'
+            // tooltip labels already give their share.
             label: ({ dataset, parsed }) =>
               dataset.isBenchmark
                 ? dataset.tooltipLabel
-                : `${dataset.tooltipLabel}: ${parsed.y == null ? "none" : twoFigures(parsed.y) + "%"}`,
+                : parsed.y == null ? `no ${dataset.tooltipLabel}` : `${percent(parsed.y / 100)} ${dataset.tooltipLabel}`,
           },
         },
       },
     },
   });
   hideTooltipOnPressElsewhere(lineChart);
+}
+
+// The day's multiple, as in the headline: "6.5× expected coverage". None on a
+// day the country wasn't mentioned, or where it has no figure for the
+// benchmark: a multiple of nothing means nothing.
+function expectedCoverage(mentionsPercentage, benchmarkPercentage) {
+  if (!mentionsPercentage || !benchmarkPercentage) return null;
+  const times = document.createElement("strong");
+  times.textContent = multiple(mentionsPercentage, benchmarkPercentage);
+  const footer = document.createDocumentFragment();
+  footer.append(times, " expected coverage");
+  return footer;
 }
 
 // A Chart.js plugin writing each note inside the top left of the plot area,

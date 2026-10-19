@@ -264,6 +264,9 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
    chart, in its color. */
 .chart-tooltip .group { font-weight: 600; }
 .chart-tooltip .group ~ .group { margin-top: 4px; }
+/* What sums up the group, under its last line: lined up with the lines' text,
+   past their swatches. */
+.chart-tooltip .group-footer { padding-left: 22px; }
 /* The caret pointing at the point: a square with two of its borders, turned
    so their corner sticks out of the tooltip's left edge, or its right where
    the tooltip is to the point's left. --caret-y is set by the script. */
