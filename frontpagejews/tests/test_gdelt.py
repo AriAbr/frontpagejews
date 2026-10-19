@@ -1,8 +1,12 @@
-from datetime import date
+import io
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 from frontpagejews import gdelt
+from frontpagejews.news_coverage import DAYS_SHOWN
 
 
 def gkg_line(domain, url, locations, collection="1"):
@@ -134,3 +138,50 @@ def describe_fetch_day():
     def test_refuses_a_day_that_is_not_over():
         with pytest.raises(ValueError, match="not over"):
             gdelt.fetch_day(date(2999, 1, 1))
+
+
+def describe_fetch_gdelt_command():
+    """Tests for `manage.py fetch_gdelt`"""
+
+    @pytest.fixture
+    def fetched_days(mocker):
+        """The days the command fetches, in order, without downloading anything."""
+        days = []
+
+        def fetch_day(day, refresh=False):
+            days.append(day)
+            return {"domains": {}, "files": 0, "files_expected": 0}
+
+        mocker.patch.object(gdelt, "load_day", return_value=None)
+        mocker.patch.object(gdelt, "fetch_day", side_effect=fetch_day)
+        return days
+
+    def fetch(*args):
+        call_command("fetch_gdelt", *args, stdout=io.StringIO())
+
+    def test_fetches_the_days_from_start_to_end(fetched_days):
+        fetch("--start", "2024-02-28", "--end", "2024-03-01")
+
+        assert fetched_days == [date(2024, 2, 28), date(2024, 2, 29), date(2024, 3, 1)]
+
+    def test_counts_days_back_from_end(fetched_days):
+        fetch("--days", "2", "--end", "2024-03-01")
+
+        assert fetched_days == [date(2024, 2, 29), date(2024, 3, 1)]
+
+    def test_defaults_to_the_days_the_site_shows_up_to_yesterday(fetched_days):
+        fetch()
+
+        yesterday = datetime.now(UTC).date() - timedelta(days=1)
+        assert len(fetched_days) == DAYS_SHOWN
+        assert fetched_days[-1] == yesterday
+
+    def test_refuses_an_end_that_is_not_over():
+        today = datetime.now(UTC).date()
+
+        with pytest.raises(CommandError, match="not over"):
+            fetch("--end", today.isoformat())
+
+    def test_refuses_a_start_after_the_end():
+        with pytest.raises(CommandError, match="after"):
+            fetch("--start", "2024-03-02", "--end", "2024-03-01")
