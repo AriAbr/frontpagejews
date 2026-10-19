@@ -61,9 +61,10 @@ function drawTooltip({ chart, tooltip }) {
   title.textContent = tooltip.title.join(" ");
   const rows = [title];
   tooltip.body.forEach((bodyItem, i) => {
-    // A dataset's tooltipGroup, {name, color}, puts its line under a heading
-    // shared with the datasets next to it in the same group: the country, in
-    // the line chart.
+    // A dataset's tooltipGroup, {name, color, footer}, puts its line under a
+    // heading shared with the datasets next to it in the same group: the
+    // country, in the line chart. Its footer, given the point's index, returns
+    // what goes under the group's last line, or null for nothing.
     const { tooltipGroup } = tooltip.dataPoints[i].dataset;
     if (tooltipGroup && tooltipGroup !== tooltip.dataPoints[i - 1]?.dataset.tooltipGroup) {
       const heading = document.createElement("div");
@@ -89,6 +90,15 @@ function drawTooltip({ chart, tooltip }) {
       row.append(text);
       rows.push(row);
     });
+    if (tooltipGroup?.footer && tooltipGroup !== tooltip.dataPoints[i + 1]?.dataset.tooltipGroup) {
+      const footer = tooltipGroup.footer(tooltip.dataPoints[i].dataIndex);
+      if (footer) {
+        const row = document.createElement("div");
+        row.className = "group-footer";
+        row.append(footer);
+        rows.push(row);
+      }
+    }
   });
   tooltipElement.replaceChildren(...rows);
 
