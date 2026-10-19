@@ -83,6 +83,19 @@ def describe_summarize():
 
         assert list(gdelt.summarize([raw_file])["domains"]) == ["bbc.co.uk"]
 
+    def test_matches_abcs_old_address_by_its_url():
+        """GDELT files abcnews.go.com under go.com, which other Disney sites share"""
+        raw_file = "\n".join(
+            [
+                gkg_line("go.com", "https://abcnews.go.com/International/1", TEL_AVIV),
+                gkg_line("go.com", "https://espn.go.com/1", GEORGIA_STATE),
+            ]
+        )
+
+        assert gdelt.summarize([raw_file])["domains"] == {
+            "abcnews.go.com": {"articles": 1, "countries": {"ISR": 1}}
+        }
+
     def test_skips_non_web_sources():
         raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV, collection="2")
 

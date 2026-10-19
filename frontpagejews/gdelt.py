@@ -23,6 +23,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from enum import IntEnum
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
@@ -99,6 +100,19 @@ def fetch_gkg(url):
         return archive.read(archive.namelist()[0]).decode("utf-8", errors="replace")
 
 
+def outlet_domain(domain, url):
+    """The outlet domain an article is counted under, or None if it isn't an outlet's.
+
+    GDELT files articles under the site's registered domain, so ABC's articles at
+    abcnews.go.com (its address until early 2026) come under go.com, which
+    other Disney sites share. Those are matched by the URL's host instead.
+    """
+    if domain in OUTLET_DOMAINS:
+        return domain
+    host = urlparse(url).hostname
+    return host if host in OUTLET_DOMAINS else None
+
+
 def summarize(raw_files):
     """Reduce a day's raw GDELT files to per-domain article and country counts.
 
@@ -110,8 +124,9 @@ def summarize(raw_files):
     files = 0
     for raw_file in raw_files:
         files += 1
-        for domain, url, countries in parse_gkg(raw_file):
-            if domain not in OUTLET_DOMAINS:
+        for gdelt_domain, url, countries in parse_gkg(raw_file):
+            domain = outlet_domain(gdelt_domain, url)
+            if domain is None:
                 continue
             articles[domain].setdefault(url, set()).update(countries)
 
