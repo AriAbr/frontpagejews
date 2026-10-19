@@ -244,28 +244,37 @@ function fillBadge(badge, points, colorOf, side) {
 
   // The arrow and the text are separate, so the arrow stays at the badge's
   // outer edge when the text wraps.
-  const arrow = document.createElement("span");
-  arrow.className = "arrow";
+  const arrow = arrowIcon(side);
   const text = document.createElement("span");
   text.className = "text";
   text.append(...content);
-  if (side === "left") {
-    arrow.textContent = "←";
-    badge.append(arrow, text);
-  } else {
-    arrow.textContent = "→";
-    badge.append(text, arrow);
-  }
+  if (side === "left") badge.append(arrow, text);
+  else badge.append(text, arrow);
+}
+
+// An arrow pointing left or right. Drawn rather than typed: an arrow
+// character's height in its line depends on the font, and in some it sits
+// well below the text's middle.
+function arrowIcon(side) {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const icon = document.createElementNS(svgNamespace, "svg");
+  icon.setAttribute("class", "arrow");
+  icon.setAttribute("viewBox", "0 0 12 10");
+  icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(svgNamespace, "path");
+  path.setAttribute("d", side === "left" ? "M11 5H1M5 1 1 5l4 4" : "M1 5h10M7 1l4 4-4 4");
+  icon.append(path);
+  return icon;
 }
 
 // A wrapped badge stays as wide as the room it was squeezed into, leaving empty
-// space beside its lines. Once its text has wrapped (it's taller than its
-// one-line arrow), narrow it to its wrapped text instead.
+// space beside its lines. Once its text has wrapped (it's taller than one
+// line), narrow it to its wrapped text instead.
 function narrowIfWrapped(badge) {
-  const arrow = badge.querySelector(".arrow");
   const text = badge.querySelector(".text");
-  if (!arrow) return;
-  if (text.offsetHeight > arrow.offsetHeight * 1.5) badge.classList.add("narrowed");
+  if (!text) return;
+  const lineHeight = parseFloat(getComputedStyle(text).lineHeight);
+  if (text.offsetHeight > lineHeight * 1.5) badge.classList.add("narrowed");
 }
 
 // A space wider than usual. Where the line breaks there, it disappears like any
