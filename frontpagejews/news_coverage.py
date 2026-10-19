@@ -29,7 +29,7 @@ OUTLETS = {
     "fox": Outlet("Fox News", ["foxnews.com"]),
     "nypost": Outlet("New York Post", ["nypost.com"]),
     "cbs": Outlet("CBS News", ["cbsnews.com"]),
-    "abc": Outlet("ABC News", ["abcnews.com"]),
+    "abc": Outlet("ABC News", ["abcnews.com", "abcnews.go.com"]),
     "npr": Outlet("NPR", ["npr.org"]),
     "bbc": Outlet("BBC", ["bbc.co.uk", "bbc.com"]),
     "guardian": Outlet("The Guardian", ["theguardian.com"]),
