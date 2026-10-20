@@ -96,6 +96,7 @@
             <span class="heading" id="outlets-heading">News outlets</span>
             <input type="hidden" name="vs" />
             <input type="hidden" name="by" />
+            <input type="hidden" name="month" />
             {# A button that opens the checkboxes. It starts with the default, every outlet, so it has its height before the script fills in the outlets chosen. #}
             <div class="outlets-dropdown">
               <button type="button"
@@ -114,6 +115,11 @@
               </div>
             </div>
           </form>
+          <div>
+            <label class="heading" for="month-select">Period</label>
+            {# The script adds a month per month there's data for, after the last days. #}
+            <select id="month-select"></select>
+          </div>
         </div>
       </header>
       {# In place of the masthead once it scrolls away, so what's compared stays in view beside every chart, and in screenshots of it. The script fills in the summary. #}

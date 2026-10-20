@@ -1,6 +1,6 @@
 // The visitor's choices: which outlets, which country to compare with, which
 // benchmark to measure reality by, and which month to show. Read from and
-// written to the query string (all but the month, so far). Nothing here touches the page.
+// written to the query string. Nothing here touches the page.
 import { countryName, mentionsByCountry } from "./chart-data.js";
 
 // The outlets, comparison country, benchmark and month in the query string,
@@ -25,8 +25,10 @@ export function choicesFromUrl(queryString, data) {
 // The query string for the given choices: the reverse of `choicesFromUrl`. In
 // the same order as the outlet form submits them, so a view has one URL
 // whichever control led to it.
-export function choicesQuery({ selectedOutlets, comparisonCode, benchmark }) {
-  const params = [["vs", comparisonCode], ["by", benchmark], ...selectedOutlets.map(slug => ["outlet", slug])];
+export function choicesQuery({ selectedOutlets, comparisonCode, benchmark, month }) {
+  const params = [["vs", comparisonCode], ["by", benchmark]];
+  if (month) params.push(["month", month]);
+  params.push(...selectedOutlets.map(slug => ["outlet", slug]));
   return `?${new URLSearchParams(params)}`;
 }
 

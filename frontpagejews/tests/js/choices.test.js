@@ -44,12 +44,18 @@ describe("choicesFromUrl", () => {
 });
 
 describe("choicesQuery", () => {
-  const data = siteData({});
+  const data = siteData({}, {}, ["2024-03"]);
 
   test("gives the choices back to choicesFromUrl unchanged", () => {
-    const choices = { selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "gdp", month: null };
+    const choices = { selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "gdp", month: "2024-03" };
 
     assert.deepEqual(choicesFromUrl(choicesQuery(choices), data), choices);
+  });
+
+  test("leaves the month out when there is none", () => {
+    const query = choicesQuery({ selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "gdp", month: null });
+
+    assert.equal(query, "?vs=USA&by=gdp&outlet=bbc");
   });
 
   test("includes the benchmark even when it is the default", () => {
