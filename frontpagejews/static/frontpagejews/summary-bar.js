@@ -6,7 +6,8 @@ import { describeOutlets } from "./formats.js";
 
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
 // outletCount: how many outlets there are to choose from.
-export function drawSummaryBar({ focus, comparison, benchmarkDisplaySettings, selectedOutlets, outletCount }) {
+// period: the days shown, as the page names them: "last 30 days", "March 2024".
+export function drawSummaryBar({ focus, comparison, benchmarkDisplaySettings, selectedOutlets, outletCount, period }) {
   const focusName = element("strong", focus.name);
   focusName.style.color = COLORS.focus;
   const comparisonName = element("strong", comparison.name);
@@ -15,7 +16,7 @@ export function drawSummaryBar({ focus, comparison, benchmarkDisplaySettings, se
   countries.append(focusName, " vs ", comparisonName);
 
   const outlets = describeOutlets(selectedOutlets.length, outletCount);
-  const measures = element("span", `by ${benchmarkDisplaySettings.noun} · ${outlets}`);
+  const measures = element("span", `by ${benchmarkDisplaySettings.noun} · ${outlets} · ${period}`);
 
   // In two parts, so the second moves to the next line whole where both don't fit.
   const parts = document.createElement("div");
