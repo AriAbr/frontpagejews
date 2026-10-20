@@ -1,21 +1,24 @@
-// The visitor's choices: which outlets, which country to compare with, and
-// which benchmark to measure reality by. Read from and written to the query
-// string. Nothing here touches the page.
+// The visitor's choices: which outlets, which country to compare with, which
+// benchmark to measure reality by, and which month to show. Read from and
+// written to the query string (all but the month, so far). Nothing here touches the page.
 import { countryName, mentionsByCountry } from "./chart-data.js";
 
-// The outlets, comparison country and benchmark in the query string, falling
-// back to all outlets and the defaults. A country the data doesn't name, like
-// one left out of it, falls back too.
+// The outlets, comparison country, benchmark and month in the query string,
+// falling back to all outlets, the defaults, and no month: the last days
+// shown. A country the data doesn't name, like one left out of it, falls back
+// too, as does a month with no data.
 export function choicesFromUrl(queryString, data) {
   const params = new URLSearchParams(queryString);
   const allOutlets = Object.keys(data.outlets);
   const outletsInUrl = params.getAll("outlet").filter(slug => allOutlets.includes(slug));
   const comparison = params.get("vs");
   const benchmark = params.get("by");
+  const month = params.get("month");
   return {
     selectedOutlets: outletsInUrl.length ? outletsInUrl : allOutlets,
     comparisonCode: comparison in data.names ? comparison : data.default_comparison,
     benchmark: benchmark in data.benchmark_figures ? benchmark : data.default_benchmark,
+    month: data.months.includes(month) ? month : null,
   };
 }
 

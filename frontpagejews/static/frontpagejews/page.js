@@ -1,5 +1,5 @@
-// Loads data.json, applies the visitor's choices from the query string, and
-// fills in the page.
+// Loads data.json, and the month's file if the visitor picked a month, applies
+// the visitor's choices from the query string, and fills in the page.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { setUpControls } from "./controls.js";
 import {
@@ -19,7 +19,10 @@ import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
 import { drawSummaryBar } from "./summary-bar.js";
 
-const allData = await (await fetch("data.json")).json();
+const siteData = await fetchJson("data.json");
+// A picked month's days take the place of the last days.
+const { month } = choicesFromUrl(location.search, siteData);
+const allData = month ? { ...siteData, ...(await fetchJson(`months/${month}.json`)) } : siteData;
 const shownData = withoutCountries(allData, allData.home_countries);
 // After leaving countries out, so the composite's shares are of the countries shown.
 const data = withComposite(shownData, COMPOSITE_WEIGHTS);
@@ -61,6 +64,10 @@ if (data.days.length) {
 } else {
   document.getElementById("charts").hidden = true;
   document.getElementById("no-data").hidden = false;
+}
+
+async function fetchJson(url) {
+  return (await fetch(url)).json();
 }
 
 // "Data updated 2 hours ago" in the byline, with the exact time on hover.
