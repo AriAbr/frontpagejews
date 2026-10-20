@@ -38,7 +38,8 @@ def set_fetch_time(day, fetched_at):
 
 
 def cache_figures(benchmark, **figures):
-    benchmarks.cache_path(benchmark).write_text(json.dumps(figures))
+    """Cache a population or GDP history of one year, with these figures."""
+    benchmarks.cache_path(benchmark).write_text(json.dumps({"2025": figures}))
 
 
 def describe_site_data():
@@ -141,7 +142,9 @@ def describe_dashboard():
         assert b"googletagmanager" not in client.get("/").content
 
     def test_names_the_months_the_conflict_deaths_cover(client):
-        benchmarks.conflict_deaths_months_path().write_text("Aug 2025–Jul 2026")
+        months = benchmarks.ucdp.months_between("2025-08", "2026-07")
+        history = {"countries": ["ISR"], "months": {month: {} for month in months}}
+        benchmarks.cache_path("conflict_deaths").write_text(json.dumps(history))
 
         assert "12 months it has data for (Aug 2025–Jul 2026)." in client.get("/").content.decode()
 

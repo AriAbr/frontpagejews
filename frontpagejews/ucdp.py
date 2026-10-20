@@ -21,7 +21,6 @@ import io
 import re
 import zipfile
 from collections.abc import Iterator
-from datetime import date
 
 import requests
 
@@ -33,8 +32,9 @@ DOWNLOAD_CENTER = "https://ucdp.uu.se/downloads/"
 GED_FILE_LINK = re.compile(re.escape(DOWNLOAD_CENTER) + r"ged/ged\d+-csv\.zip")
 CANDIDATE_FILE_LINK = re.compile(re.escape(DOWNLOAD_CENTER) + r"candidateged/GEDEvent_v[\d_]+\.csv")
 
-# Deaths are summed over the 12 months up to the newest month UCDP has data for.
-MONTHS_SUMMED = 12
+# The first month whose deaths are kept. GDELT's history starts in February
+# 2015, and a period's deaths reach back 12 months before its start.
+FIRST_MONTH = "2014-01"
 
 # UCDP numbers countries by the Gleditsch-Ward list, a political science
 # standard, not ISO. This covers every country UCDP has recorded an event in
@@ -197,52 +197,56 @@ def read_events(url) -> Iterator[dict[str, str]]:
         yield from csv.DictReader(io.StringIO(response.content.decode("utf-8")))
 
 
-def months_back(month, count):
-    """The `count` months up to and including `month`, oldest first:
-    months_back("2026-02", 3) == ["2025-12", "2026-01", "2026-02"]."""
-    year, month_number = map(int, month.split("-"))
+def months_between(start_month, end_month):
+    """Every month from `start_month` to `end_month`, both included:
+    months_between("2025-11", "2026-02") == ["2025-11", "2025-12", "2026-01", "2026-02"]."""
+    year, month_number = map(int, start_month.split("-"))
     months = []
-    for _ in range(count):
+    month = start_month
+    while month <= end_month:
+        months.append(month)
+        month_number += 1
+        if month_number == 13:
+            year, month_number = year + 1, 1
         zero_padded_month = f"{month_number:02}"  # 8 -> "08"
-        months.append(f"{year}-{zero_padded_month}")
-        month_number -= 1
-        if month_number == 0:
-            year, month_number = year - 1, 12
-    return list(reversed(months))
+        month = f"{year}-{zero_padded_month}"
+    return months
 
 
-def fetch_deaths(today=None):
-    """The last `MONTHS_SUMMED` months UCDP has data for, oldest first, and a map
-    of ISO3 -> deaths over them.
+def fetch_deaths():
+    """Map month ("YYYY-MM") -> ISO3 -> deaths that month, for every month from
+    `FIRST_MONTH` to the newest UCDP has data for. A country with no deaths in a
+    month is left out of it.
 
     An event revised in a later release appears in more than one file; the
     first file listed (the checked GED, else the newest candidate file) wins.
     Events are dated by the day they started: a handful span weeks, and their
     deaths all land in that first month.
     """
-    # Anything older can't fall within 12 months of the newest data, and
-    # skipping it keeps the GED's 35 years of events out of memory.
-    earliest_year = str((today or date.today()).year - 2)
+    # Older events are skipped as they're read, keeping the GED's 35 years of
+    # events out of memory.
     events = {}
     for url in file_urls():
         for event in read_events(url):
-            if event["date_start"][:4] >= earliest_year and event["id"] not in events:
-                events[event["id"]] = (event["date_start"][:7], event["country_id"], int(event["best"]))
+            month = event["date_start"][:7]
+            if month >= FIRST_MONTH and event["id"] not in events:
+                events[event["id"]] = (month, event["country_id"], int(event["best"]))
 
-    months_summed = months_back(max(month for month, _, _ in events.values()), MONTHS_SUMMED)
-    # UCDP drops files from its page as newer releases replace them, so check
-    # none of the 12 months went missing. Summing fewer months wouldn't fail,
-    # it would just quietly give wrong figures.
-    missing = set(months_summed) - {month for month, _, _ in events.values()}
-    if missing:
-        raise ValueError(f"UCDP's files have no events for {', '.join(sorted(missing))}")
-
-    deaths = {}
+    latest_month_with_data = max(month for month, _, _ in events.values())
+    deaths_by_month_by_country = {
+        month: {} for month in months_between(FIRST_MONTH, latest_month_with_data)
+    }
     for month, country_id, best in events.values():
-        if month not in months_summed:
-            continue
         if country_id not in GW_TO_ISO3:
             raise ValueError(f"No ISO code for UCDP country {country_id}; add it to GW_TO_ISO3")
         code = GW_TO_ISO3[country_id]
-        deaths[code] = deaths.get(code, 0) + best
-    return months_summed, deaths
+        deaths_by_month_by_country[month][code] = deaths_by_month_by_country[month].get(code, 0) + best
+    # UCDP drops files from its page as newer releases replace them, so check
+    # no month went missing. Summing over a missing month wouldn't fail, it
+    # would just quietly give wrong figures. (Every month has deaths somewhere.)
+    missing = [
+        month for month, deaths_by_country in deaths_by_month_by_country.items() if not deaths_by_country
+    ]
+    if missing:
+        raise ValueError(f"UCDP's files have no events for {', '.join(missing)}")
+    return deaths_by_month_by_country
