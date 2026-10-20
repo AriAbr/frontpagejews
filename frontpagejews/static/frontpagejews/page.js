@@ -13,7 +13,7 @@ import {
 } from "./chart-data.js";
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { withBenchmarkLinked } from "./definitions.js";
-import { timeAgo } from "./formats.js";
+import { describePeriod, timeAgo } from "./formats.js";
 import { drawHeadline } from "./headline.js";
 import { drawLineChart } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
@@ -29,10 +29,15 @@ const data = withComposite(shownData, COMPOSITE_WEIGHTS);
 const { selectedOutlets, comparisonCode, benchmark } = choicesFromUrl(location.search, data);
 const focus = { code: data.focus, name: countryName(data, data.focus) };
 const comparison = { code: comparisonCode, name: countryName(data, comparisonCode) };
+const period = describePeriod(month, siteData.days.length);
 
 document.getElementById("comparison-name").textContent = comparison.name;
 fillBenchmarkSpans(".benchmark-noun", BENCHMARK_DISPLAY_SETTINGS[benchmark].noun);
 fillBenchmarkSpans(".benchmark-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].share);
+// The page says "last 30 days" until a month is picked.
+if (month) {
+  for (const span of document.querySelectorAll(".period")) span.textContent = period;
+}
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({ choices: comparisonChoices(data, selectedOutlets, benchmark), comparison, selectedOutlets, benchmark });
 drawSummaryBar({
@@ -41,6 +46,7 @@ drawSummaryBar({
   benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
   selectedOutlets,
   outletCount: Object.keys(data.outlets).length,
+  period,
 });
 
 if (data.days.length) {
@@ -57,7 +63,7 @@ if (data.days.length) {
     points,
     benchmarkTotal: benchmarkTotal(data, benchmark),
     benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
-    days: data.days.length,
+    period,
     focus,
     comparison,
   });

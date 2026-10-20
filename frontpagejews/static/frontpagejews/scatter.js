@@ -20,8 +20,8 @@ const tickPercent = fraction => `${Math.round(fraction * 100)}%`;
 // benchmarkPercentage} per country, the percentages as fractions of the total.
 // benchmarkTotal: the benchmark's total, so a figure over it is a share.
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
-// days: how many days the mentions cover.
-export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, days, focus, comparison }) {
+// period: the days the mentions cover, as the page names them: "last 30 days", "March 2024".
+export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, period, focus, comparison }) {
   const coverageAxisMax = roundUp(Math.max(COVERAGE_AXIS_STEP, ...points.map(p => p.mentionsPercentage)), COVERAGE_AXIS_STEP);
 
   // One group of dots. Each dot keeps its whole point, so the tooltip and
@@ -110,7 +110,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           type: "linear",
           min: 0,
           max: coverageAxisMax,
-          title: { display: true, text: `Share of coverage, last ${days} days` },
+          title: { display: true, text: `Share of coverage, ${period}` },
           ticks: { stepSize: COVERAGE_AXIS_STEP, callback: tickPercent },
         },
       },

@@ -137,7 +137,7 @@
         <div class="headline" id="headline"></div>
         <h2>
           {{ focus_name }} vs <span id="comparison-name"></span>: coverage vs
-          <span class="benchmark-noun"></span>, last {{ days_shown }} days
+          <span class="benchmark-noun"></span>, <span class="period">last {{ days_shown }} days</span>
         </h2>
         <p>
           Solid: each country's <a class="definition" href="#share-of-coverage">share of coverage</a>
@@ -149,9 +149,11 @@
         <div class="chart">
           <canvas id="line-chart"></canvas>
         </div>
-        <h2>Every country, last {{ days_shown }} days</h2>
+        <h2>
+          Every country, <span class="period">last {{ days_shown }} days</span>
+        </h2>
         <p>
-          Each country's <a class="definition" href="#share-of-coverage">share of coverage</a> over the last {{ days_shown }} days,
+          Each country's <a class="definition" href="#share-of-coverage">share of coverage</a>
           against its <span class="benchmark-noun benchmark-definition"></span>.
           <br />
           Dashed line is what the benchmark would predict. Countries above it are "over-covered",

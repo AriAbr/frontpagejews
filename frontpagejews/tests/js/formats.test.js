@@ -2,7 +2,17 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { timeAgo } from "../../static/frontpagejews/formats.js";
+import { describePeriod, timeAgo } from "../../static/frontpagejews/formats.js";
+
+describe("describePeriod", () => {
+  test("names the month picked", () => {
+    assert.equal(describePeriod("2024-03", 30), "March 2024");
+  });
+
+  test("says how many days back with no month picked", () => {
+    assert.equal(describePeriod(null, 30), "last 30 days");
+  });
+});
 
 describe("timeAgo", () => {
   const now = new Date("2026-10-15T12:00:00Z");

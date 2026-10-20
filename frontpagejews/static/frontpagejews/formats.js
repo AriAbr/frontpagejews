@@ -1,6 +1,6 @@
 // Number formats shared by the headline, the scatter and the benchmark
-// display settings, and the outlets chosen, shared by the controls and the
-// summary bar.
+// display settings, and the outlets and period chosen, shared by the controls,
+// the charts and the summary bar.
 
 // 0.139 → "13.9%", and small shares to two decimals: 0.0004 → "0.04%".
 export function percent(fraction) {
@@ -22,6 +22,16 @@ export function multiple(mentionsPercentage, benchmarkPercentage) {
 export function describeOutlets(selectedCount, outletCount) {
   if (selectedCount < outletCount) return `${selectedCount} of ${outletCount} outlets`;
   return `all ${outletCount} outlets`;
+}
+
+// "2024-03" → "March 2024".
+export function monthName(month) {
+  return new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+// The period shown: the month picked, or with none, "last 30 days".
+export function describePeriod(month, daysShown) {
+  return month ? monthName(month) : `last ${daysShown} days`;
 }
 
 // How long ago a moment was, in the largest whole unit that reads naturally:
