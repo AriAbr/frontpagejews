@@ -45,8 +45,21 @@ def cached_past_months():
 
 def month_site_data(month):
     """The days of one month, "YYYY-MM", for the page to show in place of the last
-    `DAYS_SHOWN` days."""
-    return {"days": daily_mentions([day for day in gdelt.cached_days() if f"{day:%Y-%m}" == month])}
+    `DAYS_SHOWN` days, and the benchmarks' figures for it.
+
+    Only the conflict deaths are the month's own so far, over the 12 months up to
+    it. Population and GDP are today's."""
+    deaths_history = benchmarks.load_history("conflict_deaths")
+    deaths_months = benchmarks.conflict_deaths_months_for(deaths_history, month)
+    return {
+        "days": daily_mentions([day for day in gdelt.cached_days() if f"{day:%Y-%m}" == month]),
+        "benchmark_figures": {
+            "population": benchmarks.load_figures("population"),
+            "gdp": benchmarks.load_figures("gdp"),
+            "conflict_deaths": benchmarks.conflict_deaths_over(deaths_history, deaths_months),
+        },
+        "conflict_deaths_months": benchmarks.describe_months(deaths_months),
+    }
 
 
 def site_data():
@@ -67,6 +80,7 @@ def site_data():
         "benchmark_figures": figures_by_benchmark,
         "days": days,
         "months": cached_past_months(),
+        "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         # For "Data updated 2 hours ago", worked out in the browser.
         "last_fetched": last_fetched.isoformat(timespec="seconds") if last_fetched else None,
     }
