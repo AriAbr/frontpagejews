@@ -1,7 +1,7 @@
 import io
 import json
 import os
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from django.core.management import call_command
@@ -84,6 +84,16 @@ def describe_site_data():
     def test_gives_no_fetch_time_with_nothing_cached():
         assert site_data.site_data()["last_fetched"] is None
 
+    def test_lists_the_months_with_cached_days_but_this_one(mocker):
+        """This month isn't over; the last days shown cover it"""
+        mocker.patch.object(site_data, "datetime", wraps=datetime)
+        site_data.datetime.now.return_value = datetime(2026, 10, 20, tzinfo=UTC)
+        cache_day("2024-03-31", {"bbc.co.uk": {"ISR": 1}})
+        cache_day("2026-09-30", {"bbc.co.uk": {"ISR": 1}})
+        cache_day("2026-10-01", {"bbc.co.uk": {"ISR": 1}})
+
+        assert site_data.site_data()["months"] == ["2024-03", "2026-09"]
+
     def test_includes_each_benchmarks_figures():
         """A benchmark not fetched yet is there but empty"""
         cache_figures("population", ISR=10, CHN=90)
@@ -93,6 +103,21 @@ def describe_site_data():
             "gdp": {},
             "conflict_deaths": {},
         }
+
+
+def describe_month_data():
+    """Tests for the data of a month the visitor picks"""
+
+    def test_gives_each_day_of_the_month_and_no_others():
+        cache_day("2024-02-29", {"bbc.co.uk": {"ISR": 1}})
+        cache_day("2024-03-01", {"bbc.co.uk": {"ISR": 2}})
+        cache_day("2024-03-31", {"bbc.co.uk": {"ISR": 3}})
+        cache_day("2024-04-01", {"bbc.co.uk": {"ISR": 4}})
+
+        days = site_data.month_site_data("2024-03")["days"]
+
+        assert [day["date"] for day in days] == ["2024-03-01", "2024-03-31"]
+        assert days[0]["mentions"]["bbc"] == {"ISR": 2}
 
 
 def describe_dashboard():
@@ -127,6 +152,13 @@ def describe_dashboard():
 
         assert response.json()["days"][0]["mentions"]["bbc"] == {"ISR": 1}
 
+    def test_serves_a_months_data(client):
+        cache_day("2024-03-05", {"bbc.co.uk": {"ISR": 1}})
+
+        response = client.get("/months/2024-03.json")
+
+        assert response.json()["days"][0]["date"] == "2024-03-05"
+
 
 def describe_build_site():
     """Tests for writing the site out as static files"""
@@ -139,5 +171,8 @@ def describe_build_site():
 
         assert "<canvas" in (out / "index.html").read_text()
         assert json.loads((out / "data.json").read_text())["days"][0]["date"] == "2026-09-22"
+        assert (
+            json.loads((out / "months" / "2026-09.json").read_text())["days"][0]["date"] == "2026-09-22"
+        )
         assert (out / "static" / "frontpagejews" / "page.js").exists()
         assert not (out / "static" / "admin").exists()

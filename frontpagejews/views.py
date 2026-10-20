@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 from frontpagejews import benchmarks
 from frontpagejews.countries import country_name
 from frontpagejews.news_coverage import DAYS_SHOWN, OUTLETS
-from frontpagejews.site_data import FOCUS, site_data
+from frontpagejews.site_data import FOCUS, month_site_data, site_data
 
 
 def page_context():
@@ -51,3 +51,7 @@ class Dashboard(TemplateView):
 
 def data(request):
     return JsonResponse(site_data())
+
+
+def month(request, month):
+    return JsonResponse(month_site_data(month))
