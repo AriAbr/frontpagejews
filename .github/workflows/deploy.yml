@@ -79,8 +79,8 @@ jobs:
       - name: Fetch benchmarks
         run: >-
           poetry run python manage.py fetch_benchmarks
-          || (test -f var/benchmarks/population.json && test -f var/benchmarks/gdp.json
-          && test -f var/benchmarks/conflict_deaths.json)
+          || (test -f var/benchmarks/population_history.json && test -f var/benchmarks/gdp_history.json
+          && test -f var/benchmarks/conflict_deaths_history.json)
 
       # Saved even if a later step fails, so a long backfill is never lost.
       - name: Save data cache

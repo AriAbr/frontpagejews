@@ -1,6 +1,5 @@
 import io
 import zipfile
-from datetime import date
 
 import pytest
 
@@ -22,8 +21,6 @@ UKRAINE = "369"
 # Holds the filler events, so no test checks it.
 SWEDEN = "380"
 
-TODAY = date(2026, 10, 13)
-
 
 def events_csv(events):
     """A UCDP file's CSV, from (id, date_start, country_id, best) tuples. Real
@@ -41,9 +38,9 @@ def zipped(csv_text):
 
 
 def filler_events(skip_month=None):
-    """A death in Sweden each month from September 2025 to August 2026, so none
-    of the 12 months is empty and fetch_deaths doesn't refuse them."""
-    months = [f"2025-{m:02}" for m in range(9, 13)] + [f"2026-{m:02}" for m in range(1, 9)]
+    """A death in Sweden each month from `FIRST_MONTH` to August 2026, so no
+    month is empty and fetch_deaths doesn't refuse them."""
+    months = ucdp.months_between(ucdp.FIRST_MONTH, "2026-08")
     return [(f"ID-{month}", f"{month}-15", SWEDEN, 1) for month in months if month != skip_month]
 
 
@@ -81,28 +78,35 @@ def describe_file_urls():
         assert ucdp.file_urls() == [GED_URL, NEWEST_URL, OLDER_URL]
 
 
-def describe_months_back():
-    def test_counts_back_across_a_new_year():
-        assert ucdp.months_back("2026-02", 4) == ["2025-11", "2025-12", "2026-01", "2026-02"]
+def describe_months_between():
+    def test_counts_across_a_new_year():
+        assert ucdp.months_between("2025-11", "2026-02") == ["2025-11", "2025-12", "2026-01", "2026-02"]
 
 
 def describe_fetch_deaths():
-    """Tests for summing UCDP's events into deaths per country"""
+    """Tests for summing UCDP's events into deaths per country per month"""
 
-    def test_sums_deaths_per_country(mock_ucdp_files):
+    def test_sums_deaths_per_country_per_month(mock_ucdp_files):
         mock_ucdp_files(
             newest=[
                 *filler_events(),
                 ("ID-1", "2026-03-01", ISRAEL, 2),
-                ("ID-2", "2026-05-01", ISRAEL, 3),
-                ("ID-3", "2026-05-01", UKRAINE, 9),
+                ("ID-2", "2026-03-31", ISRAEL, 3),
+                ("ID-3", "2026-05-01", ISRAEL, 4),
+                ("ID-4", "2026-05-01", UKRAINE, 9),
             ]
         )
 
-        _, deaths = ucdp.fetch_deaths(today=TODAY)
+        deaths = ucdp.fetch_deaths()
 
-        assert deaths["ISR"] == 5
-        assert deaths["UKR"] == 9
+        assert deaths["2026-03"]["ISR"] == 5
+        assert deaths["2026-05"]["ISR"] == 4
+        assert deaths["2026-05"]["UKR"] == 9
+
+    def test_leaves_a_country_out_of_months_it_had_no_deaths_in(mock_ucdp_files):
+        mock_ucdp_files(newest=[*filler_events(), ("ID-1", "2026-03-01", ISRAEL, 2)])
+
+        assert "ISR" not in ucdp.fetch_deaths()["2026-04"]
 
     def test_reads_the_ged_zip_and_the_candidate_csvs(mock_ucdp_files):
         mock_ucdp_files(
@@ -111,33 +115,19 @@ def describe_fetch_deaths():
             older=[("ID-3", "2026-03-01", ISRAEL, 100)],
         )
 
-        _, deaths = ucdp.fetch_deaths(today=TODAY)
+        deaths = ucdp.fetch_deaths()
 
-        assert deaths["ISR"] == 111
+        assert deaths["2025-10"]["ISR"] == 1
+        assert deaths["2026-03"]["ISR"] == 100
+        assert deaths["2026-08"]["ISR"] == 10
 
-    def test_sums_only_the_12_months_up_to_the_newest_one(mock_ucdp_files):
-        """The newest is August 2026, so August 2025 is left out"""
-        mock_ucdp_files(
-            newest=[
-                *filler_events(),
-                ("ID-1", "2025-08-31", ISRAEL, 100),
-                ("ID-2", "2025-09-01", ISRAEL, 2),
-                ("ID-3", "2026-08-31", ISRAEL, 3),
-            ]
-        )
+    def test_gives_every_month_from_the_first_to_the_newest(mock_ucdp_files):
+        """December 2013 is before the first month, so it's left out"""
+        mock_ucdp_files(ged=[("ID-1", "2013-12-31", ISRAEL, 100)], newest=filler_events())
 
-        _, deaths = ucdp.fetch_deaths(today=TODAY)
+        months = list(ucdp.fetch_deaths())
 
-        assert deaths["ISR"] == 5
-
-    def test_gives_the_months_it_summed(mock_ucdp_files):
-        mock_ucdp_files(newest=filler_events())
-
-        months, _ = ucdp.fetch_deaths(today=TODAY)
-
-        assert months[0] == "2025-09"
-        assert months[-1] == "2026-08"
-        assert len(months) == 12
+        assert months == ucdp.months_between("2014-01", "2026-08")
 
     def test_counts_a_revised_event_once_from_the_newest_file(mock_ucdp_files):
         mock_ucdp_files(
@@ -145,20 +135,18 @@ def describe_fetch_deaths():
             older=[("ID-1", "2026-03-02", ISRAEL, 2283)],
         )
 
-        _, deaths = ucdp.fetch_deaths(today=TODAY)
+        assert ucdp.fetch_deaths()["2026-03"]["ISR"] == 2236
 
-        assert deaths["ISR"] == 2236
-
-    def test_refuses_a_window_with_a_month_missing(mock_ucdp_files):
+    def test_refuses_a_month_missing(mock_ucdp_files):
         """Without this, a missing file would quietly shrink everyone's deaths"""
-        mock_ucdp_files(newest=filler_events(skip_month="2026-07"))
+        mock_ucdp_files(newest=filler_events(skip_month="2019-07"))
 
-        with pytest.raises(ValueError, match="2026-07"):
-            ucdp.fetch_deaths(today=TODAY)
+        with pytest.raises(ValueError, match="2019-07"):
+            ucdp.fetch_deaths()
 
     def test_refuses_a_country_it_has_no_iso_code_for(mock_ucdp_files):
         """Rather than silently dropping its deaths"""
         mock_ucdp_files(newest=[*filler_events(), ("ID-1", "2026-05-01", "9999", 1)])
 
         with pytest.raises(ValueError, match="9999"):
-            ucdp.fetch_deaths(today=TODAY)
+            ucdp.fetch_deaths()
