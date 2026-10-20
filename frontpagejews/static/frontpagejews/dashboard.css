@@ -4,7 +4,7 @@
    the background (4.75:1). */
 :root { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --border: #44403c; --focus: #3b82f6; }
 /* The arrow on each control that opens a list: the country picker, the
-   benchmark and the outlets. A background, since a select can't have an
+   benchmark, the outlets and the month. A background, since a select can't have an
    ::after, so its color is --muted written out. */
 :root { --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a8a29e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 /* The header's "How this works" link scrolls down to the methodology. */
@@ -99,41 +99,40 @@ a.definition:hover { text-decoration-style: solid; }
 .picker li.active a, .picker li a:hover { background: var(--border); }
 .picker li.current a { font-weight: 600; }
 .picker .none { padding: 4px 10px; color: var(--muted); }
-/* Each control's heading beside it rather than above, to keep the masthead
-   short. In one row where they fit, and otherwise stacked, never two on one
-   line and one on the next. Where they stack, every box is the same width,
-   so they line up: headings in one column, boxes in the other. */
-.controls { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; margin-top: 10px; }
-.controls > * { display: flex; align-items: flex-start; gap: 4px 10px; }
-/* Each heading level with the first line of its box, whether in one row or
-   stacked: 5.5px down, measured in Chrome on Linux, for the box's border and
-   padding and its taller line. In one row, the boxes line up along their
-   tops, the benchmark's second line hanging below the others. */
-.controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; padding-top: 5.5px; }
+/* Where they fit, the four controls in one row, each heading small above its
+   box. On a phone, stacked, each heading beside its box rather than above, to
+   keep the masthead short, and every box the same width, so they line up:
+   headings in one column, boxes in the other. */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-start; margin-top: 10px; }
+.controls > * { display: flex; flex-direction: column; gap: 2px; }
+.controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 .controls .picker { margin-bottom: 0; }
-/* The benchmark's and the outlets' buttons, both drawn with the chevron. */
-#benchmark-toggle, #outlets-toggle { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
+/* The benchmark's and the outlets' buttons and the month's select, all drawn with the chevron. */
+#benchmark-toggle, #outlets-toggle, #month-select { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
                                     appearance: none; color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
                                     background: var(--bg) var(--chevron) no-repeat right 10px center; }
-/* The benchmark's is two lines: its label, and under it what it is. Wider,
-   for that second line: the longest, "Share of armed conflict deaths", is
-   172px in the system font on Linux, and the 192px it has leaves about 11% to
-   spare for wider fonts. It holds its height before the script fills it in,
-   so the masthead doesn't jump. */
-#benchmark-toggle { width: 232px; min-height: calc(1.5em + 1.3 * 0.75em + 8px); }
-/* One row is 882px in the system font on Linux, plus the page's padding and
-   about 11% to spare for wider system fonts. Stacked, the boxes fill the
-   column on a phone, up to a width that still reads as a box on a tablet. */
+/* One line, like the others: what each benchmark is shows in the open list.
+   It holds its height before the script fills it in, so the masthead doesn't
+   jump. */
+#benchmark-toggle { min-height: calc(1.5em + 8px); }
+#benchmark-toggle .description { display: none; }
+/* In one row, about 770px in the system font on Linux, plus the page's
+   padding and plenty to spare for wider system fonts. Stacked, the boxes fill
+   the column on a phone, up to a width that still reads as a box on a
+   tablet. */
 @media (max-width: 1009px) {
   .controls { display: grid; grid-template-columns: max-content minmax(0, 320px); gap: 8px 12px; }
   .controls > * { display: contents; }
-  .controls .picker, #benchmark-toggle, #outlets-toggle { width: 100%; }
+  /* Each heading level with the first line of its box: 5.5px down, measured
+     in Chrome on Linux, for the box's border and padding. */
+  .controls .heading { padding-top: 5.5px; }
+  .controls .picker, #benchmark-toggle, #outlets-toggle, #month-select { width: 100%; }
 }
-/* The benchmark's button and list: each benchmark's label, and under it in
+/* The benchmark's list: each benchmark's label, and under it in
    small type what it is. */
 .benchmark-dropdown { position: relative; }
 #benchmark-toggle .label, #benchmark-list .label { display: block; }
-#benchmark-toggle .description, #benchmark-list .description { display: block; font-size: 0.75rem; line-height: 1.3; color: var(--muted); }
+#benchmark-list .description { display: block; font-size: 0.75rem; line-height: 1.3; color: var(--muted); }
 #benchmark-list { position: absolute; z-index: 10; left: 0; min-width: 100%; box-sizing: border-box; margin: 2px 0 0; padding: 4px 0;
                   list-style: none; background: var(--bg); line-height: 1.3;
                   border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }

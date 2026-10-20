@@ -39,7 +39,15 @@ if (month) {
   for (const span of document.querySelectorAll(".period")) span.textContent = period;
 }
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
-setUpControls({ choices: comparisonChoices(data, selectedOutlets, benchmark), comparison, selectedOutlets, benchmark });
+setUpControls({
+  choices: comparisonChoices(data, selectedOutlets, benchmark),
+  comparison,
+  selectedOutlets,
+  benchmark,
+  months: data.months,
+  month,
+  daysShown: siteData.days.length,
+});
 drawSummaryBar({
   focus,
   comparison,

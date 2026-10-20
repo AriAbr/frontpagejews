@@ -1,13 +1,16 @@
-// The comparison-country picker, the benchmark choice and the outlet checkboxes.
+// The comparison-country picker, the benchmark choice, the outlet checkboxes
+// and the month.
 //
 // All work by reloading the page with new query-string choices: each country
-// is a link, choosing a benchmark goes to its own URL, and the outlets are a
-// GET form.
+// is a link, choosing a benchmark goes to its own URL, the outlets are a GET
+// form, and picking a month goes to its URL.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { choicesQuery, countryMatches } from "./choices.js";
-import { describeOutlets } from "./formats.js";
+import { describeOutlets, describePeriod } from "./formats.js";
 
-export function setUpControls({ choices, comparison, selectedOutlets, benchmark }) {
+// months: every month there's data for, "YYYY-MM", oldest first. month: the
+// one shown, or null for the last `daysShown` days.
+export function setUpControls({ choices, comparison, selectedOutlets, benchmark, months, month, daysShown }) {
   // Country picker: focus opens the full list, typing filters it (anywhere in
   // the name), arrows move, Enter follows the highlighted link, Escape closes.
   const search = document.getElementById("country-search");
@@ -15,7 +18,7 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   const none = list.querySelector(".none");
   for (const { code, name } of choices) {
     const link = document.createElement("a");
-    link.href = choicesQuery({ selectedOutlets, comparisonCode: code, benchmark });
+    link.href = choicesQuery({ selectedOutlets, comparisonCode: code, benchmark, month });
     link.textContent = name;
     const item = document.createElement("li");
     if (code === comparison.code) item.className = "current";
@@ -81,7 +84,7 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   };
   for (const [benchmarkOption, displaySettings] of Object.entries(BENCHMARK_DISPLAY_SETTINGS)) {
     const link = document.createElement("a");
-    link.href = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkOption });
+    link.href = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark: benchmarkOption, month });
     describeBenchmark(link, displaySettings);
     const item = document.createElement("li");
     if (benchmarkOption === benchmark) {
@@ -135,6 +138,9 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   const outletForm = document.getElementById("outlet-form");
   outletForm.elements.vs.value = comparison.code;
   outletForm.elements.by.value = benchmark;
+  // With no month, the field is left out, rather than sent empty.
+  outletForm.elements.month.value = month ?? "";
+  outletForm.elements.month.disabled = !month;
   const boxes = [...outletForm.querySelectorAll("input[name=outlet]")];
   for (const box of boxes) box.checked = selectedOutlets.includes(box.value);
   const toggle = document.getElementById("outlets-toggle");
@@ -170,5 +176,17 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark 
   outletForm.addEventListener("change", event => {
     if (!tickedOutlets().length) event.target.checked = true;
     describeTicked();
+  });
+
+  // Month: the last days first, then each month, newest first.
+  const monthSelect = document.getElementById("month-select");
+  for (const option of [null, ...[...months].reverse()]) {
+    const label = describePeriod(option, daysShown);
+    const capitalized = label[0].toUpperCase() + label.slice(1);
+    monthSelect.add(new Option(capitalized, option ?? "", false, option === month));
+  }
+  monthSelect.addEventListener("change", () => {
+    const picked = monthSelect.value || null;
+    location.search = choicesQuery({ selectedOutlets, comparisonCode: comparison.code, benchmark, month: picked });
   });
 }
