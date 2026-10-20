@@ -37,6 +37,10 @@ def set_fetch_time(day, fetched_at):
     os.utime(gdelt.cache_path(date.fromisoformat(day)), (timestamp, timestamp))
 
 
+def cache_history(benchmark, history):
+    benchmarks.cache_path(benchmark).write_text(json.dumps(history))
+
+
 def cache_figures(benchmark, **figures):
     """Cache a population or GDP history of one year, with these figures."""
     benchmarks.cache_path(benchmark).write_text(json.dumps({"2025": figures}))
@@ -114,11 +118,35 @@ def describe_month_data():
         cache_day("2024-03-01", {"bbc.co.uk": {"ISR": 2}})
         cache_day("2024-03-31", {"bbc.co.uk": {"ISR": 3}})
         cache_day("2024-04-01", {"bbc.co.uk": {"ISR": 4}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
 
         days = site_data.month_site_data("2024-03")["days"]
 
         assert [day["date"] for day in days] == ["2024-03-01", "2024-03-31"]
         assert days[0]["mentions"]["bbc"] == {"ISR": 2}
+
+    def test_sums_the_conflict_deaths_over_the_12_months_up_to_the_month():
+        """March 2023 is 13 months back from March 2024, so it's left out"""
+        months = {month: {} for month in benchmarks.ucdp.months_between("2023-03", "2024-08")}
+        months["2023-03"] = {"ISR": 100}
+        months["2023-10"] = {"ISR": 7}
+        months["2024-03"] = {"ISR": 2}
+        months["2024-04"] = {"ISR": 1000}
+        cache_history("conflict_deaths", {"countries": ["ISR", "UKR"], "months": months})
+
+        month_data = site_data.month_site_data("2024-03")
+
+        assert month_data["benchmark_figures"]["conflict_deaths"] == {"ISR": 9, "UKR": 0}
+        assert month_data["conflict_deaths_months"] == "Apr 2023–Mar 2024"
+
+    def test_gives_todays_population_and_gdp():
+        """Until their history is used too"""
+        cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
+
+        month_data = site_data.month_site_data("2024-03")
+
+        assert month_data["benchmark_figures"]["population"] == {"ISR": 10}
 
 
 def describe_dashboard():
@@ -143,10 +171,11 @@ def describe_dashboard():
 
     def test_names_the_months_the_conflict_deaths_cover(client):
         months = benchmarks.ucdp.months_between("2025-08", "2026-07")
-        history = {"countries": ["ISR"], "months": {month: {} for month in months}}
-        benchmarks.cache_path("conflict_deaths").write_text(json.dumps(history))
+        cache_history(
+            "conflict_deaths", {"countries": ["ISR"], "months": {month: {} for month in months}}
+        )
 
-        assert "12 months it has data for (Aug 2025–Jul 2026)." in client.get("/").content.decode()
+        assert ">Aug 2025–Jul 2026</span>)." in client.get("/").content.decode()
 
     def test_serves_the_data(client):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
@@ -157,6 +186,7 @@ def describe_dashboard():
 
     def test_serves_a_months_data(client):
         cache_day("2024-03-05", {"bbc.co.uk": {"ISR": 1}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
 
         response = client.get("/months/2024-03.json")
 
@@ -168,6 +198,7 @@ def describe_build_site():
 
     def test_writes_the_page_the_data_and_the_scripts(tmp_path):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2026-09": {}}})
         out = tmp_path / "build"
 
         call_command("build_site", out=out, stdout=io.StringIO())

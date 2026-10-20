@@ -37,6 +37,7 @@ fillBenchmarkSpans(".benchmark-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].sha
 // The page says "last 30 days" until a month is picked.
 if (month) {
   for (const span of document.querySelectorAll(".period")) span.textContent = period;
+  for (const span of document.querySelectorAll(".conflict-deaths-months")) span.textContent = data.conflict_deaths_months;
 }
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({
