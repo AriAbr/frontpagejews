@@ -32,6 +32,15 @@ export function choicesQuery({ selectedOutlets, comparisonCode, benchmark, month
   return `?${new URLSearchParams(params)}`;
 }
 
+// The periods either side of the month shown, in the order the visitor steps
+// through them: each month there's data for, oldest first, then the last days.
+// Each is a month, null for the last days, or undefined at either end.
+export function neighboringPeriods(months, month) {
+  const periods = [...months, null];
+  const index = periods.indexOf(month);
+  return { earlier: periods[index - 1], later: periods[index + 1] };
+}
+
 // Countries to compare with: mentioned and with a figure for the benchmark,
 // most mentioned first, Israel aside.
 export function comparisonChoices(data, selectedOutlets, benchmark) {

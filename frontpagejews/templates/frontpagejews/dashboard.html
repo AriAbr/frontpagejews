@@ -116,9 +116,44 @@
             </div>
           </form>
           <div>
-            <label class="heading" for="month-select">Period</label>
-            {# The script adds a month per month there's data for, after the last days. #}
-            <select id="month-select"></select>
+            <span class="heading" id="period-heading">Period</span>
+            {# A button that opens the last days and a year's months, between links a month earlier and later. The script fills them in, the button too: it starts empty rather than with the last days, which would show while a picked month loads. #}
+            <div class="period-control">
+              <a class="period-step" id="period-earlier" aria-label="A month earlier">
+                <svg width="6" height="10" viewBox="0 0 6 10" aria-hidden="true">
+                  <path d="M5 1 1 5l4 4" />
+                </svg>
+              </a>
+              <div class="period-dropdown">
+                <button type="button"
+                        id="period-toggle"
+                        aria-expanded="false"
+                        aria-controls="period-panel"
+                        aria-describedby="period-heading"></button>
+                <div class="period-panel" id="period-panel" hidden>
+                  <a id="period-last-days"></a>
+                  <div class="period-year">
+                    <button type="button" id="period-year-earlier" aria-label="A year earlier">
+                      <svg width="6" height="10" viewBox="0 0 6 10" aria-hidden="true">
+                        <path d="M5 1 1 5l4 4" />
+                      </svg>
+                    </button>
+                    <span id="period-year"></span>
+                    <button type="button" id="period-year-later" aria-label="A year later">
+                      <svg width="6" height="10" viewBox="0 0 6 10" aria-hidden="true">
+                        <path d="m1 1 4 4-4 4" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="period-months" id="period-months"></div>
+                </div>
+              </div>
+              <a class="period-step" id="period-later" aria-label="A month later">
+                <svg width="6" height="10" viewBox="0 0 6 10" aria-hidden="true">
+                  <path d="m1 1 4 4-4 4" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </header>

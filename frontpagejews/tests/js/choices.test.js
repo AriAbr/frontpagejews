@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { choicesFromUrl, choicesQuery, comparisonChoices, countryMatches } from "../../static/frontpagejews/choices.js";
+import { choicesFromUrl, choicesQuery, comparisonChoices, countryMatches, neighboringPeriods } from "../../static/frontpagejews/choices.js";
 import { siteData } from "./site-data.js";
 
 describe("choicesFromUrl", () => {
@@ -88,5 +88,30 @@ describe("countryMatches", () => {
   test("ignores accents, in the name or the typing", () => {
     assert.equal(countryMatches("Türkiye", "turk"), true);
     assert.equal(countryMatches("Cote d'Ivoire", "côte"), true);
+  });
+});
+
+describe("neighboringPeriods", () => {
+  // No data for April.
+  const months = ["2024-01", "2024-02", "2024-03", "2024-05"];
+
+  test("are the months either side", () => {
+    assert.deepEqual(neighboringPeriods(months, "2024-02"), { earlier: "2024-01", later: "2024-03" });
+  });
+
+  test("skip months without data", () => {
+    assert.equal(neighboringPeriods(months, "2024-03").later, "2024-05");
+  });
+
+  test("go from the newest month to the last days, null", () => {
+    assert.equal(neighboringPeriods(months, "2024-05").later, null);
+  });
+
+  test("go from the last days back to the newest month, and no later", () => {
+    assert.deepEqual(neighboringPeriods(months, null), { earlier: "2024-05", later: undefined });
+  });
+
+  test("have none earlier than the oldest month", () => {
+    assert.equal(neighboringPeriods(months, "2024-01").earlier, undefined);
   });
 });
