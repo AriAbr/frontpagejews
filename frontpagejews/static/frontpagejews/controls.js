@@ -5,7 +5,7 @@
 // is a link, choosing a benchmark goes to its own URL, the outlets are a GET
 // form, and picking a month goes to its URL.
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
-import { choicesQuery, countryMatches } from "./choices.js";
+import { choicesQuery, countryMatches, neighboringPeriods } from "./choices.js";
 import { describeOutlets, describePeriod } from "./formats.js";
 
 // months: every month there's data for, "YYYY-MM", oldest first. month: the
@@ -164,7 +164,7 @@ function setUpOutletControl({ selectedOutlets, comparisonCode, benchmark, month 
   const tickedOutlets = () => boxes.filter(box => box.checked).map(box => box.value);
   const describeTicked = () => {
     const description = describeOutlets(tickedOutlets().length, boxes.length);
-    toggle.textContent = description[0].toUpperCase() + description.slice(1);
+    toggle.textContent = capitalize(description);
   };
   const open = () => {
     list.hidden = false;
@@ -193,15 +193,103 @@ function setUpOutletControl({ selectedOutlets, comparisonCode, benchmark, month 
   });
 }
 
-// Month: the last days first, then each month, newest first.
+const MONTH_ABBREVIATIONS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Month: a button that opens a link to the last days and, under it, a year's
+// twelve months, a link each where there's data for it. Arrows beside the
+// year page through the years. It opens on the year shown, or with the last
+// days shown, the newest year. Either side of the button, a link a month
+// earlier and later; a month later than the newest is the last days.
 function setUpMonthControl({ months, daysShown, chosen }) {
-  const select = document.getElementById("month-select");
-  for (const option of [null, ...[...months].reverse()]) {
-    const label = describePeriod(option, daysShown);
-    const capitalized = label[0].toUpperCase() + label.slice(1);
-    select.add(new Option(capitalized, option ?? "", false, option === chosen.month));
+  const toggle = document.getElementById("period-toggle");
+  const panel = document.getElementById("period-panel");
+  const dropdown = panel.parentElement;
+  toggle.textContent = capitalize(describePeriod(chosen.month, daysShown));
+
+  const lastDays = document.getElementById("period-last-days");
+  lastDays.href = choicesQuery({ ...chosen, month: null });
+  lastDays.textContent = capitalize(describePeriod(null, daysShown));
+  if (!chosen.month) {
+    lastDays.className = "current";
+    lastDays.setAttribute("aria-current", "true");
   }
-  select.addEventListener("change", () => {
-    location.search = choicesQuery({ ...chosen, month: select.value || null });
+
+  const { earlier, later } = neighboringPeriods(months, chosen.month);
+  setUpStep({ link: document.getElementById("period-earlier"), period: earlier, daysShown, chosen });
+  setUpStep({ link: document.getElementById("period-later"), period: later, daysShown, chosen });
+
+  const firstYear = Number(months[0]?.slice(0, 4));
+  const lastYear = Number(months.at(-1)?.slice(0, 4));
+  const yearLabel = document.getElementById("period-year");
+  const yearEarlier = document.getElementById("period-year-earlier");
+  const yearLater = document.getElementById("period-year-later");
+  const monthGrid = document.getElementById("period-months");
+  let yearShown = Number((chosen.month ?? months.at(-1))?.slice(0, 4));
+  const showYear = year => {
+    yearShown = year;
+    yearLabel.textContent = year;
+    yearEarlier.disabled = year <= firstYear;
+    yearLater.disabled = year >= lastYear;
+    monthGrid.replaceChildren();
+    MONTH_ABBREVIATIONS.forEach((abbreviation, index) => {
+      const month = `${year}-${String(index + 1).padStart(2, "0")}`;
+      // A month without data is a plain span, grayed out, so the grid keeps its shape.
+      const cell = document.createElement(months.includes(month) ? "a" : "span");
+      cell.textContent = abbreviation;
+      if (months.includes(month)) cell.href = choicesQuery({ ...chosen, month });
+      if (month === chosen.month) {
+        cell.className = "current";
+        cell.setAttribute("aria-current", "true");
+      }
+      monthGrid.append(cell);
+    });
+  };
+  // With no past months yet, just the last days.
+  panel.querySelector(".period-year").hidden = !months.length;
+  if (months.length) showYear(yearShown);
+  yearEarlier.addEventListener("click", () => showYear(yearShown - 1));
+  yearLater.addEventListener("click", () => showYear(yearShown + 1));
+
+  const open = () => {
+    panel.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+  };
+  const close = () => {
+    panel.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+  };
+  toggle.addEventListener("click", () => {
+    if (panel.hidden) open();
+    else close();
   });
+  dropdown.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      close();
+      toggle.focus();
+    }
+  });
+  // Closes when a click or focus lands anywhere else. Focus going nowhere is
+  // left to the click: a year arrow loses it when it's disabled at the first
+  // or last year, and the panel should stay open.
+  document.addEventListener("click", event => {
+    if (!dropdown.contains(event.target)) close();
+  });
+  dropdown.addEventListener("focusout", event => {
+    if (event.relatedTarget && !dropdown.contains(event.relatedTarget)) close();
+  });
+}
+
+// A month earlier or later: a link to it, or with none, the arrow grayed out.
+function setUpStep({ link, period, daysShown, chosen }) {
+  if (period === undefined) {
+    link.setAttribute("aria-disabled", "true");
+    return;
+  }
+  link.href = choicesQuery({ ...chosen, month: period });
+  link.title = capitalize(describePeriod(period, daysShown));
+}
+
+// "last 30 days" → "Last 30 days".
+function capitalize(text) {
+  return text[0].toUpperCase() + text.slice(1);
 }

@@ -4,7 +4,7 @@
    the background (4.75:1). */
 :root { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --border: #44403c; --focus: #3b82f6; }
 /* The arrow on each control that opens a list: the country picker, the
-   benchmark, the outlets and the month. A background, since a select can't have an
+   benchmark, the outlets and the period. A background, since an input can't have an
    ::after, so its color is --muted written out. */
 :root { --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a8a29e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 /* The header's "How this works" link scrolls down to the methodology. */
@@ -107,8 +107,8 @@ a.definition:hover { text-decoration-style: solid; }
 .controls > * { display: flex; flex-direction: column; gap: 2px; }
 .controls .heading { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 .controls .picker { margin-bottom: 0; }
-/* The benchmark's and the outlets' buttons and the month's select, all drawn with the chevron. */
-#benchmark-toggle, #outlets-toggle, #month-select { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
+/* The benchmark's, the outlets' and the period's buttons, all drawn with the chevron. */
+#benchmark-toggle, #outlets-toggle, #period-toggle { font: inherit; width: 180px; padding: 3px 28px 3px 10px; text-align: left; cursor: pointer;
                                     appearance: none; color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
                                     background: var(--bg) var(--chevron) no-repeat right 10px center; }
 /* One line, like the others: what each benchmark is shows in the open list.
@@ -116,7 +116,19 @@ a.definition:hover { text-decoration-style: solid; }
    jump. */
 #benchmark-toggle { min-height: calc(1.5em + 8px); }
 #benchmark-toggle .description { display: none; }
-/* In one row, about 770px in the system font on Linux, plus the page's
+/* The period's button between arrows a month earlier and later, the button
+   a little narrower than the others, to make room for them. */
+.period-control { display: flex; gap: 4px; }
+/* Holding its height while empty, like the benchmark's. */
+#period-toggle { width: 160px; min-height: calc(1.5em + 8px); white-space: nowrap; }
+.period-step { display: flex; align-items: center; justify-content: center; width: 24px; color: var(--muted); text-decoration: none;
+               border: 1px solid var(--border); border-radius: 6px; }
+.period-step:hover { background: var(--border); }
+.period-step[aria-disabled] { color: var(--border); pointer-events: none; }
+/* The arrows, here and beside the year: chevrons drawn like the buttons' own,
+   in their color, set as the text's so a disabled arrow grays out with it. */
+.period-control svg path { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* In one row, about 810px in the system font on Linux, plus the page's
    padding and plenty to spare for wider system fonts. Stacked, the boxes fill
    the column on a phone, up to a width that still reads as a box on a
    tablet. */
@@ -126,7 +138,9 @@ a.definition:hover { text-decoration-style: solid; }
   /* Each heading level with the first line of its box: 5.5px down, measured
      in Chrome on Linux, for the box's border and padding. */
   .controls .heading { padding-top: 5.5px; }
-  .controls .picker, #benchmark-toggle, #outlets-toggle, #month-select { width: 100%; }
+  .controls .picker, #benchmark-toggle, #outlets-toggle { width: 100%; }
+  .period-dropdown { flex: 1; }
+  #period-toggle { width: 100%; }
 }
 /* The benchmark's list: each benchmark's label, and under it in
    small type what it is. */
@@ -148,6 +162,25 @@ a.definition:hover { text-decoration-style: solid; }
 .outlets label { white-space: nowrap; }
 .outlets .done { align-self: flex-end; margin-top: 4px; font: inherit; font-size: 0.85rem; padding: 2px 12px; cursor: pointer;
                  background: var(--border); color: var(--fg); border: 0; border-radius: 6px; }
+/* The last days, then a year between arrows and its months in four rows of three. */
+.period-dropdown { position: relative; }
+.period-panel { position: absolute; z-index: 10; left: 0; width: 220px; margin-top: 2px; padding: 4px 0 8px;
+                background: var(--bg); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
+.period-panel[hidden] { display: none; }
+.period-panel a { color: inherit; text-decoration: none; }
+.period-panel a:hover, .period-panel a:focus { background: var(--border); outline: none; }
+.period-panel .current { font-weight: 600; }
+#period-last-days { display: block; padding: 5px 10px; }
+.period-year { display: flex; align-items: center; justify-content: space-between; margin: 4px 0; padding: 4px 6px 0;
+               border-top: 1px solid var(--border); }
+.period-year[hidden] { display: none; }
+.period-year button { display: flex; align-items: center; justify-content: center; width: 28px; height: 24px; padding: 0; cursor: pointer; color: var(--muted); background: none; border: 0; border-radius: 6px; }
+.period-year button:hover { background: var(--border); }
+.period-year button:disabled { color: var(--border); cursor: default; background: none; }
+.period-months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 0 6px; }
+.period-months > * { padding: 4px 0; text-align: center; border-radius: 6px; }
+.period-months span { color: var(--border); }
+.period-months .current { background: var(--border); }
 /* The two countries one above the other, so their multiples line up, each
    with the shares it comes from under it. Where there's room (the same width
    as the controls' one row, so the masthead and the headline change at once),
