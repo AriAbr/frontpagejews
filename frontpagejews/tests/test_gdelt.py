@@ -1,7 +1,9 @@
 import io
+import zipfile
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
+import requests
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
@@ -16,6 +18,17 @@ def gkg_line(domain, url, locations, collection="1"):
     columns[gdelt.GkgColumn.DOCUMENT_URL] = url
     columns[gdelt.GkgColumn.V2_LOCATIONS] = locations
     return "\t".join(columns)
+
+
+def gdelt_response(mocker, status_code, contents=""):
+    """A response to a GKG file's download: a zip of one CSV with these contents."""
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as archive:
+        archive.writestr("20150721110000.gkg.csv", contents)
+    fake = mocker.Mock(status_code=status_code, content=zip_buffer.getvalue())
+    if status_code >= 400:
+        fake.raise_for_status.side_effect = requests.HTTPError(response=fake)
+    return fake
 
 
 TEL_AVIV = "4#Tel Aviv, Tel Aviv, Israel#IS#IS05##32.06#34.76#-781545#120"
@@ -104,6 +117,55 @@ def describe_summarize():
         raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV, collection="2")
 
         assert gdelt.summarize([raw_file])["domains"] == {}
+
+
+def describe_fetch_gkg():
+    """Tests for downloading one GKG file"""
+
+    URL = "https://data.gdeltproject.org/gdeltv2/20150721110000.gkg.csv.zip"
+
+    @pytest.fixture
+    def sleep(mocker):
+        return mocker.patch.object(gdelt.time, "sleep")
+
+    def test_tries_again_after_a_dropped_connection(mocker, sleep):
+        """As when DNS failed for a moment on 2026-10-21, ending a night's backfill"""
+        mocker.patch.object(
+            gdelt.requests,
+            "get",
+            side_effect=[
+                requests.ConnectionError("Failed to resolve"),
+                gdelt_response(mocker, 200, "a row"),
+            ],
+        )
+
+        assert gdelt.fetch_gkg(URL) == "a row"
+        sleep.assert_called_once_with(gdelt.RETRY_WAITS[0])
+
+    def test_tries_again_after_an_error_on_gdelts_side(mocker, sleep):
+        mocker.patch.object(
+            gdelt.requests,
+            "get",
+            side_effect=[gdelt_response(mocker, 503), gdelt_response(mocker, 200, "a row")],
+        )
+
+        assert gdelt.fetch_gkg(URL) == "a row"
+
+    def test_gives_up_after_the_last_wait(mocker, sleep):
+        get = mocker.patch.object(gdelt.requests, "get", side_effect=requests.ConnectionError)
+
+        with pytest.raises(requests.ConnectionError):
+            gdelt.fetch_gkg(URL)
+
+        assert [call.args[0] for call in sleep.call_args_list] == gdelt.RETRY_WAITS
+        assert get.call_count == len(gdelt.RETRY_WAITS) + 1
+
+    def test_does_not_try_again_for_a_file_gdelt_never_published(mocker, sleep):
+        get = mocker.patch.object(gdelt.requests, "get", return_value=gdelt_response(mocker, 404))
+
+        assert gdelt.fetch_gkg(URL) is None
+        assert get.call_count == 1
+        sleep.assert_not_called()
 
 
 def describe_fetch_day():
