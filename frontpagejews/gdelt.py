@@ -99,8 +99,9 @@ def fetch_gkg(url):
     """The decoded contents of one GKG file, or None if GDELT never published it.
 
     GDELT skips the occasional 15-minute slot, so a missing file is expected.
-    A download that fails for a reason that may pass (no connection, a timeout,
-    an error on GDELT's side) is tried again after each of `RETRY_WAITS`.
+    A download that fails for a reason that may pass (no connection, one that
+    breaks partway, a timeout, an error on GDELT's side) is tried again after
+    each of `RETRY_WAITS`.
     """
     for wait in RETRY_WAITS:
         try:
@@ -117,7 +118,10 @@ def is_temporary(error):
     """Whether a failed download may work if tried again."""
     if isinstance(error, requests.HTTPError):
         return error.response.status_code >= 500
-    return isinstance(error, (requests.ConnectionError, requests.Timeout))
+    # ChunkedEncodingError: the connection broke partway through the file.
+    return isinstance(
+        error, (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError)
+    )
 
 
 def download_gkg(url):
