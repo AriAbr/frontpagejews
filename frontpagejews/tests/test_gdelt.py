@@ -142,6 +142,21 @@ def describe_fetch_gkg():
         assert gdelt.fetch_gkg(URL) == "a row"
         sleep.assert_called_once_with(gdelt.RETRY_WAITS[0])
 
+    def test_tries_again_after_a_connection_breaks_partway(mocker, sleep):
+        """As on 2026-10-21, ending two of the backfill's runs"""
+        mocker.patch.object(
+            gdelt.requests,
+            "get",
+            side_effect=[
+                requests.exceptions.ChunkedEncodingError(
+                    "IncompleteRead(7372742 bytes read, 692548 more expected)"
+                ),
+                gdelt_response(mocker, 200, "a row"),
+            ],
+        )
+
+        assert gdelt.fetch_gkg(URL) == "a row"
+
     def test_tries_again_after_an_error_on_gdelts_side(mocker, sleep):
         mocker.patch.object(
             gdelt.requests,
