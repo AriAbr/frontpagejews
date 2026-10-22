@@ -36,6 +36,8 @@ const TOOLTIP_GAP = 12;
 // From the point to the tooltip's edge: room for its caret (6px) and for the
 // tip to clear the scatter's biggest dot, hovered (11px across the middle).
 const POINT_GAP = 18;
+// From the line drawn down the hovered day to the tooltip's edge.
+const DAY_LINE_GAP = 8;
 // The caret stays this far inside the tooltip's top and bottom, clear of the
 // rounded corners.
 const CARET_INSET = 10;
@@ -105,28 +107,63 @@ function drawTooltip({ chart, tooltip }) {
   // To the right of the point, or to its left where it would run off the
   // window; centered on it vertically, but kept inside the window. The caret
   // is on the side facing the point, level with it.
+  //
+  // On a phone, a point in the middle can have room on neither side, and a
+  // box pushed back inside the window covers it. A chart whose tooltip sets
+  // `aboveOrBelowIfNoRoomBeside` (the scatter, where the point is the
+  // country) puts it above the point there instead, or below where there's no
+  // room above, centered on it but kept inside the window, with the caret on
+  // the edge facing the point, in line with it.
+  //
+  // A chart whose tooltip sets `atTopBesideDay` (the line chart, whose tooltip
+  // is for a day, not a point) puts it at the top of the plot, beside the line
+  // drawn down that day, with no caret: the line ties them. It stays at the
+  // top as the day changes rather than following the lines up and down.
   const canvas = chart.canvas.getBoundingClientRect();
+  const atTopBesideDay = tooltip.options.atTopBesideDay;
   const pointX = canvas.left + tooltip.caretX;
-  const pointY = canvas.top + tooltip.caretY;
+  const pointY = canvas.top + (atTopBesideDay ? chart.chartArea.top : tooltip.caretY);
+  const gap = atTopBesideDay ? DAY_LINE_GAP : POINT_GAP;
   const { width, height } = tooltipElement.getBoundingClientRect();
   // The window less any scrollbar, which innerWidth and innerHeight include.
   const { clientWidth: windowWidth, clientHeight: windowHeight } = document.documentElement;
-  let left = pointX + POINT_GAP;
-  const flipped = left + width > windowWidth - TOOLTIP_GAP;
-  if (flipped) left = pointX - POINT_GAP - width;
-  left = Math.max(TOOLTIP_GAP, left);
-  const top = Math.min(Math.max(TOOLTIP_GAP, pointY - height / 2), windowHeight - TOOLTIP_GAP - height);
-  const caretY = Math.min(Math.max(CARET_INSET, pointY - top), height - CARET_INSET);
-  tooltipElement.classList.toggle("caret-right", flipped);
+  // The summary bar covers the window's top once the page is scrolled down,
+  // and is drawn over the tooltip, so the room starts below it.
+  const summaryBar = document.getElementById("summary-bar");
+  const windowTop = summaryBar?.classList.contains("shown") ? summaryBar.getBoundingClientRect().bottom : 0;
+  const keptInside = (start, size, windowStart, windowEnd) =>
+    Math.min(Math.max(windowStart + TOOLTIP_GAP, start), windowEnd - TOOLTIP_GAP - size);
+  const fitsRight = pointX + gap + width <= windowWidth - TOOLTIP_GAP;
+  const fitsLeft = pointX - gap - width >= TOOLTIP_GAP;
+  let side;
+  let left;
+  let top;
+  if (fitsRight || fitsLeft || !tooltip.options.aboveOrBelowIfNoRoomBeside) {
+    side = fitsRight ? "right" : "left";
+    left = Math.round(Math.max(TOOLTIP_GAP, fitsRight ? pointX + gap : pointX - gap - width));
+    top = Math.round(keptInside(atTopBesideDay ? pointY : pointY - height / 2, height, windowTop, windowHeight));
+    const caretY = Math.min(Math.max(CARET_INSET, pointY - top), height - CARET_INSET);
+    tooltipElement.style.setProperty("--caret-y", `${caretY}px`);
+  } else {
+    side = pointY - POINT_GAP - height >= windowTop + TOOLTIP_GAP ? "above" : "below";
+    top = Math.round(side === "above" ? pointY - POINT_GAP - height : pointY + POINT_GAP);
+    left = Math.round(keptInside(pointX - width / 2, width, 0, windowWidth));
+    const caretX = Math.min(Math.max(CARET_INSET, pointX - left), width - CARET_INSET);
+    tooltipElement.style.setProperty("--caret-x", `${caretX}px`);
+  }
+  tooltipElement.classList.toggle("no-caret", Boolean(atTopBesideDay));
+  tooltipElement.classList.toggle("caret-right", side === "left");
+  tooltipElement.classList.toggle("caret-below", side === "above");
+  tooltipElement.classList.toggle("caret-above", side === "below");
   // It glides from one point to the next, but where it was hidden, it fades
   // in at the new point rather than gliding over from where it last was.
   tooltipElement.classList.toggle("gliding", tooltipElement.classList.contains("shown"));
   tooltipElement.classList.add("shown");
-  // Whole pixels, so the text is sharp once it stops.
+  // Whole pixels, so the text is sharp once it stops. Rounded before the
+  // caret is placed, so the caret, at its exact place, points at the point.
   const pageX = Math.round(left + window.scrollX);
   const pageY = Math.round(top + window.scrollY);
   tooltipElement.style.transform = `translate(${pageX}px, ${pageY}px)`;
-  tooltipElement.style.setProperty("--caret-y", `${Math.round(caretY)}px`);
 }
 
 // Once faded out, back to the page's top left corner. Left where it was, near
