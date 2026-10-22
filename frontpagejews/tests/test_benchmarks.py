@@ -7,11 +7,6 @@ from frontpagejews import benchmarks
 from frontpagejews.ucdp import months_between
 
 
-@pytest.fixture(autouse=True)
-def _cache_dir(settings, tmp_path):
-    settings.BENCHMARK_CACHE_DIR = tmp_path
-
-
 def cache_history(benchmark, history):
     benchmarks.cache_path(benchmark).write_text(json.dumps(history))
 

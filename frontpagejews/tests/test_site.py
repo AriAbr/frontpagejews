@@ -3,19 +3,9 @@ import json
 import os
 from datetime import UTC, date, datetime
 
-import pytest
 from django.core.management import call_command
 
 from frontpagejews import benchmarks, gdelt, site_data
-
-
-@pytest.fixture(autouse=True)
-def _empty_caches(settings, tmp_path):
-    """Point both caches at empty directories, so each test caches only what it shows."""
-    settings.GDELT_CACHE_DIR = tmp_path / "gdelt"
-    settings.BENCHMARK_CACHE_DIR = tmp_path / "benchmarks"
-    settings.GDELT_CACHE_DIR.mkdir()
-    settings.BENCHMARK_CACHE_DIR.mkdir()
 
 
 def cache_day(day, mentions_by_domain):

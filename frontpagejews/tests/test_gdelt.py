@@ -186,10 +186,6 @@ def describe_fetch_gkg():
 def describe_fetch_day():
     """Tests for building and caching one day"""
 
-    @pytest.fixture(autouse=True)
-    def _cache_dir(settings, tmp_path):
-        settings.GDELT_CACHE_DIR = tmp_path
-
     def test_caches_the_summary_and_reuses_it(mocker, settings):
         fetch = mocker.patch.object(
             gdelt, "fetch_gkg", return_value=gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV)
@@ -237,32 +233,38 @@ def describe_fetch_gdelt_command():
         mocker.patch.object(gdelt, "fetch_day", side_effect=fetch_day)
         return days
 
-    def fetch(*args):
-        call_command("fetch_gdelt", *args, stdout=io.StringIO())
+    @pytest.fixture
+    def run_fetch_gdelt(fetched_days):
+        """Runs the command, with fetching mocked by `fetched_days`."""
 
-    def test_fetches_the_days_from_start_to_end(fetched_days):
-        fetch("--start", "2024-02-28", "--end", "2024-03-01")
+        def run(*args):
+            call_command("fetch_gdelt", *args, stdout=io.StringIO())
+
+        return run
+
+    def test_fetches_the_days_from_start_to_end(run_fetch_gdelt, fetched_days):
+        run_fetch_gdelt("--start", "2024-02-28", "--end", "2024-03-01")
 
         assert fetched_days == [date(2024, 2, 28), date(2024, 2, 29), date(2024, 3, 1)]
 
-    def test_counts_days_back_from_end(fetched_days):
-        fetch("--days", "2", "--end", "2024-03-01")
+    def test_counts_days_back_from_end(run_fetch_gdelt, fetched_days):
+        run_fetch_gdelt("--days", "2", "--end", "2024-03-01")
 
         assert fetched_days == [date(2024, 2, 29), date(2024, 3, 1)]
 
-    def test_defaults_to_the_days_the_site_shows_up_to_yesterday(fetched_days):
-        fetch()
+    def test_defaults_to_the_days_the_site_shows_up_to_yesterday(run_fetch_gdelt, fetched_days):
+        run_fetch_gdelt()
 
         yesterday = datetime.now(UTC).date() - timedelta(days=1)
         assert len(fetched_days) == DAYS_SHOWN
         assert fetched_days[-1] == yesterday
 
-    def test_refuses_an_end_that_is_not_over():
+    def test_refuses_an_end_that_is_not_over(run_fetch_gdelt):
         today = datetime.now(UTC).date()
 
         with pytest.raises(CommandError, match="not over"):
-            fetch("--end", today.isoformat())
+            run_fetch_gdelt("--end", today.isoformat())
 
-    def test_refuses_a_start_after_the_end():
+    def test_refuses_a_start_after_the_end(run_fetch_gdelt):
         with pytest.raises(CommandError, match="after"):
-            fetch("--start", "2024-03-02", "--end", "2024-03-01")
+            run_fetch_gdelt("--start", "2024-03-02", "--end", "2024-03-01")
