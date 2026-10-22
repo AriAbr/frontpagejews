@@ -23,6 +23,15 @@ const tickPercent = fraction => `${Math.round(fraction * 100)}%`;
 // period: the days the mentions cover, as the page names them: "last 30 days", "March 2024".
 export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, period, focus, comparison }) {
   const coverageAxisMax = roundUp(Math.max(COVERAGE_AXIS_STEP, ...points.map(p => p.mentionsPercentage)), COVERAGE_AXIS_STEP);
+  // The benchmark's usual end, or past it to the next grid line where a
+  // country's figure is larger (Ethiopia's deaths in the Tigray war). The
+  // chart's width keeps the dashed line at 45 degrees, so the scale stays the
+  // same: the chart just runs further to the right.
+  const largestFigure = Math.max(...points.map(p => p.benchmarkFigure));
+  const benchmarkAxisMax = Math.max(
+    benchmarkDisplaySettings.axisMax,
+    roundUp(largestFigure, benchmarkDisplaySettings.axisStep),
+  );
 
   // One group of dots. Each dot keeps its whole point, so the tooltip and
   // clicks can use its name and code; `parsing` says which fields to plot.
@@ -49,7 +58,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   // top edge or the right one, whichever it reaches first.
   // A figure's share of the total: the line's height above it.
   const slope = 1 / benchmarkTotal;
-  const lineEnd = Math.min(benchmarkDisplaySettings.axisMax, coverageAxisMax / slope);
+  const lineEnd = Math.min(benchmarkAxisMax, coverageAxisMax / slope);
 
   // Names the countries scrolled out of view: after every layout of the chart
   // (including the widening below, which Chart.js applies a moment later),
@@ -94,7 +103,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         x: {
           type: "linear",
           min: 0,
-          max: benchmarkDisplaySettings.axisMax,
+          max: benchmarkAxisMax,
           ticks: {
             stepSize: benchmarkDisplaySettings.axisStep,
             callback: value => {
@@ -161,7 +170,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   const area = scatter.chartArea;
   const plotHeight = area.bottom - area.top;
   const aroundPlot = scatter.width - (area.right - area.left);
-  const plotWidth = plotHeight * ((slope * benchmarkDisplaySettings.axisMax) / coverageAxisMax);
+  const plotWidth = plotHeight * ((slope * benchmarkAxisMax) / coverageAxisMax);
   const chartWidth = Math.round(plotWidth + aroundPlot);
   document.getElementById("scatter-wrap").style.width = `${chartWidth}px`;
   // The scrolling area shows the chart without its y-axis, which is beside it.
