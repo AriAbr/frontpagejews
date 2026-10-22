@@ -1,6 +1,5 @@
 import io
 import json
-import os
 from datetime import UTC, date, datetime
 
 from django.core.management import call_command
@@ -8,25 +7,20 @@ from django.core.management import call_command
 from frontpagejews import benchmarks, gdelt, site_data
 
 
-def cache_day(day, mentions_by_domain):
-    """Cache one day's GDELT summary, e.g. {"bbc.co.uk": {"ISR": 3}}."""
+def cache_day(day, mentions_by_domain, fetched_at=None):
+    """Cache one day's GDELT summary, e.g. {"bbc.co.uk": {"ISR": 3}}, fetched at
+    `fetched_at`, e.g. "2026-09-23T01:35:00+00:00"."""
     domains = {
         # The site never reads article counts.
         domain: {"articles": 1, "countries": mentions}
         for domain, mentions in mentions_by_domain.items()
     }
+    summary = {"date": day, "domains": domains}
+    if fetched_at:
+        summary["fetched_at"] = fetched_at
     path = gdelt.cache_path(date.fromisoformat(day))
     path.parent.mkdir(exist_ok=True)
-    path.write_text(json.dumps({"date": day, "domains": domains}))
-
-
-def set_fetch_time(day, fetched_at):
-    """Make a cached day look fetched at `fetched_at`, e.g. "2026-09-23T01:35:00+00:00".
-
-    `gdelt.last_fetched` reads the file's modification time, which os.utime sets
-    (along with its access time, which nothing reads)."""
-    timestamp = datetime.fromisoformat(fetched_at).timestamp()
-    os.utime(gdelt.cache_path(date.fromisoformat(day)), (timestamp, timestamp))
+    path.write_text(json.dumps(summary))
 
 
 def cache_history(benchmark, history):
@@ -71,12 +65,16 @@ def describe_site_data():
     def test_gives_when_a_day_was_last_fetched():
         """The latest fetch of any day, not the latest day's fetch: an older day
         is fetched again with --refresh"""
-        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
-        cache_day("2026-09-23", {"bbc.co.uk": {"ISR": 1}})
-        set_fetch_time("2026-09-22", "2026-10-01T09:00:00+00:00")
-        set_fetch_time("2026-09-23", "2026-09-24T01:35:00+00:00")
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}}, fetched_at="2026-10-01T09:00:00+00:00")
+        cache_day("2026-09-23", {"bbc.co.uk": {"ISR": 1}}, fetched_at="2026-09-24T01:35:00+00:00")
 
         assert site_data.site_data()["last_fetched"] == "2026-10-01T09:00:00+00:00"
+
+    def test_gives_no_fetch_time_for_days_that_do_not_record_one():
+        """Days fetched before fetch times were recorded"""
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+
+        assert site_data.site_data()["last_fetched"] is None
 
     def test_gives_no_fetch_time_with_nothing_cached():
         assert site_data.site_data()["last_fetched"] is None
