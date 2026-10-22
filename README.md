@@ -14,3 +14,14 @@ make web
 ```
 
 Then open `http://localhost:$PORT/`.
+
+The GDELT days fetched so far live on the `gdelt-data` branch, which holds only
+data. Check it out at `var/gdelt`, where the site reads them:
+
+```bash
+git fetch origin gdelt-data
+git worktree add var/gdelt gdelt-data
+```
+
+The deploy fetches any day that's missing and pushes it there; `git pull` in
+`var/gdelt` brings the new days in.

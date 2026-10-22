@@ -8,9 +8,12 @@ GDP, conflict deaths, market moves).
 
 `manage.py fetch_gdelt` downloads GDELT's raw files for each finished day,
 reduces them to per-domain article and country-mention counts, and caches one
-JSON file per day under `var/gdelt/`. `manage.py fetch_benchmarks` caches
-World Bank population and GDP under `var/benchmarks/`. Both caches are
-disposable: deleting them only means re-downloading.
+JSON file per day under `var/gdelt/`. That folder is a worktree of the
+`gdelt-data` branch, which holds every day since 2015 and nothing else; the
+deploy pushes each new day to it. Refetching it all takes about a day, so treat
+it as data, not a cache. `manage.py fetch_benchmarks` caches World Bank
+population and GDP and UCDP's conflict deaths under `var/benchmarks/`, which is
+disposable: deleting it only means re-downloading.
 
 The site is static. `manage.py build_site` writes the dashboard to `build/`: the
 page, a `data.json` of each outlet's daily mentions over the last 30 days, and

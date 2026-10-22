@@ -1,5 +1,5 @@
-# Fetches the newest GDELT day, builds the static site and deploys it to
-# Netlify. Runs daily, on every push to main (so code changes go live), and by
+# Fetches any GDELT day not yet fetched, builds the static site and deploys it
+# to Netlify. Runs daily, on every push to main (so code changes go live), and by
 # hand from the Actions tab.
 name: Deploy
 on:
@@ -31,8 +31,12 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # The first run backfills 30 days, a few minutes each.
+    # Normally one new day. Room for a few hundred missing ones, at about 12
+    # seconds each.
     timeout-minutes: 300
+    # To push the new GDELT days to the gdelt-data branch.
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -60,20 +64,44 @@ jobs:
         run: poetry install --no-interaction
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
-      # The data cache (var/) lives in the Actions cache, not the repo. Each run
-      # restores the newest copy and saves a new one, so only missing days are
-      # downloaded. If it is ever evicted, the next run just backfills again.
-      # Changing how days are counted means changing the prefix (here and in
-      # "Save data cache"), so the next run starts empty and refetches them all.
-      - name: Restore data cache
+      # Every GDELT day fetched so far, one JSON file each, kept on a branch of
+      # their own that holds only data. Each run fetches any day missing from
+      # it and pushes the new ones back, so the history stays complete by
+      # itself. Changing how days are counted means refetching them all with
+      # --refresh, once, and pushing the result.
+      - name: Check out GDELT days
+        uses: actions/checkout@v4
+        with:
+          ref: gdelt-data
+          path: var/gdelt
+
+      # The benchmarks live in the Actions cache. They're refetched every run,
+      # so the cache is only a fallback for when a fetch fails.
+      - name: Restore benchmarks cache
         uses: actions/cache/restore@v4
         with:
-          path: var
-          key: data-v2-${{ github.run_id }}
-          restore-keys: data-v2-
+          path: var/benchmarks
+          key: benchmarks-v1-${{ github.run_id }}
+          restore-keys: benchmarks-v1-
 
+      # From GDELT 2's first full day, so a day missed for any reason is
+      # filled in; days already fetched are skipped in a moment.
       - name: Fetch GDELT
-        run: poetry run python manage.py fetch_gdelt
+        run: poetry run python manage.py fetch_gdelt --start 2015-02-19
+
+      # Saved even if a later step fails, so no fetched day is lost.
+      - name: Push new GDELT days
+        if: always()
+        working-directory: var/gdelt
+        run: |
+          git add .
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -m "chore: Add $(git diff --cached --name-only | wc -l) GDELT days"
+          # In case days were pushed from elsewhere meanwhile; each day is its own file.
+          git pull --quiet --rebase
+          git push
 
       # The benchmarks change monthly at most; if the fetch fails, keep the last copies.
       - name: Fetch benchmarks
@@ -82,13 +110,12 @@ jobs:
           || (test -f var/benchmarks/population_history.json && test -f var/benchmarks/gdp_history.json
           && test -f var/benchmarks/conflict_deaths_history.json)
 
-      # Saved even if a later step fails, so a long backfill is never lost.
-      - name: Save data cache
+      - name: Save benchmarks cache
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: var
-          key: data-v2-${{ github.run_id }}
+          path: var/benchmarks
+          key: benchmarks-v1-${{ github.run_id }}
 
       - name: Build site
         run: poetry run python manage.py build_site
