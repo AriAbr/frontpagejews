@@ -60,8 +60,6 @@ def month_site_data(month):
             "gdp": gdp_history[gdp_year],
             "conflict_deaths": benchmarks.conflict_deaths_over(deaths_history, deaths_months),
         },
-        "world_bank_years": {"population": population_year, "gdp": gdp_year},
-        "conflict_deaths_months": benchmarks.describe_months(deaths_months),
     }
 
 
@@ -91,7 +89,6 @@ def site_data():
         "benchmark_figures": figures_by_benchmark,
         "days": daily_mentions_by_outlet,
         "months": cached_past_months(),
-        "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         # For "Data updated 2 hours ago", worked out in the browser.
         "last_fetched": last_fetched.isoformat(timespec="seconds") if last_fetched else None,
     }

@@ -213,11 +213,6 @@ def describe_conflict_deaths_months_for():
         assert months == months_between("2025-09", "2026-08")
 
 
-def describe_describe_months():
-    def test_names_the_first_and_last_month():
-        assert benchmarks.describe_months(months_between("2025-09", "2026-08")) == "Sep 2025–Aug 2026"
-
-
 def describe_fetch_benchmarks():
     """Tests for the command that refreshes the cache"""
 
@@ -238,7 +233,6 @@ def describe_fetch_benchmarks():
             "countries": ["ISR"],
             "months": {"2026-08": {"ISR": 7}},
         }
-        assert benchmarks.load_conflict_deaths_months() == "Aug 2026–Aug 2026"
 
     def test_replaces_an_existing_cache(mocker):
         cache_history("population", {"2020": {"ISR": 1}})
@@ -285,5 +279,4 @@ def describe_fetch_benchmarks():
         get = mocker.patch.object(benchmarks.requests, "get")
 
         assert benchmarks.load_figures("population") == {}
-        assert benchmarks.load_conflict_deaths_months() is None
         get.assert_not_called()
