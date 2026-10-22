@@ -15,13 +15,12 @@ make web
 
 Then open `http://localhost:$PORT/`.
 
-The GDELT days fetched so far live on the `gdelt-data` branch, which holds only
-data. Check it out at `var/gdelt`, where the site reads them:
+To get the data, and again later to update it:
 
 ```bash
-git fetch origin gdelt-data
-git worktree add var/gdelt gdelt-data
+make data
 ```
 
-The deploy fetches any day that's missing and pushes it there; `git pull` in
-`var/gdelt` brings the new days in.
+The GDELT days live on the `gdelt-data` branch, which holds only data and is
+checked out at `var/gdelt`; the deploy fetches any day that's missing and pushes
+it there. The benchmarks are fetched fresh each time.

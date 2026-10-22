@@ -26,10 +26,21 @@ web: .venv $(migrations)
 	poetry run python manage.py migrate
 	poetry run python manage.py runserver 0.0.0.0:$$PORT
 
+# The GDELT days live on the gdelt-data branch, checked out at var/gdelt; the
+# benchmarks are small enough to refetch each time.
+data: .venv
+	if [[ -e var/gdelt/.git ]]; then
+		git -C var/gdelt pull --quiet --rebase --autostash
+	else
+		git fetch origin gdelt-data
+		git worktree add var/gdelt gdelt-data
+	fi
+	poetry run python manage.py fetch_benchmarks
+
 ci:
 	poetry run pre-commit run --show-diff-on-failure --color=always --all-files
 
 test:
 	poetry run pytest -ra -q --disable-warnings --tb=long
 
-.PHONY: clean web ci test
+.PHONY: clean web data ci test
