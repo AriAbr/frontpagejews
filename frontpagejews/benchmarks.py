@@ -128,6 +128,12 @@ def latest_figures(benchmark, history):
     return history[max(history)]
 
 
+def world_bank_year_for(history, year):
+    """The year of a population or GDP history to use for a year ("YYYY"): that
+    year, or the newest the World Bank has, if it has none that recent."""
+    return min(year, max(history))
+
+
 def conflict_deaths_months_for(history, month):
     """The `MONTHS_SUMMED` months a month's conflict deaths are summed over: the
     ones up to and including it, or UCDP's newest, if it has no data for the
@@ -201,6 +207,16 @@ def load_figures(benchmark):
     """The benchmark's figures today by ISO3, from the cache, or an empty dict
     if they have not been fetched."""
     return latest_figures(benchmark, load_history(benchmark))
+
+
+def load_latest_world_bank_years():
+    """Map benchmark -> the year today's population or GDP are from, or None if
+    it has not been fetched."""
+    years = {}
+    for benchmark in WORLD_BANK_INDICATORS:
+        history = load_history(benchmark)
+        years[benchmark] = max(history) if history else None
+    return years
 
 
 def load_conflict_deaths_months():

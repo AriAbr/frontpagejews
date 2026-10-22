@@ -185,6 +185,16 @@ def describe_latest_figures():
         assert benchmarks.latest_figures("population", {}) == {}
 
 
+def describe_world_bank_year_for():
+    """Tests for which year's population or GDP a year uses"""
+
+    def test_is_the_year_itself():
+        assert benchmarks.world_bank_year_for({"2024": {}, "2025": {}}, "2024") == "2024"
+
+    def test_is_the_newest_for_a_year_the_world_bank_has_none_for():
+        assert benchmarks.world_bank_year_for({"2024": {}, "2025": {}}, "2026") == "2025"
+
+
 def describe_conflict_deaths_months_for():
     """Tests for which months a month's conflict deaths are summed over"""
 
