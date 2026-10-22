@@ -5,7 +5,7 @@
 // the coverage lines always look the same. A benchmark share above the axis
 // gets no line, which would read as a value on the axis: it is written inside
 // the top of the chart instead ("▲ China GDP: 23.6%, above the chart").
-import { ANIMATION, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
+import { ANIMATION, COLORS, hideTooltipOnPressElsewhere, noDataNoteElement } from "./chart-common.js";
 import { MIN_MENTIONS_PER_DAY } from "./chart-data.js";
 import { multiple, percent } from "./formats.js";
 
@@ -239,7 +239,7 @@ function noDataBands(rows) {
       ctx.restore();
     },
     afterDatasetsDraw({ canvas, ctx, chartArea, scales: { x } }) {
-      notes ??= runs.map(run => noDataNoteElement(canvas, explainDayRangeWithoutData(rows, run)));
+      notes ??= runs.map(run => noDataNoteElement(canvas.parentElement, explainDayRangeWithoutData(rows, run)));
       const middle = chartArea.top + chartArea.height / 2;
       runs.forEach((run, i) => {
         const { left, right } = bandEdges(x, chartArea, run);
@@ -268,44 +268,9 @@ function noDataBands(rows) {
   };
 }
 
-// A "No data ⓘ" button over the chart, whose explanation shows while it's
-// hovered or focused: tapping it focuses it on a phone, and tapping elsewhere
-// hides it again.
-// Room between a note's explanation and the window's edge, as for tooltips.
-const WINDOW_GAP = 12;
-
-function noDataNoteElement(canvas, explanation) {
-  const note = document.createElement("div");
-  note.className = "no-data-note";
-  const button = document.createElement("button");
-  button.type = "button";
-  button.innerHTML =
-    'No data <svg class="info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.75v.5"/></svg>';
-  const popover = document.createElement("div");
-  popover.className = "explanation";
-  popover.id = `no-data-${crypto.randomUUID()}`;
-  popover.setAttribute("role", "tooltip");
-  popover.textContent = explanation;
-  button.setAttribute("aria-describedby", popover.id);
-  note.append(button, popover);
-  // Shifted sideways as it opens, if it would run off the window: on a
-  // phone, a note near the plot's edge would otherwise push it off.
-  const keepInWindow = () => {
-    popover.style.marginLeft = "";
-    const { left, right } = popover.getBoundingClientRect();
-    const windowWidth = document.documentElement.clientWidth;
-    const shift = Math.max(WINDOW_GAP - left, 0) - Math.max(right - (windowWidth - WINDOW_GAP), 0);
-    popover.style.marginLeft = `${shift}px`;
-  };
-  note.addEventListener("mouseenter", keepInWindow);
-  note.addEventListener("focusin", keepInWindow);
-  canvas.after(note);
-  return note;
-}
-
 // Why a run of days has no coverage to show, for its "No data" note. No dates:
 // the note sits on them.
-function explainDayRangeWithoutData(rows, { firstDay, lastDay }) {
+export function explainDayRangeWithoutData(rows, { firstDay, lastDay }) {
   const gdeltMissing = rows.slice(firstDay, lastDay + 1).every(row => !row.gdeltHasDay);
   if (gdeltMissing) {
     return "GDELT, the database these article counts come from, had an outage and has no articles from any outlet for these days.";

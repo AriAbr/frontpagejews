@@ -317,6 +317,9 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .no-data-note[data-side="right"] .explanation { left: 0; transform: none; }
 .no-data-note[data-side="left"] .explanation { left: auto; right: 0; transform: none; }
 .no-data-note:hover .explanation, .no-data-note:focus-within .explanation { display: block; }
+/* The scatter's plot, for a period without data: shaded as the line chart
+   shades its days without data, placed by the script, with the note on it. */
+.scatter-without-data { position: absolute; background: color-mix(in srgb, var(--border) 25%, transparent); }
 /* A note under the whole tooltip, set apart from the lines above it. */
 .chart-tooltip .footer { margin-top: 4px; color: var(--muted); }
 /* The caret pointing at the point: a square with two of its borders, turned

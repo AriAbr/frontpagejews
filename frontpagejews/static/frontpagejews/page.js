@@ -15,7 +15,7 @@ import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { withBenchmarkLinked } from "./definitions.js";
 import { describePeriod, timeAgo } from "./formats.js";
 import { drawHeadline } from "./headline.js";
-import { drawLineChart } from "./line-chart.js";
+import { drawLineChart, explainDayRangeWithoutData } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
 import { drawSummaryBar } from "./summary-bar.js";
 
@@ -63,13 +63,13 @@ drawSummaryBar({
 
 if (data.days.length) {
   document.getElementById("charts").classList.remove("loading");
-  drawLineChart({
-    rows: lineChartRows(data, selectedOutlets, comparison.code, benchmark),
-    benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
-    focus,
-    comparison,
-  });
-  const points = scatterPoints(data, selectedOutlets, benchmark);
+  const rows = lineChartRows(data, selectedOutlets, comparison.code, benchmark);
+  drawLineChart({ rows, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison });
+  // A period without a single day of data, like the NY Post alone in 2021,
+  // has no shares to plot: the scatter is drawn empty, saying why, as the
+  // line chart does over its days.
+  const periodHasData = rows.some(row => row.focusMentionsPercentage !== null);
+  const points = periodHasData ? scatterPoints(data, selectedOutlets, benchmark) : [];
   drawHeadline({ points, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison });
   drawScatter({
     points,
@@ -78,6 +78,7 @@ if (data.days.length) {
     period,
     focus,
     comparison,
+    noDataExplanation: periodHasData ? null : explainDayRangeWithoutData(rows, { firstDay: 0, lastDay: rows.length - 1 }),
   });
 } else {
   document.getElementById("charts").hidden = true;
