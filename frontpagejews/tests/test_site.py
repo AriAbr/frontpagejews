@@ -25,7 +25,9 @@ def cache_day(day, mentions_by_domain):
         domain: {"articles": 1, "countries": mentions}
         for domain, mentions in mentions_by_domain.items()
     }
-    gdelt.cache_path(date.fromisoformat(day)).write_text(json.dumps({"date": day, "domains": domains}))
+    path = gdelt.cache_path(date.fromisoformat(day))
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({"date": day, "domains": domains}))
 
 
 def set_fetch_time(day, fetched_at):

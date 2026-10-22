@@ -190,7 +190,7 @@ def describe_fetch_day():
     def _cache_dir(settings, tmp_path):
         settings.GDELT_CACHE_DIR = tmp_path
 
-    def test_caches_the_summary_and_reuses_it(mocker):
+    def test_caches_the_summary_and_reuses_it(mocker, settings):
         fetch = mocker.patch.object(
             gdelt, "fetch_gkg", return_value=gkg_line("bbc.co.uk", "https://bbc.co.uk/1", TEL_AVIV)
         )
@@ -203,6 +203,10 @@ def describe_fetch_day():
         assert fetch.call_count == gdelt.RAW_GDELT_FILES_PER_DAY
         assert first["files"] == gdelt.RAW_GDELT_FILES_PER_DAY
         assert gdelt.cached_days() == [day]
+        assert (
+            gdelt.cache_path(day).relative_to(settings.GDELT_CACHE_DIR).as_posix()
+            == "2026/2026-09-22.json"
+        )
 
     def test_tolerates_missing_files(mocker):
         mocker.patch.object(gdelt, "fetch_gkg", return_value=None)
