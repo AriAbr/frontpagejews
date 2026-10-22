@@ -39,10 +39,12 @@ class Command(BaseCommand):
         if start > end:
             raise CommandError(f"--start {start} is after --end {end}")
 
+        # Counted rather than listed: the deploy checks every day since 2015.
+        days_already_cached = 0
         for offset in range((end - start).days + 1):
             day = start + timedelta(days=offset)
             if not refresh and gdelt.load_day(day) is not None:
-                self.stdout.write(f"{day}: cached")
+                days_already_cached += 1
                 continue
             summary = gdelt.fetch_day(day, refresh=refresh)
             articles = sum(d["articles"] for d in summary["domains"].values())
@@ -50,3 +52,4 @@ class Command(BaseCommand):
                 f"{day}: {articles} articles from {len(summary['domains'])} domains "
                 f"({summary['files']}/{summary['files_expected']} files)"
             )
+        self.stdout.write(f"{days_already_cached} days already cached")
