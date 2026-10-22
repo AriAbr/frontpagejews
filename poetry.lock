@@ -478,6 +478,20 @@ pytest = ">=6.2.5"
 dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
+name = "pytest-socket"
+version = "0.8.1"
+description = "Pytest Plugin to disable socket calls during tests"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "pytest_socket-0.8.1-py3-none-any.whl", hash = "sha256:f9846bed1dcd96eed459e5e14795bbaf96715cf4e827891fe70773817ecb8ed4"},
+    {file = "pytest_socket-0.8.1.tar.gz", hash = "sha256:2f57787914ad2e1308d09ce141b95c3e55741fbb4fb7b7556593a6b063e0c9c7"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[[package]]
 name = "pytest-spec"
 version = "3.2.0"
 description = "Library pytest-spec is a pytest plugin to display test execution output like a SPECIFICATION."
@@ -759,4 +773,4 @@ python-discovery = ">=1.6"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "f111a1179f2c65e04a827417f9b86d22e257f1a1a5861f7e65df8f17ea569e92"
+content-hash = "934b823684a67d58ac186cebf75d498402a74b2c8c83a6afda892a6e1073542e"
