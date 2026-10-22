@@ -94,17 +94,33 @@ export function withComposite(data, weights) {
   return { ...data, benchmark_figures: { ...data.benchmark_figures, composite } };
 }
 
+// Fewer mentions than this from the selected outlets in a day, and the day's
+// shares are left out as if it had none. A share out of a handful of mentions
+// says nothing: in February 2019, GDELT has an article a day from ABC on some
+// days and none on the rest. Normal days have far more, even CBS's and NPR's
+// quiet ones (20 or more).
+export const MIN_MENTIONS_PER_DAY = 10;
+
 // One row per day: both countries' share of mentions that day, and of the
 // world's total for the benchmark.
 export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) {
   const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
   return data.days.map(day => {
-    const mentionsPercentages = percentagesOfTotal(mentionsByCountry([day], selectedOutlets));
+    const mentions = mentionsByCountry([day], selectedOutlets);
+    const mentionsPercentages = percentagesOfTotal(mentions);
+    // A day with (almost) no mentions from the selected outlets has no shares
+    // at all, rather than 0% for everyone: GDELT has no data for it (June 15
+    // to July 1, 2025), or next to none from these outlets. Null, so the line
+    // breaks there rather than falling to 0.
+    const hasMentions = sum(Object.values(mentions)) >= MIN_MENTIONS_PER_DAY;
     return {
       date: day.date,
-      focusMentionsPercentage: mentionsPercentages[data.focus] ?? 0,
+      // Whether GDELT has the day at all, from any outlet, which tells an
+      // outage on its side from a day the selected outlets were missing.
+      gdeltHasDay: Object.values(day.mentions).some(counts => Object.keys(counts).length > 0),
+      focusMentionsPercentage: hasMentions ? (mentionsPercentages[data.focus] ?? 0) : null,
       focusBenchmarkPercentage: benchmarkPercentages[data.focus] ?? null,
-      comparisonMentionsPercentage: mentionsPercentages[comparisonCode] ?? 0,
+      comparisonMentionsPercentage: hasMentions ? (mentionsPercentages[comparisonCode] ?? 0) : null,
       comparisonBenchmarkPercentage: benchmarkPercentages[comparisonCode] ?? null,
     };
   });
