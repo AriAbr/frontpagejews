@@ -187,7 +187,9 @@ def build_day(day, workers=8):
 
 
 def cache_path(day):
-    return settings.GDELT_CACHE_DIR / f"{day.isoformat()}.json"
+    """A folder per year, so each stays under the 1,000 files GitHub lists in
+    one: var/gdelt/2024/2024-03-01.json."""
+    return settings.GDELT_CACHE_DIR / str(day.year) / f"{day.isoformat()}.json"
 
 
 def load_day(day):
@@ -218,14 +220,14 @@ def cached_days():
     directory = settings.GDELT_CACHE_DIR
     if not directory.exists():
         return []
-    return sorted(date.fromisoformat(path.stem) for path in directory.glob("*.json"))
+    return sorted(date.fromisoformat(path.stem) for path in directory.glob("*/*.json"))
 
 
 def last_fetched():
     """When a day was last fetched: the newest cache file's modification time,
     or None if nothing is cached."""
     directory = settings.GDELT_CACHE_DIR
-    times = [path.stat().st_mtime for path in directory.glob("*.json")] if directory.exists() else []
+    times = [path.stat().st_mtime for path in directory.glob("*/*.json")] if directory.exists() else []
     if not times:
         return None
     return datetime.fromtimestamp(max(times), UTC)
