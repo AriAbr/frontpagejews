@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { describePeriod, timeAgo } from "../../static/frontpagejews/formats.js";
+import { compactAxisLabel, describePeriod, timeAgo } from "../../static/frontpagejews/formats.js";
 
 describe("describePeriod", () => {
   test("names the month picked", () => {
@@ -11,6 +11,16 @@ describe("describePeriod", () => {
 
   test("says how many days back with no month picked", () => {
     assert.equal(describePeriod(null, 30), "last 30 days");
+  });
+});
+
+describe("compactAxisLabel", () => {
+  test("keeps axis labels past 100K apart", () => {
+    assert.deepEqual([110e3, 115e3, 120e3, 125e3].map(compactAxisLabel), ["110K", "115K", "120K", "125K"]);
+  });
+
+  test("labels below 100K as before", () => {
+    assert.deepEqual([5e3, 95e3].map(compactAxisLabel), ["5K", "95K"]);
   });
 });
 

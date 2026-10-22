@@ -11,6 +11,10 @@ export function percent(fraction) {
 // 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".
 export const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 2 }).format;
 
+// The same with a third digit, for axis labels past 100K, which two would
+// round together: 115K → "115K", not "120K".
+export const compactAxisLabel = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 3 }).format;
+
 // A share of coverage over a share of the benchmark, to two significant
 // figures: "6.7×", "0.42×", "15×".
 const twoFigures = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 2 }).format;
