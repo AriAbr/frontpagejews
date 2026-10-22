@@ -31,6 +31,7 @@ def page_context():
         "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
+        "world_bank_years": benchmarks.load_latest_world_bank_years(),
         "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
         "sentry_dsn": settings.SENTRY_DSN,

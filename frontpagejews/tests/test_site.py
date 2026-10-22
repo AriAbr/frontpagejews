@@ -110,6 +110,8 @@ def describe_month_data():
         cache_day("2024-03-01", {"bbc.co.uk": {"ISR": 2}})
         cache_day("2024-03-31", {"bbc.co.uk": {"ISR": 3}})
         cache_day("2024-04-01", {"bbc.co.uk": {"ISR": 4}})
+        cache_history("population", {"2024": {}})
+        cache_history("gdp", {"2024": {}})
         cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
 
         days = site_data.month_site_data("2024-03")["days"]
@@ -124,6 +126,8 @@ def describe_month_data():
         months["2023-10"] = {"ISR": 7}
         months["2024-03"] = {"ISR": 2}
         months["2024-04"] = {"ISR": 1000}
+        cache_history("population", {"2024": {}})
+        cache_history("gdp", {"2024": {}})
         cache_history("conflict_deaths", {"countries": ["ISR", "UKR"], "months": months})
 
         month_data = site_data.month_site_data("2024-03")
@@ -131,14 +135,27 @@ def describe_month_data():
         assert month_data["benchmark_figures"]["conflict_deaths"] == {"ISR": 9, "UKR": 0}
         assert month_data["conflict_deaths_months"] == "Apr 2023–Mar 2024"
 
-    def test_gives_todays_population_and_gdp():
-        """Until their history is used too"""
+    def test_gives_the_population_and_gdp_of_the_months_year():
         cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
+        cache_history("gdp", {"2024": {"ISR": 500}, "2025": {"ISR": 520}})
         cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
 
         month_data = site_data.month_site_data("2024-03")
 
+        assert month_data["benchmark_figures"]["population"] == {"ISR": 9}
+        assert month_data["benchmark_figures"]["gdp"] == {"ISR": 500}
+        assert month_data["world_bank_years"] == {"population": "2024", "gdp": "2024"}
+
+    def test_gives_the_newest_population_and_gdp_for_a_year_the_world_bank_has_none_for():
+        """It publishes a year's figures the summer after"""
+        cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
+        cache_history("gdp", {"2024": {"ISR": 500}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2026-03": {}}})
+
+        month_data = site_data.month_site_data("2026-03")
+
         assert month_data["benchmark_figures"]["population"] == {"ISR": 10}
+        assert month_data["world_bank_years"] == {"population": "2025", "gdp": "2024"}
 
 
 def describe_dashboard():
@@ -169,6 +186,15 @@ def describe_dashboard():
 
         assert ">Aug 2025–Jul 2026</span>)." in client.get("/").content.decode()
 
+    def test_names_the_year_of_todays_population_and_gdp(client):
+        cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
+        cache_history("gdp", {"2024": {"ISR": 500}})
+
+        page = client.get("/").content.decode()
+
+        assert '<span class="population-year">2025</span>' in page
+        assert '<span class="gdp-year">2024</span>' in page
+
     def test_serves_the_data(client):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
 
@@ -178,6 +204,8 @@ def describe_dashboard():
 
     def test_serves_a_months_data(client):
         cache_day("2024-03-05", {"bbc.co.uk": {"ISR": 1}})
+        cache_history("population", {"2024": {}})
+        cache_history("gdp", {"2024": {}})
         cache_history("conflict_deaths", {"countries": [], "months": {"2024-03": {}}})
 
         response = client.get("/months/2024-03.json")
@@ -190,6 +218,8 @@ def describe_build_site():
 
     def test_writes_the_page_the_data_and_the_scripts(tmp_path):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+        cache_history("population", {"2026": {}})
+        cache_history("gdp", {"2026": {}})
         cache_history("conflict_deaths", {"countries": [], "months": {"2026-09": {}}})
         out = tmp_path / "build"
 
