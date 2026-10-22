@@ -301,11 +301,27 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart-tooltip .group-footer { padding-left: 22px; }
 /* The caret pointing at the point: a square with two of its borders, turned
    so their corner sticks out of the tooltip's left edge, or its right where
-   the tooltip is to the point's left. --caret-y is set by the script. */
-.chart-tooltip::before { content: ""; position: absolute; top: calc(var(--caret-y, 50%) - 4.5px); left: -5.5px;
+   the tooltip is to the point's left, or its bottom or top where the tooltip
+   is above or below it. --caret-y and --caret-x are set by the script, from
+   the tooltip's outer edge: the square is 10px across with its borders, and
+   placed from inside the tooltip's 1px border, so 6px back centers it. */
+.chart-tooltip::before { content: ""; position: absolute; top: calc(var(--caret-y, 50%) - 6px); left: -5.5px;
                          width: 8px; height: 8px; background: var(--bg); border: 1px solid var(--border);
                          border-width: 0 0 1px 1px; transform: rotate(45deg); }
 .chart-tooltip.caret-right::before { left: auto; right: -5.5px; border-width: 1px 1px 0 0; }
+.chart-tooltip.caret-below::before { top: auto; bottom: -5.5px; left: calc(var(--caret-x, 50%) - 6px); border-width: 0 1px 1px 0; }
+.chart-tooltip.caret-above::before { top: -5.5px; left: calc(var(--caret-x, 50%) - 6px); border-width: 1px 0 0 1px; }
+/* The line down the line chart's hovered day, behind its canvas: the muted
+   text color, faded, so it stands out from the grid lines without competing
+   with the chart's own lines. It fades and glides like the tooltip. */
+.day-line { position: absolute; left: 0; width: 1px; background: var(--muted); pointer-events: none;
+            opacity: 0; transition: opacity 0.15s; }
+.day-line.shown { opacity: 0.4; }
+.day-line.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .day-line, .day-line.gliding { transition: none; } }
+#line-chart { position: relative; }
+/* None for a day's tooltip, which the line down the day ties to its place. */
+.chart-tooltip.no-caret::before { display: none; }
 .chart-tooltip .swatch { display: inline-block; width: 16px; border-top: 2px solid; margin-right: 6px; vertical-align: 0.3em; }
 .empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
 code { font-size: 0.9em; }

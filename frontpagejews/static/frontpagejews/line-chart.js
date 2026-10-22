@@ -75,7 +75,7 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
   const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: { labels: rows.map(row => row.date), datasets },
-    plugins: [aboveAxisNotes(aboveAxis)],
+    plugins: [aboveAxisNotes(aboveAxis), hoveredDayLine],
     options: {
       animation: ANIMATION,
       maintainAspectRatio: false,
@@ -105,6 +105,9 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
         // dataset's dash. (Point-style legends ignore the dash.)
         legend: { labels: { boxWidth: 32, boxHeight: 0 } },
         tooltip: {
+          // At the top, beside the line down the hovered day. See drawTooltip
+          // in chart-common.js.
+          atTopBesideDay: true,
           // Each country's benchmark before its coverage, as in the scatter's
           // tooltip; the countries stay in the datasets' order.
           itemSort(a, b) {
@@ -156,3 +159,31 @@ function aboveAxisNotes(notes) {
     },
   };
 }
+
+// A Chart.js plugin putting a line down the hovered day, which ties the
+// tooltip at the top to its day. An element behind the canvas rather than
+// drawn on it, so it fades and glides with the tooltip, by the same CSS, and
+// sits under the lines.
+const hoveredDayLine = {
+  id: "hoveredDayLine",
+  afterDraw({ canvas, chartArea, tooltip }) {
+    let dayLine = canvas.parentElement.querySelector(".day-line");
+    if (!dayLine) {
+      dayLine = document.createElement("div");
+      dayLine.className = "day-line";
+      canvas.before(dayLine);
+    }
+    const hovered = tooltip.getActiveElements()[0];
+    if (!hovered || tooltip.opacity === 0) {
+      dayLine.classList.remove("shown");
+      return;
+    }
+    dayLine.style.top = `${chartArea.top}px`;
+    dayLine.style.height = `${chartArea.bottom - chartArea.top}px`;
+    // It glides from one day to the next, but where it was hidden, it fades
+    // in at the new day, as the tooltip does.
+    dayLine.classList.toggle("gliding", dayLine.classList.contains("shown"));
+    dayLine.classList.add("shown");
+    dayLine.style.transform = `translateX(${Math.round(hovered.element.x)}px)`;
+  },
+};

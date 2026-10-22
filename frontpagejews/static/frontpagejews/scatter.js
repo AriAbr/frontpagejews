@@ -132,6 +132,9 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
           filter: item => item.raw.name,
           // One country, whose dot is right there: a color swatch adds nothing.
           displayColors: false,
+          // Above or below the dot where there's no room beside it, rather than
+          // over it. See drawTooltip in chart-common.js.
+          aboveOrBelowIfNoRoomBeside: true,
           callbacks: {
             title: items => items[0].raw.name,
             label: ({ raw: { mentions, mentionsPercentage, benchmarkFigure, benchmarkPercentage } }) => {
