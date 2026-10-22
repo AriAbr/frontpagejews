@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 from django.views.generic import TemplateView
 
-from frontpagejews import benchmarks
 from frontpagejews.countries import country_name
 from frontpagejews.news_coverage import DAYS_SHOWN, OUTLETS
 from frontpagejews.site_data import FOCUS, month_site_data, site_data
@@ -31,8 +30,6 @@ def page_context():
         "focus_name": focus_name,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
-        "world_bank_years": benchmarks.load_latest_world_bank_years(),
-        "conflict_deaths_months": benchmarks.load_conflict_deaths_months(),
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
         "sentry_dsn": settings.SENTRY_DSN,
         # Brevo's "frontpagejews signup" form. Brevo emails each address a

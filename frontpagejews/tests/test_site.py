@@ -131,7 +131,6 @@ def describe_month_data():
         month_data = site_data.month_site_data("2024-03")
 
         assert month_data["benchmark_figures"]["conflict_deaths"] == {"ISR": 9, "UKR": 0}
-        assert month_data["conflict_deaths_months"] == "Apr 2023–Mar 2024"
 
     def test_gives_the_population_and_gdp_of_the_months_year():
         cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
@@ -142,7 +141,6 @@ def describe_month_data():
 
         assert month_data["benchmark_figures"]["population"] == {"ISR": 9}
         assert month_data["benchmark_figures"]["gdp"] == {"ISR": 500}
-        assert month_data["world_bank_years"] == {"population": "2024", "gdp": "2024"}
 
     def test_gives_the_newest_population_and_gdp_for_a_year_the_world_bank_has_none_for():
         """It publishes a year's figures the summer after"""
@@ -153,7 +151,7 @@ def describe_month_data():
         month_data = site_data.month_site_data("2026-03")
 
         assert month_data["benchmark_figures"]["population"] == {"ISR": 10}
-        assert month_data["world_bank_years"] == {"population": "2025", "gdp": "2024"}
+        assert month_data["benchmark_figures"]["gdp"] == {"ISR": 500}
 
 
 def describe_dashboard():
@@ -175,23 +173,6 @@ def describe_dashboard():
         settings.GA_MEASUREMENT_ID = ""
 
         assert b"googletagmanager" not in client.get("/").content
-
-    def test_names_the_months_the_conflict_deaths_cover(client):
-        months = benchmarks.ucdp.months_between("2025-08", "2026-07")
-        cache_history(
-            "conflict_deaths", {"countries": ["ISR"], "months": {month: {} for month in months}}
-        )
-
-        assert ">Aug 2025–Jul 2026</span>)." in client.get("/").content.decode()
-
-    def test_names_the_year_of_todays_population_and_gdp(client):
-        cache_history("population", {"2024": {"ISR": 9}, "2025": {"ISR": 10}})
-        cache_history("gdp", {"2024": {"ISR": 500}})
-
-        page = client.get("/").content.decode()
-
-        assert '<span class="population-year">2025</span>' in page
-        assert '<span class="gdp-year">2024</span>' in page
 
     def test_serves_the_data(client):
         cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})

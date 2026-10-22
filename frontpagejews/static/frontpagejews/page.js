@@ -20,6 +20,9 @@ import { drawScatter } from "./scatter.js";
 import { drawSummaryBar } from "./summary-bar.js";
 
 const siteData = await fetchJson("data.json");
+// The charts are drawn once, onto canvases, so their text is in whatever font
+// has loaded by then: wait for Noto Sans.
+await document.fonts.ready;
 // A picked month's days take the place of the last days.
 const { month } = choicesFromUrl(location.search, siteData);
 const allData = month ? { ...siteData, ...(await fetchJson(`months/${month}.json`)) } : siteData;
@@ -37,10 +40,6 @@ fillBenchmarkSpans(".benchmark-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].sha
 // The page says "last 30 days" until a month is picked.
 if (month) {
   for (const span of document.querySelectorAll(".period")) span.textContent = period;
-  for (const span of document.querySelectorAll(".conflict-deaths-months")) span.textContent = data.conflict_deaths_months;
-  for (const [worldBankBenchmark, year] of Object.entries(data.world_bank_years)) {
-    for (const span of document.querySelectorAll(`.${worldBankBenchmark}-year`)) span.textContent = year;
-  }
 }
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({

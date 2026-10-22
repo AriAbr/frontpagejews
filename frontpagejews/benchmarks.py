@@ -11,7 +11,7 @@ population and GDP per year, deaths per month.
 """
 
 import json
-from datetime import date, datetime
+from datetime import date
 
 import requests
 from django.conf import settings
@@ -143,14 +143,6 @@ def conflict_deaths_months_for(history, month):
     return months[max(0, end - MONTHS_SUMMED + 1) : end + 1]
 
 
-def describe_months(months):
-    """["2025-09", ..., "2026-08"] -> "Sep 2025–Aug 2026"."""
-    first, last = (
-        datetime.strptime(month, "%Y-%m").strftime("%b %Y") for month in (months[0], months[-1])
-    )
-    return f"{first}–{last}"
-
-
 def conflict_deaths_over(history, months):
     """Map ISO3 -> deaths over the given months, 0 for a country with none."""
     deaths = dict.fromkeys(history["countries"], 0)
@@ -207,22 +199,3 @@ def load_figures(benchmark):
     """The benchmark's figures today by ISO3, from the cache, or an empty dict
     if they have not been fetched."""
     return latest_figures(benchmark, load_history(benchmark))
-
-
-def load_latest_world_bank_years():
-    """Map benchmark -> the year today's population or GDP are from, or None if
-    it has not been fetched."""
-    years = {}
-    for benchmark in WORLD_BANK_INDICATORS:
-        history = load_history(benchmark)
-        years[benchmark] = max(history) if history else None
-    return years
-
-
-def load_conflict_deaths_months():
-    """Which months today's conflict deaths cover, as "Sep 2025–Aug 2026", or
-    None if they have not been fetched."""
-    history = load_history("conflict_deaths")
-    if not history:
-        return None
-    return describe_months(conflict_deaths_months_for(history, list(history["months"])[-1]))

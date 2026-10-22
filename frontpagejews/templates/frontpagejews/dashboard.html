@@ -11,7 +11,7 @@
     <meta property="og:url" content="{{ url }}" />
     <meta property="og:title" content="{{ title }}" />
     <meta property="og:description" content="{{ subtitle }}" />
-    {# og-image.png is drawn from og-image.svg by Chrome, which sets the text as the page does. In the static folder: google-chrome --headless --hide-scrollbars --window-size=1200,800 --screenshot=og-image.png og-image.svg && convert og-image.png -crop 1200x630+0+0 +repage og-image.png (the window is taller than the image, since the browser's frame takes some of it). #}
+    {# og-image.png is drawn from og-image.svg by Chrome, which sets the text in Noto Sans. In the static folder: google-chrome --headless --hide-scrollbars --window-size=1200,800 --screenshot=og-image.png og-image.svg && convert og-image.png -crop 1200x630+0+0 +repage og-image.png (the window is taller than the image, since the browser's frame takes some of it). #}
     <meta property="og:image" content="{{ preview_image_url }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -45,6 +45,11 @@
       gtag("config", "{{ ga_measurement_id }}");
       </script>
     {% endif %}
+    {# Noto Sans for the page, and Source Serif for the About and Methodology sections. Loaded rather than left to the system, so every device shows the same. #}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Source+Serif+4:ital,wght@0,400;0,700;1,400&display=swap" />
   </head>
   <body>
     <main>
@@ -60,7 +65,7 @@
           </h1>
           <p class="subtitle">{{ subtitle }}</p>
           <p class="byline">
-            A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#methodology">How this works</a>
+            A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#about">How this works</a>
             {# The script fills in how long ago and shows it, once the data has loaded. #}
             <span id="last-fetched" hidden><span class="separator">·</span> Data updated <time id="last-fetched-time"></time></span>
           </p>
@@ -227,8 +232,8 @@
       <div class="empty" id="no-data" hidden>
         No data cached yet. Run <code>python manage.py fetch_gdelt</code>.
       </div>
-      <section class="methodology" id="methodology">
-        <h2>Methodology</h2>
+      <section class="about" id="about">
+        <h2>About</h2>
         <figure class="epigraph">
           <blockquote>
             <p>
@@ -240,16 +245,22 @@
           </figcaption>
         </figure>
         <p class="lede">
-          Front Page Jews aims to quantify whether and to what degree Israel, the Jewish state, is over-represented in major news outlets relative to its real-world significance. To do that, it sets each country's share of coverage against the same benchmark: an equally weighted composite score based on its population, GDP and conflict-related deaths. Each metric can also be viewed on its own.
+          Front Page Jews aims to quantify whether and to what degree Israel, the Jewish state, is over-represented in major news outlets relative to its real-world significance. To do that, it sets each country's share of coverage against the same benchmark: an equally weighted composite score based on its population, GDP and recent conflict-related deaths. Each metric can also be viewed on its own.
         </p>
         <p class="lede">
-          This formula is not meant to be perfect. It does not follow events in real time, and it does not account for the many other reasons a country's share of coverage might differ from what its score would predict, such as ties to an outlet's home country, religious or historical significance to the outlet's readers, or simply being safer or more accessible for reporters.
+          This formula is not meant to be perfect. It does not follow events in real time, and it does not account for other reasons a country's share of coverage might differ from what its score would predict, such as ties to an outlet's home country, religious or historical significance to the outlet's readers, or simply being safer or more accessible for reporters.
         </p>
         <p class="lede">
-          This site measures the gap. It does not try to explain it. But when a country's share of news coverage consistently and significantly deviates from the benchmark, it is worth asking why.
+          This site presents the data. It does not try to explain it. But when a country's share of news coverage consistently and significantly deviates from the benchmark, it is worth asking why.
+        </p>
+      </section>
+      <section class="methodology" id="methodology">
+        <h2>Methodology</h2>
+        <p>
+          The US and UK are left out of every metric: the outlets are American and British, so their domestic coverage would skew the results.
         </p>
         <p>
-          The US and UK are left out of every chart and every total: the outlets are American and British, so most of their mentions of those two are home news, not foreign coverage.
+          Coverage data comes from the <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener">GDELT Project</a>, which monitors news outlets worldwide. The outlets here were chosen based on how much data GDELT has for them. Its record has a few gaps, most notably a complete outage from June 15 to July 1, 2025. The line chart shows these gaps as breaks. The scatter plot uses whatever data is available for the period.
         </p>
         <h3>Definitions</h3>
         <dl>
@@ -259,34 +270,30 @@
           </dd>
           <dt id="share-of-coverage">Share of coverage</dt>
           <dd>
-            Each article counts once toward the "total mentions" for every country it mentions. A country's share of coverage is the number of articles that mention it, divided by the total mentions. For example, if one article mentions Israel, Jordan and Iran, and another mentions only China, that would be four mentions in all, and each of the four countries would have a 25% share of coverage.
+            <p>
+              Each article counts once toward the "total mentions" for every country it mentions. A country's share of coverage is the number of articles that mention it, divided by the total mentions.
+            </p>
+            <p>
+              For example, if one article mentions Israel, Jordan and Iran, and another mentions only China, that would be four mentions in all, and each of the four countries would have a 25% share of coverage.
+            </p>
           </dd>
           <dt id="composite-score">Composite score</dt>
           <dd>
             The equally weighted average of a country's shares of the total population, GDP and conflict deaths, as a percentage.
           </dd>
+          <dt id="population-and-gdp">Population and GDP</dt>
+          <dd>
+            The World Bank's <a href="https://data.worldbank.org/indicator/SP.POP.TOTL"
+    target="_blank"
+    rel="noopener">population</a> and <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD"
+    target="_blank"
+    rel="noopener">GDP</a> figures for the period shown, or its latest if it has none that recent.
+          </dd>
           <dt id="conflict-deaths">Conflict deaths</dt>
           <dd>
-            Deaths in wars and armed conflicts involving a government, in fighting between armed groups, and in deliberate killings of civilians by either. UCDP's count for the 12 months up to the period shown, or its latest 12 if it does not have data that recent (<span class="conflict-deaths-months">{{ conflict_deaths_months }}</span>).
+            The sum over the 12 months up to and including the period shown, as counted by the <a href="https://ucdp.uu.se/" target="_blank" rel="noopener">Uppsala Conflict Data Program</a> (UCDP), or UCDP's latest 12 months where it does not have recent enough data. The latest months come from UCDP's monthly releases, which it checks and revises later.
           </dd>
         </dl>
-        <h3>Data sources</h3>
-        <p>
-          News coverage: <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener">GDELT</a>, for major English-language outlets it tracks well
-        </p>
-        <p>
-          Population: <a href="https://data.worldbank.org/indicator/SP.POP.TOTL"
-    target="_blank"
-    rel="noopener">World Bank</a>, <span class="population-year">{{ world_bank_years.population }}</span>
-        </p>
-        <p>
-          GDP: <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD"
-    target="_blank"
-    rel="noopener">World Bank</a>, <span class="gdp-year">{{ world_bank_years.gdp }}</span>
-        </p>
-        <p>
-          Conflict deaths: <a href="https://ucdp.uu.se/" target="_blank" rel="noopener">UCDP</a>
-        </p>
       </section>
       <section class="signup" id="signup">
         {% include "frontpagejews/signup_form.html" %}
