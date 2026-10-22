@@ -115,6 +115,11 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
             return Boolean(b.dataset.isBenchmark) - Boolean(a.dataset.isBenchmark);
           },
           callbacks: {
+            // "June 14, 2023" rather than "2023-06-14", with the month in full as elsewhere on the page.
+            title: items => {
+              const date = new Date(`${items[0].label}T00:00:00Z`);
+              return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+            },
             // Number first, as in the headline: "6.0% share of coverage". The
             // swatch, not the words, ties the row to its line. Benchmark lines'
             // tooltip labels already give their share.
