@@ -5,12 +5,18 @@
 // chart is made as wide as it needs to be for the dashed line to sit at 45
 // degrees, and scrolls sideways. Most countries sit near the origin, because a
 // few countries are huge and most are small.
-import { ANIMATION, BACKGROUND, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
+import { ANIMATION, BACKGROUND, COLORS, hideTooltipOnPressElsewhere, noDataNoteElement } from "./chart-common.js";
 import { multiple, percent } from "./formats.js";
 
 // Rounded up to this, so the coverage axis ends on a round number.
 const COVERAGE_AXIS_STEP = 0.01;
 const OTHER_COUNTRIES_COLOR = "#a8a29e99";
+// The axes for a period without data, which has no shares to size them by: a
+// usual range, so the empty chart shows what would be there. The benchmark's
+// is a share of its world total, and the chart's width keeps the dashed line
+// at 45 degrees as always.
+const WITHOUT_DATA_COVERAGE_AXIS_MAX = 0.1;
+const WITHOUT_DATA_BENCHMARK_AXIS_SHARE = 0.15;
 
 const roundUp = (n, step) => Math.ceil(n / step) * step;
 // Axis ticks fall on whole percents: 0.05 → "5%".
@@ -21,17 +27,21 @@ const tickPercent = fraction => `${Math.round(fraction * 100)}%`;
 // benchmarkTotal: the benchmark's total, so a figure over it is a share.
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
 // period: the days the mentions cover, as the page names them: "last 30 days", "March 2024".
-export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, period, focus, comparison }) {
-  const coverageAxisMax = roundUp(Math.max(COVERAGE_AXIS_STEP, ...points.map(p => p.mentionsPercentage)), COVERAGE_AXIS_STEP);
+// noDataExplanation: for a period without a single day of data, why. The
+// chart is drawn without dots, so it's clear what would be there, and the
+// plot is shaded with the line chart's "No data ⓘ" note over it.
+export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, period, focus, comparison, noDataExplanation }) {
+  const coverageAxisMax = noDataExplanation
+    ? WITHOUT_DATA_COVERAGE_AXIS_MAX
+    : roundUp(Math.max(COVERAGE_AXIS_STEP, ...points.map(p => p.mentionsPercentage)), COVERAGE_AXIS_STEP);
   // The benchmark's usual end, or past it to the next grid line where a
   // country's figure is larger (Ethiopia's deaths in the Tigray war). The
   // chart's width keeps the dashed line at 45 degrees, so the scale stays the
   // same: the chart just runs further to the right.
   const largestFigure = Math.max(...points.map(p => p.benchmarkFigure));
-  const benchmarkAxisMax = Math.max(
-    benchmarkDisplaySettings.axisMax,
-    roundUp(largestFigure, benchmarkDisplaySettings.axisStep),
-  );
+  const benchmarkAxisMax = noDataExplanation
+    ? roundUp(WITHOUT_DATA_BENCHMARK_AXIS_SHARE * benchmarkTotal, benchmarkDisplaySettings.axisStep)
+    : Math.max(benchmarkDisplaySettings.axisMax, roundUp(largestFigure, benchmarkDisplaySettings.axisStep));
 
   // One group of dots. Each dot keeps its whole point, so the tooltip and
   // clicks can use its name and code; `parsing` says which fields to plot.
@@ -152,7 +162,11 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
         },
       },
     },
-    plugins: [pinnedAxis(document.getElementById("scatter-y-axis")), { id: "offscreen", afterLayout: showOffscreen }],
+    plugins: [
+      pinnedAxis(document.getElementById("scatter-y-axis")),
+      { id: "offscreen", afterLayout: showOffscreen },
+      ...(noDataExplanation ? [shadedWithoutData(scrollArea, noDataExplanation)] : []),
+    ],
   });
   hideTooltipOnPressElsewhere(scatter);
 
@@ -187,6 +201,34 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   // the y-axis beside it shrinks to size), and changes with the window.
   new ResizeObserver(() => showOffscreen(scatter)).observe(scrollArea);
   scrollArea.addEventListener("scroll", () => showOffscreen(scatter), { passive: true });
+}
+
+// A Chart.js plugin shading the plot, as the line chart shades its days
+// without data, with the note over it: in the middle of the part in view,
+// since the plot can be wider than the window. Placed after every layout, as
+// the chart widens itself once it's first drawn.
+function shadedWithoutData(scrollArea, explanation) {
+  let shade;
+  let note;
+  return {
+    id: "shadedWithoutData",
+    afterLayout(scatter) {
+      if (!shade) {
+        shade = document.createElement("div");
+        shade.className = "scatter-without-data";
+        scatter.canvas.parentElement.append(shade);
+        note = noDataNoteElement(shade, explanation);
+        note.dataset.side = "center";
+        note.style.top = "50%";
+      }
+      const { left, top, width, height } = scatter.chartArea;
+      shade.style.left = `${left}px`;
+      shade.style.top = `${top}px`;
+      shade.style.width = `${width}px`;
+      shade.style.height = `${height}px`;
+      note.style.left = `${Math.min(width, scrollArea.clientWidth) / 2}px`;
+    },
+  };
 }
 
 // Badges over the plot's edges for the countries off the left and right of the

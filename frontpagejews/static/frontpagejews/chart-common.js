@@ -195,3 +195,38 @@ export function hideTooltipOnPressElsewhere(chart) {
     chart.update();
   });
 }
+
+// Room between a note's explanation and the window's edge, as for tooltips.
+const WINDOW_GAP = 12;
+
+// A "No data ⓘ" button over a chart, added to `parent`, whose explanation
+// shows while it's hovered or focused: tapping it focuses it on a phone, and
+// tapping elsewhere hides it again.
+export function noDataNoteElement(parent, explanation) {
+  const note = document.createElement("div");
+  note.className = "no-data-note";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.innerHTML =
+    'No data <svg class="info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.75v.5"/></svg>';
+  const popover = document.createElement("div");
+  popover.className = "explanation";
+  popover.id = `no-data-${crypto.randomUUID()}`;
+  popover.setAttribute("role", "tooltip");
+  popover.textContent = explanation;
+  button.setAttribute("aria-describedby", popover.id);
+  note.append(button, popover);
+  // Shifted sideways as it opens, if it would run off the window: on a
+  // phone, a note near the plot's edge would otherwise push it off.
+  const keepInWindow = () => {
+    popover.style.marginLeft = "";
+    const { left, right } = popover.getBoundingClientRect();
+    const windowWidth = document.documentElement.clientWidth;
+    const shift = Math.max(WINDOW_GAP - left, 0) - Math.max(right - (windowWidth - WINDOW_GAP), 0);
+    popover.style.marginLeft = `${shift}px`;
+  };
+  note.addEventListener("mouseenter", keepInWindow);
+  note.addEventListener("focusin", keepInWindow);
+  parent.append(note);
+  return note;
+}
