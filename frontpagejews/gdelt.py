@@ -183,6 +183,9 @@ def build_day(day, workers=8):
         summary = summarize(raw_files)
     summary["date"] = day.isoformat()
     summary["files_expected"] = len(urls)
+    # In the file rather than read from its modification time, which a git
+    # checkout of the gdelt-data branch resets.
+    summary["fetched_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     return summary
 
 
@@ -223,11 +226,12 @@ def cached_days():
     return sorted(date.fromisoformat(path.stem) for path in directory.glob("*/*.json"))
 
 
-def last_fetched():
-    """When a day was last fetched: the newest cache file's modification time,
-    or None if nothing is cached."""
-    directory = settings.GDELT_CACHE_DIR
-    times = [path.stat().st_mtime for path in directory.glob("*/*.json")] if directory.exists() else []
-    if not times:
-        return None
-    return datetime.fromtimestamp(max(times), UTC)
+def last_fetched(days):
+    """When any of these days was last fetched, or None if none of them says.
+    Days fetched before 2026-10-22 don't."""
+    fetch_times = []
+    for day in days:
+        summary = load_day(day)
+        if summary and "fetched_at" in summary:
+            fetch_times.append(datetime.fromisoformat(summary["fetched_at"]))
+    return max(fetch_times, default=None)

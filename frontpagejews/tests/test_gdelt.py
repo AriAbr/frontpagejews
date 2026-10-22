@@ -198,6 +198,7 @@ def describe_fetch_day():
         assert first == second
         assert fetch.call_count == gdelt.RAW_GDELT_FILES_PER_DAY
         assert first["files"] == gdelt.RAW_GDELT_FILES_PER_DAY
+        assert datetime.fromisoformat(first["fetched_at"]).date() == datetime.now(UTC).date()
         assert gdelt.cached_days() == [day]
         assert (
             gdelt.cache_path(day).relative_to(settings.GDELT_CACHE_DIR).as_posix()
