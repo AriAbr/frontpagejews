@@ -299,6 +299,26 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 /* What sums up the group, under its last line: lined up with the lines' text,
    past their swatches. */
 .chart-tooltip .group-footer { padding-left: 22px; }
+/* The line chart's "No data ⓘ" note over a band of days without data,
+   placed by the script: centered on the band, or beside it (data-side) as a
+   half see-through badge. Its explanation shows while it's hovered or
+   focused. */
+.no-data-note { position: absolute; z-index: 2; transform: translate(-50%, -50%); }
+.no-data-note[data-side="right"] { transform: translate(0, -50%); }
+.no-data-note[data-side="left"] { transform: translate(-100%, -50%); }
+.no-data-note button { display: flex; align-items: center; gap: 5px; padding: 2px 10px; border: 0; border-radius: 10px;
+                       background: none; color: var(--muted); font: inherit; font-size: 0.8rem; white-space: nowrap; cursor: default; }
+.no-data-note.beside button { background: color-mix(in srgb, var(--border) 50%, transparent); color: var(--fg); font-weight: 600; font-size: 0.75rem; }
+.no-data-note .info { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.no-data-note .explanation { display: none; position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+                             width: max-content; max-width: min(240px, calc(100vw - 24px)); box-sizing: border-box; padding: 7px 10px; background: var(--bg);
+                             border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgb(0 0 0 / 0.4);
+                             color: var(--fg); font-size: 0.8rem; line-height: 1.45; }
+.no-data-note[data-side="right"] .explanation { left: 0; transform: none; }
+.no-data-note[data-side="left"] .explanation { left: auto; right: 0; transform: none; }
+.no-data-note:hover .explanation, .no-data-note:focus-within .explanation { display: block; }
+/* A note under the whole tooltip, set apart from the lines above it. */
+.chart-tooltip .footer { margin-top: 4px; color: var(--muted); }
 /* The caret pointing at the point: a square with two of its borders, turned
    so their corner sticks out of the tooltip's left edge, or its right where
    the tooltip is to the point's left, or its bottom or top where the tooltip

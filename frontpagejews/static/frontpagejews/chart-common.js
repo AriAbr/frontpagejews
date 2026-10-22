@@ -102,6 +102,15 @@ function drawTooltip({ chart, tooltip }) {
       }
     }
   });
+  // The footer callback's lines, under everything: the line chart's note on a
+  // day without data.
+  for (const text of tooltip.footer) {
+    if (!text) continue;
+    const row = document.createElement("div");
+    row.className = "footer";
+    row.textContent = text;
+    rows.push(row);
+  }
   tooltipElement.replaceChildren(...rows);
 
   // To the right of the point, or to its left where it would run off the

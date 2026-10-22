@@ -6,6 +6,7 @@
 // gets no line, which would read as a value on the axis: it is written inside
 // the top of the chart instead ("▲ China GDP: 23.6%, above the chart").
 import { ANIMATION, COLORS, hideTooltipOnPressElsewhere } from "./chart-common.js";
+import { MIN_MENTIONS_PER_DAY } from "./chart-data.js";
 import { multiple, percent } from "./formats.js";
 
 // Just past the highest daily coverage share at any one outlet in the 30 days
@@ -75,7 +76,7 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
   const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: { labels: rows.map(row => row.date), datasets },
-    plugins: [aboveAxisNotes(aboveAxis), hoveredDayLine],
+    plugins: [aboveAxisNotes(aboveAxis), hoveredDayLine, noDataBands(rows)],
     options: {
       animation: ANIMATION,
       maintainAspectRatio: false,
@@ -123,6 +124,9 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
               const date = new Date(`${items[0].label}T00:00:00Z`);
               return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
             },
+            // A day without data has no coverage lines in the tooltip, which
+            // leaves out missing values, so this says why, once.
+            footer: items => explainDayWithoutData(rows[items[0].dataIndex]),
             // Number first, as in the headline: "6.0% share of coverage". The
             // swatch, not the words, ties the row to its line. Benchmark lines'
             // tooltip labels already give their share.
@@ -195,3 +199,125 @@ const hoveredDayLine = {
     dayLine.style.transform = `translateX(${Math.round(hovered.element.x)}px)`;
   },
 };
+
+// A Chart.js plugin shading the days with no coverage to show, where the
+// lines break, with a "No data ⓘ" note across them, so the break reads as
+// missing data rather than a gap in the chart. Hovering or tapping the note
+// says why. Where the band is too narrow for the note (a single day), the note
+// goes beside it, on the side with more room, as a half see-through badge,
+// with a line pointing back to the band. The notes are buttons in the page
+// over the canvas, so they can be focused and tapped.
+function noDataBands(rows) {
+  // Each run of days without data, by its first and last day's index.
+  const runs = [];
+  rows.forEach((row, dayIndex) => {
+    if (row.focusMentionsPercentage !== null) return;
+    const previousRun = runs.at(-1);
+    if (previousRun && previousRun.lastDay === dayIndex - 1) previousRun.lastDay = dayIndex;
+    else runs.push({ firstDay: dayIndex, lastDay: dayIndex });
+  });
+  // From the last day with data before the run to the first one after, where
+  // the lines stop and start again, or to the plot's edge.
+  const bandEdges = (x, chartArea, { firstDay, lastDay }) => ({
+    left: firstDay > 0 ? x.getPixelForValue(firstDay - 1) : chartArea.left,
+    right: lastDay < rows.length - 1 ? x.getPixelForValue(lastDay + 1) : chartArea.right,
+  });
+  // Room between a narrow band and its badge.
+  const BADGE_GAP = 16;
+  let notes;
+  return {
+    id: "noDataBands",
+    // The shading under the lines, and a narrow band's line to its badge.
+    beforeDatasetsDraw({ ctx, chartArea, scales: { x } }) {
+      ctx.save();
+      ctx.fillStyle = Chart.defaults.borderColor;
+      ctx.globalAlpha = 0.5;
+      for (const run of runs) {
+        const { left, right } = bandEdges(x, chartArea, run);
+        ctx.fillRect(left, chartArea.top, right - left, chartArea.height);
+      }
+      ctx.restore();
+    },
+    afterDatasetsDraw({ canvas, ctx, chartArea, scales: { x } }) {
+      notes ??= runs.map(run => noDataNoteElement(canvas, explainDayRangeWithoutData(rows, run)));
+      const middle = chartArea.top + chartArea.height / 2;
+      runs.forEach((run, i) => {
+        const { left, right } = bandEdges(x, chartArea, run);
+        const note = notes[i];
+        note.style.top = `${middle}px`;
+        const fits = note.offsetWidth + 16 <= right - left;
+        note.classList.toggle("beside", !fits);
+        if (fits) {
+          note.style.left = `${(left + right) / 2}px`;
+          note.dataset.side = "center";
+          return;
+        }
+        const toRight = chartArea.right - right >= left - chartArea.left;
+        note.style.left = `${toRight ? right + BADGE_GAP : left - BADGE_GAP}px`;
+        note.dataset.side = toRight ? "right" : "left";
+        ctx.save();
+        ctx.strokeStyle = Chart.defaults.color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo((left + right) / 2, middle);
+        ctx.lineTo(toRight ? right + BADGE_GAP : left - BADGE_GAP, middle);
+        ctx.stroke();
+        ctx.restore();
+      });
+    },
+  };
+}
+
+// A "No data ⓘ" button over the chart, whose explanation shows while it's
+// hovered or focused: tapping it focuses it on a phone, and tapping elsewhere
+// hides it again.
+// Room between a note's explanation and the window's edge, as for tooltips.
+const WINDOW_GAP = 12;
+
+function noDataNoteElement(canvas, explanation) {
+  const note = document.createElement("div");
+  note.className = "no-data-note";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.innerHTML =
+    'No data <svg class="info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.75v.5"/></svg>';
+  const popover = document.createElement("div");
+  popover.className = "explanation";
+  popover.id = `no-data-${crypto.randomUUID()}`;
+  popover.setAttribute("role", "tooltip");
+  popover.textContent = explanation;
+  button.setAttribute("aria-describedby", popover.id);
+  note.append(button, popover);
+  // Shifted sideways as it opens, if it would run off the window: on a
+  // phone, a note near the plot's edge would otherwise push it off.
+  const keepInWindow = () => {
+    popover.style.marginLeft = "";
+    const { left, right } = popover.getBoundingClientRect();
+    const windowWidth = document.documentElement.clientWidth;
+    const shift = Math.max(WINDOW_GAP - left, 0) - Math.max(right - (windowWidth - WINDOW_GAP), 0);
+    popover.style.marginLeft = `${shift}px`;
+  };
+  note.addEventListener("mouseenter", keepInWindow);
+  note.addEventListener("focusin", keepInWindow);
+  canvas.after(note);
+  return note;
+}
+
+// Why a run of days has no coverage to show, for its "No data" note. No dates:
+// the note sits on them.
+function explainDayRangeWithoutData(rows, { firstDay, lastDay }) {
+  const gdeltMissing = rows.slice(firstDay, lastDay + 1).every(row => !row.gdeltHasDay);
+  if (gdeltMissing) {
+    return "GDELT, the database these article counts come from, had an outage and has no articles from any outlet for these days.";
+  }
+  return `GDELT picked up fewer than ${MIN_MENTIONS_PER_DAY} country mentions a day on these days for the selected outlets, most likely a gap in its data collection. Too few for meaningful analysis.`;
+}
+
+// Why a day has no coverage to show, for its popup, or "" for a day that has.
+function explainDayWithoutData(row) {
+  if (row.focusMentionsPercentage !== null) return "";
+  if (!row.gdeltHasDay) {
+    return "No data: GDELT, the database these article counts come from, had an outage and has no articles from any outlet for this day.";
+  }
+  return `No data: GDELT picked up fewer than ${MIN_MENTIONS_PER_DAY} country mentions this day for the selected outlets, most likely a gap in its data collection.`;
+}

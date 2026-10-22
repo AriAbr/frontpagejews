@@ -62,12 +62,13 @@ describe("mentionsByCountry", () => {
 
 describe("lineChartRows", () => {
   test("gives each day's coverage and population shares", () => {
-    // Israel has 3 of the 4 mentions and 10 of the 100 people.
-    const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
+    // Israel has 30 of the 40 mentions and 10 of the 100 people.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 30, CHN: 10 } } }, { population: { ISR: 10, CHN: 90 } });
 
     assert.deepEqual(lineChartRows(data, ["bbc"], "CHN", "population"), [
       {
         date: "2026-09-22",
+        gdeltHasDay: true,
         focusMentionsPercentage: 0.75,
         focusBenchmarkPercentage: 0.1,
         comparisonMentionsPercentage: 0.25,
@@ -77,10 +78,37 @@ describe("lineChartRows", () => {
   });
 
   test("counts only the selected outlets", () => {
-    // Fox alone gives Israel 3 of 4 mentions; with the BBC it would be 3 of 8.
-    const data = siteData({ "2026-09-22": { fox: { ISR: 3, CHN: 1 }, bbc: { CHN: 4 } } });
+    // Fox alone gives Israel 30 of 40 mentions; with the BBC it would be 30 of 80.
+    const data = siteData({ "2026-09-22": { fox: { ISR: 30, CHN: 10 }, bbc: { CHN: 40 } } });
 
     assert.equal(lineChartRows(data, ["fox"], "CHN", "population")[0].focusMentionsPercentage, 0.75);
+  });
+
+  test("gives no coverage shares for a day without mentions, rather than 0", () => {
+    // GDELT has no data for the 23rd, so the line breaks there.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 10 } }, "2026-09-23": { bbc: {} } });
+
+    const [, dayWithoutData] = lineChartRows(data, ["bbc"], "CHN", "population");
+
+    assert.equal(dayWithoutData.focusMentionsPercentage, null);
+    assert.equal(dayWithoutData.comparisonMentionsPercentage, null);
+  });
+
+  test("gives no coverage shares for a day with too few mentions to share out", () => {
+    // 9 mentions, one under the minimum: China's 0% of them would mean nothing.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 9 } } });
+
+    assert.equal(lineChartRows(data, ["bbc"], "CHN", "population")[0].comparisonMentionsPercentage, null);
+  });
+
+  test("tells a day GDELT has nothing for from one the selected outlets missed", () => {
+    // On the 22nd only Fox has articles; on the 23rd, no outlet does.
+    const data = siteData({ "2026-09-22": { fox: { ISR: 1 }, bbc: {} }, "2026-09-23": { fox: {}, bbc: {} } });
+
+    const [outletsMissing, gdeltMissing] = lineChartRows(data, ["bbc"], "CHN", "population");
+
+    assert.equal(outletsMissing.gdeltHasDay, true);
+    assert.equal(gdeltMissing.gdeltHasDay, false);
   });
 
   test("measures reality by the chosen benchmark", () => {
