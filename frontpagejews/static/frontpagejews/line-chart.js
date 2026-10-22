@@ -91,6 +91,9 @@ export function drawLineChart({ rows, benchmarkDisplaySettings, focus, compariso
             },
           },
         },
+        // No labels, only its border, which closes the plot on the right where
+        // Chart.js leaves out the last day's grid line to make room for the labels.
+        right: { position: "right", display: true, ticks: { display: false }, grid: { drawOnChartArea: false, drawTicks: false } },
         y: {
           type: "linear",
           min: 0,
