@@ -260,6 +260,22 @@ def describe_fetch_gdelt_command():
         assert len(fetched_days) == DAYS_SHOWN
         assert fetched_days[-1] == yesterday
 
+    def test_skips_cached_days_and_counts_them(mocker):
+        """One line for them, not one per day: the deploy checks every day since 2015"""
+        mocker.patch.object(gdelt, "load_day", side_effect=lambda day: {} if day.day < 3 else None)
+        fetch_day = mocker.patch.object(
+            gdelt, "fetch_day", return_value={"domains": {}, "files": 96, "files_expected": 96}
+        )
+        output = io.StringIO()
+
+        call_command("fetch_gdelt", "--start", "2024-03-01", "--end", "2024-03-03", stdout=output)
+
+        fetch_day.assert_called_once_with(date(2024, 3, 3), refresh=False)
+        assert output.getvalue().splitlines() == [
+            "2024-03-03: 0 articles from 0 domains (96/96 files)",
+            "2 days already cached",
+        ]
+
     def test_refuses_an_end_that_is_not_over(run_fetch_gdelt):
         today = datetime.now(UTC).date()
 
