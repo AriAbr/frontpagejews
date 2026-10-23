@@ -14,7 +14,7 @@ from frontpagejews.views import page_context
 class Command(BaseCommand):
     help = (
         "Write the dashboard out as a static site: index.html, data.json, a file per "
-        "month and the static files."
+        "month, the static files, and the files crawlers look for at the root."
     )
 
     def add_arguments(self, parser):
@@ -42,4 +42,19 @@ class Command(BaseCommand):
                 target = static / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(storage.path(path), target)
+        self.write_crawler_files(out, data)
         self.stdout.write(f"Built {out}: {len(data['days'])} days, {len(data['months'])} months")
+
+    def write_crawler_files(self, out, data):
+        """The files search engines ask for by fixed address. The sitemap's lastmod is
+        the newest day shown, so each day's deploy tells them the page has changed."""
+        url = page_context()["url"]
+        shutil.copyfile(finders.find("frontpagejews/favicon.ico"), out / "favicon.ico")
+        (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {url}sitemap.xml\n")
+        lastmod = f"<lastmod>{data['days'][-1]['date']}</lastmod>" if data["days"] else ""
+        (out / "sitemap.xml").write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"  <url><loc>{url}</loc>{lastmod}</url>\n"
+            "</urlset>\n"
+        )

@@ -1,9 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- The scatter in brief: Israel's dot above the line, over-covered, and
        the comparison's below it, under-covered. The PNGs beside this are
-       drawn from it, for browsers without SVG icons and for iOS, which rounds
-       the corners itself and so gets a plain square:
+       drawn from it, for browsers without SVG icons, for Google's results,
+       which want a multiple of 48px, and for iOS, which rounds the corners
+       itself and so gets a plain square. favicon.ico is the fallback anything
+       looks for at the site's root:
        convert -background none -density 1200 favicon.svg -resize 32x32 favicon-32.png
+       convert -background none -density 1200 favicon.svg -resize 96x96 favicon-96.png
+       convert -background none -density 1200 favicon.svg -define icon:auto-resize=48,32,16 favicon.ico
        sed 's/ rx="6"//' favicon.svg | convert -density 1200 svg:- -resize 180x180 -background '#1c1917' -flatten apple-touch-icon.png
        og-image.svg has a copy of the marks, so change them there too. -->
   <rect width="32" height="32" rx="6" fill="#1c1917"/>
