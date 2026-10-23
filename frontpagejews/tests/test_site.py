@@ -211,3 +211,18 @@ def describe_build_site():
         )
         assert (out / "static" / "frontpagejews" / "page.js").exists()
         assert not (out / "static" / "admin").exists()
+
+    def test_writes_the_files_crawlers_look_for_at_the_root(tmp_path):
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR": 1}})
+        cache_history("population", {"2026": {}})
+        cache_history("gdp", {"2026": {}})
+        cache_history("conflict_deaths", {"countries": [], "months": {"2026-09": {}}})
+        out = tmp_path / "build"
+
+        call_command("build_site", out=out, stdout=io.StringIO())
+
+        assert (out / "favicon.ico").exists()
+        assert "Sitemap: https://frontpagejews.com/sitemap.xml" in (out / "robots.txt").read_text()
+        sitemap = (out / "sitemap.xml").read_text()
+        assert "<loc>https://frontpagejews.com/</loc>" in sitemap
+        assert "<lastmod>2026-09-22</lastmod>" in sitemap
