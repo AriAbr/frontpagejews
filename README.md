@@ -21,6 +21,6 @@ To get the data, and again later to update it:
 make data
 ```
 
-The GDELT days live on the `gdelt-data` branch, which holds only data and is
-checked out at `var/gdelt`; the deploy fetches any day that's missing and pushes
-it there. The benchmarks are fetched fresh each time.
+The GDELT days and the benchmarks live on the `data` branch, which holds only
+data and is checked out at `var/data`; the deploy fetches any day that's missing,
+refetches the benchmarks and pushes them there.

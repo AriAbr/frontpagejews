@@ -34,7 +34,7 @@ jobs:
     # Normally one new day. Room for a few hundred missing ones, at about 12
     # seconds each.
     timeout-minutes: 300
-    # To push the new GDELT days to the gdelt-data branch.
+    # To push the new GDELT days and benchmarks to the data branch.
     permissions:
       contents: write
 
@@ -64,25 +64,16 @@ jobs:
         run: poetry install --no-interaction
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
-      # Every GDELT day fetched so far, one JSON file each, kept on a branch of
-      # their own that holds only data. Each run fetches any day missing from
-      # it and pushes the new ones back, so the history stays complete by
-      # itself. Changing how days are counted means refetching them all with
+      # Every GDELT day fetched so far, one JSON file each, and the benchmarks,
+      # kept on a branch of their own that holds only data. Each run fetches any
+      # day missing from it and pushes the new ones back, so the history stays
+      # complete by itself. Changing how days are counted means refetching them all with
       # --refresh, once, and pushing the result.
-      - name: Check out GDELT days
+      - name: Check out data
         uses: actions/checkout@v4
         with:
-          ref: gdelt-data
-          path: var/gdelt
-
-      # The benchmarks live in the Actions cache. They're refetched every run,
-      # so the cache is only a fallback for when a fetch fails.
-      - name: Restore benchmarks cache
-        uses: actions/cache/restore@v4
-        with:
-          path: var/benchmarks
-          key: benchmarks-v1-${{ github.run_id }}
-          restore-keys: benchmarks-v1-
+          ref: data
+          path: var/data
 
       # From GDELT 2's first full day, so a day missed for any reason is
       # filled in; days already fetched are skipped in a moment.
@@ -92,9 +83,9 @@ jobs:
       # Saved even if a later step fails, so no fetched day is lost.
       - name: Push new GDELT days
         if: always()
-        working-directory: var/gdelt
+        working-directory: var/data
         run: |
-          git add .
+          git add gdelt
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -103,19 +94,26 @@ jobs:
           git pull --quiet --rebase
           git push
 
-      # The benchmarks change monthly at most; if the fetch fails, keep the last copies.
+      # Refetched every run, though they change monthly at most; if the fetch
+      # fails, keep the last copies.
       - name: Fetch benchmarks
         run: >-
           poetry run python manage.py fetch_benchmarks
-          || (test -f var/benchmarks/population_history.json && test -f var/benchmarks/gdp_history.json
-          && test -f var/benchmarks/conflict_deaths_history.json)
+          || (test -f var/data/benchmarks/population_history.json
+          && test -f var/data/benchmarks/gdp_history.json
+          && test -f var/data/benchmarks/conflict_deaths_history.json)
 
-      - name: Save benchmarks cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: var/benchmarks
-          key: benchmarks-v1-${{ github.run_id }}
+      - name: Push benchmarks
+        working-directory: var/data
+        run: |
+          # Don't commit a .tmp left by a fetch that failed mid-write.
+          git add benchmarks/*_history.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -m "chore: Update benchmarks"
+          git pull --quiet --rebase
+          git push
 
       - name: Build site
         run: poetry run python manage.py build_site
