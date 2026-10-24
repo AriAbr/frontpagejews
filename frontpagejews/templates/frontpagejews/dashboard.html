@@ -70,8 +70,14 @@
           <p class="subtitle">{{ subtitle }}</p>
           <p class="byline">
             A project by <a href="https://ariabramowitz.me/" target="_blank" rel="noopener">Ari Abramowitz</a> · <a href="#about">How this works</a>
-            {# The script fills in how long ago and shows it, once the data has loaded. #}
-            <span id="last-fetched" hidden><span class="separator">·</span> Data updated <time id="last-fetched-time"></time></span>
+            {# Opens the dialog below (see claude.js). #}
+            <span class="claude-item">
+              <span class="separator">·</span>
+              <button type="button" class="claude-link" id="claude-link">
+                Analyze with
+                {% include "frontpagejews/claude_logo.svg" %}
+              </button>
+            </span>
           </p>
         </div>
         <div class="controls">
@@ -307,6 +313,8 @@
         · <a href="https://github.com/AriAbr/frontpagejews"
     target="_blank"
     rel="noopener">Source on GitHub</a>
+        {# The script fills in how long ago and shows it, once the data has loaded. #}
+        <span id="last-fetched" hidden>· Data updated <time id="last-fetched-time"></time></span>
       </footer>
       {# Slides up once, after the visitor scrolls half a screen (see signup.js). #}
       <aside class="floating-card signup signup-card" id="signup-card" hidden>
@@ -322,9 +330,26 @@
         <h2>You're on the list</h2>
         <p>Thanks for signing up.</p>
       </aside>
+      {# A prompt to copy into a new Claude chat, rather than a link that fills it in: claude.ai warns about prompts that arrive in links, and here the visitor sees exactly what Claude is asked. #}
+      <dialog class="claude-dialog"
+              id="claude-dialog"
+              aria-labelledby="claude-heading">
+        <button type="button" class="close" aria-label="Close">×</button>
+        <h2 id="claude-heading">Copy, then paste to Claude</h2>
+        <p class="claude-prompt" id="claude-prompt">{{ claude_prompt }}</p>
+        {# Copy first, then open: Open Claude stays off until the prompt's copied (see claude.js). Copy is focused on opening, rather than the close button, the first in the dialog. #}
+        <div class="claude-actions">
+          <button type="button" class="step" id="claude-copy" autofocus>Copy prompt</button>
+          <button type="button" class="step" id="claude-open" disabled>
+            Open
+            {% include "frontpagejews/claude_logo.svg" %}
+          </button>
+        </div>
+      </dialog>
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script type="module" src="{% static 'frontpagejews/page.js' %}"></script>
     <script type="module" src="{% static 'frontpagejews/signup.js' %}"></script>
+    <script type="module" src="{% static 'frontpagejews/claude.js' %}"></script>
   </body>
 </html>

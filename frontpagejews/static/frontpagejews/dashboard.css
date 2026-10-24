@@ -32,19 +32,23 @@ h1 { font-size: 1.4rem; margin: 0; }
 /* Always on a line of its own, under the title. */
 .masthead .subtitle { margin: 0; flex-basis: 100%; }
 .masthead .byline { font-size: 0.85rem; margin: 0; }
-/* The width below is for the longest byline, "... Data updated 59 minutes
-   ago": 535px in Noto Sans, which fits the 548px of a 580px screen. */
-/* Where the byline won't fit on one line, "Data updated" gets a line of its
-   own, with no dot to start it; where it fits, it follows the links after a
-   dot. (Not while hidden: display would override that.) */
-#last-fetched:not([hidden]) { display: block; }
-#last-fetched .separator { display: none; }
-@media (min-width: 580px) {
-  #last-fetched:not([hidden]) { display: inline; }
-  #last-fetched .separator { display: inline; }
+/* Like the byline's other links, with Claude's logo to pick it out: its
+   wordmark in the byline's gray and its spark in its orange. The underline
+   runs under the logo too, so the text and the logo read as one link. */
+.masthead .claude-link { display: inline-flex; align-items: center; gap: 0.3em; padding: 0; border: 0;
+                     border-bottom: 1px solid currentColor; font: inherit; line-height: 1; color: inherit;
+                     background: none; cursor: pointer; white-space: nowrap; }
+/* Where the byline won't fit on one line (447px in Noto Sans, so under a
+   480px screen), the Claude link gets a line of its own, with no dot to
+   start it; where it fits, it follows the other links after a dot. */
+.masthead .claude-item { display: block; }
+.masthead .claude-item .separator { display: none; }
+@media (min-width: 480px) {
+  .masthead .claude-item { display: inline; }
+  .masthead .claude-item .separator { display: inline; }
 }
-/* Where there's room for the title and the byline side by side (781px for
-   the longest byline), the byline moves up beside the title, at the line's
+/* Where there's room for the title and the byline side by side (693px
+   for the byline), the byline moves up beside the title, at the line's
    end, and the subtitle goes below them on its own line. Narrower, they stack
    as written: title, subtitle, byline. Moved up any sooner, the byline would
    wrap onto a line of its own, between the title and the subtitle. The same
@@ -403,4 +407,32 @@ code { font-size: 0.9em; }
   .floating-card { animation: none; }
   .floating-card.fading { transition: none; }
 }
+/* The dialog the Claude badge opens, in the floating cards' look, centered
+   over a dimmed page. */
+.claude-dialog { width: 480px; max-width: calc(100% - 32px); box-sizing: border-box; padding: 18px 20px;
+                  background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 10px;
+                  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4); }
+.claude-dialog::backdrop { background: rgb(0 0 0 / 0.6); }
+.claude-dialog h2 { font-size: 1.15rem; margin: 0 24px 12px 0; }
+.claude-dialog .close { position: absolute; top: 8px; right: 10px; padding: 2px 6px; font: inherit; font-size: 1.2rem; line-height: 1;
+                         cursor: pointer; background: none; color: var(--muted); border: 0; }
+.claude-dialog .close:hover { color: var(--fg); }
+.claude-dialog .claude-prompt { margin-bottom: 14px; padding: 10px 12px; border-radius: 6px; color: var(--fg); font-size: 0.9rem;
+                                  background: color-mix(in srgb, var(--border) 40%, transparent); }
+/* Whichever step is next is in Claude's orange, with dark text (white on it is
+   too faint, 3:1); the other is plain. */
+.claude-actions { display: flex; gap: 8px; }
+.claude-actions .step { font: inherit; font-weight: 600; padding: 6px 16px; cursor: pointer; border: 0; border-radius: 6px;
+                         background: var(--border); color: var(--fg); }
+/* As wide as its widest label, "Copy prompt", so Open Claude stays put as it
+   changes to "Copied ✓" and "Copy again". */
+.claude-actions #claude-copy { min-width: 127px; }
+.claude-actions .step.next { background: #d97757; color: #1c1917; }
+.claude-actions .step.next:hover { background: #e38b6d; }
+.claude-actions .step:disabled { cursor: default; opacity: 0.45; }
+.claude-actions #claude-open { display: inline-flex; align-items: center; gap: 0.3em; }
+/* Claude's logo, inline (see claude_logo.svg), at its shape's 690:148. On
+   Open Claude it's all in the button's own text color, whatever its state. */
+.claude-logo { width: calc(1.05em * 690 / 148); height: 1.05em; }
+.claude-actions .claude-logo .spark { fill: currentColor; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
