@@ -4,6 +4,10 @@
 // All work by reloading the page with new query-string choices: each country
 // is a link, choosing a benchmark goes to its own URL, the outlets are a GET
 // form, and picking a month goes to its URL.
+//
+// Each choice is counted in Google Analytics on the way, as comparison_change,
+// benchmark_change, outlets_change or period_change, with what was chosen.
+import { track } from "./analytics.js";
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { choicesQuery, countryMatches, neighboringPeriods } from "./choices.js";
 import { describeOutlets, describePeriod } from "./formats.js";
@@ -29,6 +33,7 @@ function setUpCountryControl({ choices, comparison, chosen }) {
     const link = document.createElement("a");
     link.href = choicesQuery({ ...chosen, comparisonCode: code });
     link.textContent = name;
+    link.addEventListener("click", () => track("comparison_change", { country: name }));
     const item = document.createElement("li");
     if (code === comparison.code) item.className = "current";
     item.append(link);
@@ -98,6 +103,7 @@ function setUpBenchmarkControl(chosen) {
     const link = document.createElement("a");
     link.href = choicesQuery({ ...chosen, benchmark: benchmarkOption });
     describeBenchmark(link, displaySettings);
+    link.addEventListener("click", () => track("benchmark_change", { benchmark: benchmarkOption }));
     const item = document.createElement("li");
     if (benchmarkOption === benchmark) {
       item.className = "current";
@@ -176,7 +182,9 @@ function setUpOutletControl({ selectedOutlets, comparisonCode, benchmark, month 
     toggle.setAttribute("aria-expanded", "false");
     const ticked = tickedOutlets();
     const changed = ticked.length !== selectedOutlets.length || ticked.some(outlet => !selectedOutlets.includes(outlet));
-    if (changed) form.submit();
+    if (!changed) return;
+    track("outlets_change", { outlets: ticked.join(",") });
+    form.submit();
   };
 
   describeTicked();
@@ -208,6 +216,7 @@ function setUpMonthControl({ months, daysShown, chosen }) {
 
   const lastDays = document.getElementById("period-last-days");
   lastDays.href = choicesQuery({ ...chosen, month: null });
+  lastDays.addEventListener("click", () => trackPeriod(null, daysShown));
   lastDays.textContent = capitalize(describePeriod(null, daysShown));
   if (!chosen.month) {
     lastDays.className = "current";
@@ -236,7 +245,10 @@ function setUpMonthControl({ months, daysShown, chosen }) {
       // A month without data is a plain span, grayed out, so the grid keeps its shape.
       const cell = document.createElement(months.includes(month) ? "a" : "span");
       cell.textContent = abbreviation;
-      if (months.includes(month)) cell.href = choicesQuery({ ...chosen, month });
+      if (months.includes(month)) {
+        cell.href = choicesQuery({ ...chosen, month });
+        cell.addEventListener("click", () => trackPeriod(month, daysShown));
+      }
       if (month === chosen.month) {
         cell.className = "current";
         cell.setAttribute("aria-current", "true");
@@ -287,6 +299,12 @@ function setUpStep({ link, period, daysShown, chosen }) {
   }
   link.href = choicesQuery({ ...chosen, month: period });
   link.title = capitalize(describePeriod(period, daysShown));
+  link.addEventListener("click", () => trackPeriod(period, daysShown));
+}
+
+// A month as "YYYY-MM", or the last days as "last 30 days".
+function trackPeriod(month, daysShown) {
+  track("period_change", { period: month ?? describePeriod(null, daysShown) });
 }
 
 // "last 30 days" → "Last 30 days".
