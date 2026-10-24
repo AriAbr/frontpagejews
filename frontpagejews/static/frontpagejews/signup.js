@@ -6,6 +6,11 @@
 //
 // A script of its own rather than part of page.js, so the signup works even
 // when the data doesn't load.
+//
+// A signup is counted in Google Analytics as signup_success, with which form
+// it came from: the card or the bottom of the page.
+import { track } from "./analytics.js";
+
 const signupCard = document.getElementById("signup-card");
 const subscribedNotice = document.getElementById("subscribed-notice");
 const bottomSignup = document.getElementById("signup");
@@ -100,6 +105,7 @@ async function submitSignup(form) {
     const result = await response.json();
     if (!result.success) throw new Error("Brevo didn't save the signup");
     form.hidden = true;
+    track("signup_success", { form: signupCard.contains(form) ? "card" : "bottom" });
     // Brevo adds the address once its owner clicks the link it emails them.
     signupStatus.textContent = "Almost done: check your inbox to confirm.";
     signupCardDismissed = true;

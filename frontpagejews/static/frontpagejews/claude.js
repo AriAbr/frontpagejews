@@ -2,11 +2,13 @@
 // a new Claude chat, then a button to open one. Open Claude stays off until the
 // prompt's copied, so a visitor doesn't land on an empty chat.
 //
-// Each step is counted in Google Analytics, where it's configured, as an event
-// of its own: claude_dialog_open, claude_prompt_copy and claude_chat_open.
+// Each step is counted in Google Analytics as an event of its own:
+// claude_dialog_open, claude_prompt_copy and claude_chat_open.
 //
 // A script of its own rather than part of page.js, so it works even when the
 // data doesn't load.
+import { track } from "./analytics.js";
+
 const dialog = document.getElementById("claude-dialog");
 const promptBox = document.getElementById("claude-prompt");
 const copyButton = document.getElementById("claude-copy");
@@ -64,9 +66,4 @@ function showStep(step) {
     clearTimeout(copyAgainTimer);
     copyButton.textContent = "Copy prompt";
   }
-}
-
-// gtag is only defined where the page loads Google Analytics.
-function track(eventName) {
-  window.gtag?.("event", eventName);
 }
