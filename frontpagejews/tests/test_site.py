@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime
 
 from django.core.management import call_command
 
-from frontpagejews import benchmarks, gdelt, site_data
+from frontpagejews import benchmarks, gdelt, site_data, views
 
 
 def cache_day(day, mentions_by_domain, fetched_at=None):
@@ -163,6 +163,11 @@ def describe_dashboard():
         assert response.status_code == 200
         assert b'value="fox"' in response.content
         assert b"Fox News" in response.content
+
+    def test_shows_the_claude_prompt_to_copy(client):
+        content = client.get("/").content.decode()
+
+        assert f'id="claude-prompt">{views.CLAUDE_PROMPT}</p>' in content.replace("&#x27;", "'")
 
     def test_includes_google_analytics_when_configured(client, settings):
         settings.GA_MEASUREMENT_ID = "G-TEST123"

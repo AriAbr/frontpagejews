@@ -10,6 +10,13 @@ from frontpagejews.countries import country_name
 from frontpagejews.news_coverage import DAYS_SHOWN, OUTLETS
 from frontpagejews.site_data import FOCUS, month_site_data, site_data
 
+# For visitors to paste into a new Claude chat (see claude.js). It only
+# connects Claude to the data, so the visitor steers the conversation.
+CLAUDE_PROMPT = (
+    "I'd like to explore the data behind frontpagejews.com. Load it from the data branch "
+    "at github.com/AriAbr/frontpagejews, then let's discuss."
+)
+
 
 def page_context():
     """The page's fixed parts. Everything that depends on the visitor's choices is
@@ -28,6 +35,7 @@ def page_context():
         "preview_image_url": url.rstrip("/") + static("frontpagejews/og-image.png"),
         "subtitle": f"Measuring {focus_name}'s share of the news against real-world data",
         "focus_name": focus_name,
+        "claude_prompt": CLAUDE_PROMPT,
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "days_shown": DAYS_SHOWN,
         "ga_measurement_id": settings.GA_MEASUREMENT_ID,
