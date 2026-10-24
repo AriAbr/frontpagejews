@@ -184,14 +184,14 @@ def build_day(day, workers=8):
     summary["date"] = day.isoformat()
     summary["files_expected"] = len(urls)
     # In the file rather than read from its modification time, which a git
-    # checkout of the gdelt-data branch resets.
+    # checkout of the data branch resets.
     summary["fetched_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     return summary
 
 
 def cache_path(day):
     """A folder per year, so each stays under the 1,000 files GitHub lists in
-    one: var/gdelt/2024/2024-03-01.json."""
+    one: var/data/gdelt/2024/2024-03-01.json."""
     return settings.GDELT_CACHE_DIR / str(day.year) / f"{day.isoformat()}.json"
 
 

@@ -18,9 +18,11 @@ load_dotenv(dotenv_path)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Daily summaries of GDELT's bulk files; disposable, see frontpagejews/gdelt.py.
-GDELT_CACHE_DIR = BASE_DIR / "var" / "gdelt"
-BENCHMARK_CACHE_DIR = BASE_DIR / "var" / "benchmarks"
+# A checkout of the data branch, so the repo alone holds everything the site shows.
+DATA_DIR = BASE_DIR / "var" / "data"
+# Daily summaries of GDELT's bulk files; see frontpagejews/gdelt.py.
+GDELT_CACHE_DIR = DATA_DIR / "gdelt"
+BENCHMARK_CACHE_DIR = DATA_DIR / "benchmarks"
 
 # Google Analytics. Set only for the live site, so local visits aren't counted.
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "")
