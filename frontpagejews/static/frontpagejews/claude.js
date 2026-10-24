@@ -1,6 +1,9 @@
-// The Claude badge: a dialog with a prompt for the visitor to copy into a new
-// Claude chat, then a button to open one. Open Claude stays off until the
+// The byline's Claude link: a dialog with a prompt for the visitor to copy into
+// a new Claude chat, then a button to open one. Open Claude stays off until the
 // prompt's copied, so a visitor doesn't land on an empty chat.
+//
+// Each step is counted in Google Analytics, where it's configured, as an event
+// of its own: claude_dialog_open, claude_prompt_copy and claude_chat_open.
 //
 // A script of its own rather than part of page.js, so it works even when the
 // data doesn't load.
@@ -15,6 +18,7 @@ let copyAgainTimer;
 document.getElementById("claude-link").addEventListener("click", () => {
   showStep(copyButton);
   dialog.showModal();
+  track("claude_dialog_open");
 });
 
 dialog.querySelector(".close").addEventListener("click", () => dialog.close());
@@ -35,6 +39,7 @@ copyButton.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(promptBox.textContent);
     copyButton.textContent = "Copied ✓";
+    track("claude_prompt_copy");
     clearTimeout(copyAgainTimer);
     copyAgainTimer = setTimeout(() => (copyButton.textContent = "Copy again"), 2000);
   } catch {
@@ -44,7 +49,10 @@ copyButton.addEventListener("click", async () => {
   openButton.focus();
 });
 
-openButton.addEventListener("click", () => window.open("https://claude.ai/new", "_blank", "noopener"));
+openButton.addEventListener("click", () => {
+  window.open("https://claude.ai/new", "_blank", "noopener");
+  track("claude_chat_open");
+});
 
 // Makes `step` the next one, in orange: the copy button when the dialog
 // opens, Open Claude once the prompt's copied.
@@ -56,4 +64,9 @@ function showStep(step) {
     clearTimeout(copyAgainTimer);
     copyButton.textContent = "Copy prompt";
   }
+}
+
+// gtag is only defined where the page loads Google Analytics.
+function track(eventName) {
+  window.gtag?.("event", eventName);
 }
