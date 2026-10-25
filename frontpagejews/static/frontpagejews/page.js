@@ -84,8 +84,25 @@ if (data.days.length) {
   document.getElementById("no-data").hidden = false;
 }
 
+// A dropped connection, as on a phone switching networks, gets a couple more
+// tries. If they fail too, the page says so in place of the charts, and the
+// error goes on to Sentry.
 async function fetchJson(url) {
-  return (await fetch(url)).json();
+  const attempts = 3;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      if (attempt === attempts) {
+        document.getElementById("charts").hidden = true;
+        document.getElementById("load-failed").hidden = false;
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
 }
 
 // "Data updated 2 hours ago" in the byline, with the exact time on hover.

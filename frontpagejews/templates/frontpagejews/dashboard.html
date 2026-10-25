@@ -239,6 +239,16 @@
           </div>
         </div>
       </div>
+      <div class="load-failed" id="load-failed" role="alert" hidden>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M10 2.5L18 17H2z" />
+          <path d="M10 8v4M10 14.5v.01" />
+        </svg>
+        <div>
+          <strong>Couldn't load the data.</strong>
+          Check your connection and <a href="">reload the page</a>.
+        </div>
+      </div>
       <div class="empty" id="no-data" hidden>
         No data cached yet. Run <code>python manage.py fetch_gdelt</code>.
       </div>
