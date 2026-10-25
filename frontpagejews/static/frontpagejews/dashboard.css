@@ -1,8 +1,8 @@
 /* Dark only, whatever the device's setting, until light mode gets its own
    design. color-scheme makes native controls and scrollbars dark too.
    --focus is Israel's color in the charts, light enough to read as text on
-   the background (4.75:1). */
-:root { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --prose: #d6d3d1; --border: #44403c; --focus: #3b82f6; }
+   the background (4.75:1). --warning is amber, for the page's own errors. */
+:root { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --prose: #d6d3d1; --border: #44403c; --focus: #3b82f6; --warning: #f59e0b; }
 /* The arrow on each control that opens a list: the country picker, the
    benchmark, the outlets and the period. A background, since an input can't have an
    ::after, so its color is --muted written out. */
@@ -359,6 +359,15 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 /* None for a day's tooltip, which the line down the day ties to its place. */
 .chart-tooltip.no-caret::before { display: none; }
 .chart-tooltip .swatch { display: inline-block; width: 16px; border-top: 2px solid; margin-right: 6px; vertical-align: 0.3em; }
+/* In the spinner's place when the data won't load: a warning, in amber, with
+   rounded corners like the controls above it. */
+.load-failed { display: flex; gap: 10px; align-items: flex-start; margin: 24px 0; padding: 12px 14px;
+               color: var(--prose); background: color-mix(in srgb, var(--warning) 10%, transparent);
+               border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent); border-radius: 6px; }
+.load-failed[hidden] { display: none; }
+.load-failed svg { flex: none; fill: none; stroke: var(--warning); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.load-failed strong { display: block; color: var(--warning); font-weight: 600; }
+.load-failed a { color: var(--fg); text-underline-offset: 3px; }
 .empty { padding: 48px 0; text-align: center; border: 1px dashed var(--border); }
 code { font-size: 0.9em; }
 /* The email signup, at the bottom of the page and in the card: the address
