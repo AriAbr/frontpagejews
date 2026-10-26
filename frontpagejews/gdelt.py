@@ -12,6 +12,11 @@ they are converted to ISO3 per article (see `country_codes.py`), so an article t
 mentions both Tel Aviv and Gaza counts once for the combined Israel, West Bank,
 and Gaza.
 
+Each article is counted under the set of countries it mentions, not once per
+country, so a group of countries can later be counted the same way: an article
+about Russia and Ukraine counts once for the two together.
+`news_coverage.country_counts` turns the sets back into per-country counts.
+
 Only the outlets' domains are kept, so adding an outlet means re-fetching past
 days with `--refresh`.
 """
@@ -146,12 +151,20 @@ def outlet_domain(domain, url):
     return host if host in OUTLET_DOMAINS else None
 
 
+def country_set_key(countries):
+    """How a set of countries is written in a day file: its ISO3 codes, sorted and
+    joined by commas, so {"UKR", "RUS"} is "RUS,UKR".
+    """
+    return ",".join(sorted(countries))
+
+
 def summarize(raw_files):
-    """Reduce a day's raw GDELT files to per-domain article and country counts.
+    """Reduce a day's raw GDELT files to per-domain article counts, by the set of
+    countries each article mentions.
 
     Only the outlets' domains are kept. Each raw file is its decoded contents, as returned by `fetch_gkg`. Articles
     are counted by URL, so one GDELT re-crawl of the same page is not counted
-    twice.
+    twice. Articles that mention no country count only toward "articles".
     """
     articles = defaultdict(dict)
     files = 0
@@ -165,10 +178,11 @@ def summarize(raw_files):
 
     domains = {}
     for domain, countries_by_url in articles.items():
-        counts = Counter()
-        for countries in countries_by_url.values():
-            counts.update(countries)  # add 1 to each country
-        domains[domain] = {"articles": len(countries_by_url), "countries": dict(counts)}
+        country_set_keys = [
+            country_set_key(countries) for countries in countries_by_url.values() if countries
+        ]
+        country_set_counts = Counter(country_set_keys)
+        domains[domain] = {"articles": len(countries_by_url), "country_sets": dict(country_set_counts)}
     return {"domains": domains, "files": files}
 
 

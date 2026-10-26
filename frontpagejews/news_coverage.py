@@ -48,6 +48,23 @@ OUTLET_DOMAINS = {domain for outlet in OUTLETS.values() for domain in outlet.dom
 HOME_COUNTRIES = {"USA", "GBR"}
 
 
+def country_counts(domain_day_summary):
+    """Map ISO3 -> how many of one domain's articles that day mention the country.
+
+    A day file counts articles by the set of countries they mention (see
+    `gdelt.summarize`), so an article about Israel and Iran counts once for each.
+    Days fetched before that switch (2026-10) hold these counts directly, under
+    "countries". Drop that case once every day is refetched.
+    """
+    if "countries" in domain_day_summary:
+        return dict(domain_day_summary["countries"])
+    counts = Counter()
+    for country_set, article_count in domain_day_summary["country_sets"].items():
+        for country in country_set.split(","):
+            counts[country] += article_count
+    return dict(counts)
+
+
 def mention_counts(day_summaries, outlets):
     """Map ISO3 -> country mentions by the outlets, added up over the given days."""
     domains = []
@@ -56,8 +73,9 @@ def mention_counts(day_summaries, outlets):
     mentions = Counter()
     for day_summary in day_summaries:
         for domain in domains:
-            for code, count in day_summary["domains"].get(domain, {}).get("countries", {}).items():
-                mentions[code] += count
+            domain_day_summary = day_summary["domains"].get(domain)
+            if domain_day_summary:
+                mentions.update(country_counts(domain_day_summary))
     return mentions
 
 
