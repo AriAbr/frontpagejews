@@ -70,17 +70,27 @@ def describe_summarize():
 
         summary = gdelt.summarize([raw_file])
 
-        assert summary["domains"] == {"bbc.co.uk": {"articles": 3, "countries": {"ISR": 1, "USA": 1}}}
+        assert summary["domains"] == {"bbc.co.uk": {"articles": 3, "country_sets": {"ISR": 1, "USA": 1}}}
 
     def test_counts_an_article_once_however_many_places_it_mentions():
         raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", f"{TEL_AVIV};{TEL_AVIV}")
 
-        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["countries"] == {"ISR": 1}
+        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["country_sets"] == {"ISR": 1}
+
+    def test_counts_an_article_under_the_set_of_countries_it_mentions():
+        raw_file = "\n".join(
+            [
+                gkg_line("bbc.co.uk", "https://bbc.co.uk/1", f"{GEORGIA_STATE};{TEL_AVIV}"),
+                gkg_line("bbc.co.uk", "https://bbc.co.uk/2", f"{TEL_AVIV};{GEORGIA_STATE}"),
+            ]
+        )
+
+        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["country_sets"] == {"ISR,USA": 2}
 
     def test_counts_an_article_about_israel_and_gaza_once():
         raw_file = gkg_line("bbc.co.uk", "https://bbc.co.uk/1", f"{TEL_AVIV};{GAZA};{WEST_BANK}")
 
-        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["countries"] == {"ISR": 1}
+        assert gdelt.summarize([raw_file])["domains"]["bbc.co.uk"]["country_sets"] == {"ISR": 1}
 
     def test_counts_a_recrawled_url_once():
         """GDELT can see the same page in two 15-minute files"""
@@ -88,7 +98,7 @@ def describe_summarize():
 
         summary = gdelt.summarize([line, line])
 
-        assert summary["domains"]["bbc.co.uk"] == {"articles": 1, "countries": {"ISR": 1}}
+        assert summary["domains"]["bbc.co.uk"] == {"articles": 1, "country_sets": {"ISR": 1}}
 
     def test_keeps_only_the_outlets_domains():
         raw_file = "\n".join(
@@ -110,7 +120,7 @@ def describe_summarize():
         )
 
         assert gdelt.summarize([raw_file])["domains"] == {
-            "abcnews.go.com": {"articles": 1, "countries": {"ISR": 1}}
+            "abcnews.go.com": {"articles": 1, "country_sets": {"ISR": 1}}
         }
 
     def test_skips_non_web_sources():

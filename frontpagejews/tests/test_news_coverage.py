@@ -6,7 +6,9 @@ def day_summary(date, domains):
 
 
 def outlet(articles, **countries):
-    return {"articles": articles, "countries": countries}
+    """One domain's day, its articles each mentioning a single country, e.g.
+    outlet(3, ISR=2, USA=1)."""
+    return {"articles": articles, "country_sets": countries}
 
 
 def describe_coverage_shares():
@@ -54,3 +56,17 @@ def describe_mention_counts():
         day_summaries = [day_summary("2026-09-22", {"foxnews.com": outlet(1, ISR=1)})]
 
         assert news_coverage.mention_counts(day_summaries, ["bbc"]) == {}
+
+
+def describe_country_counts():
+    """Tests for reading one domain's per-country counts from its day"""
+
+    def test_counts_an_article_once_for_each_country_it_mentions():
+        domain_day_summary = {"articles": 4, "country_sets": {"ISR,USA": 2, "ISR": 1}}
+
+        assert news_coverage.country_counts(domain_day_summary) == {"ISR": 3, "USA": 2}
+
+    def test_reads_a_day_fetched_before_country_sets():
+        domain_day_summary = {"articles": 2, "countries": {"ISR": 2, "USA": 1}}
+
+        assert news_coverage.country_counts(domain_day_summary) == {"ISR": 2, "USA": 1}

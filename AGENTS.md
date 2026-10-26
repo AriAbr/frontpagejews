@@ -7,10 +7,11 @@ GDP, conflict deaths, market moves).
 ## How it works
 
 `manage.py fetch_gdelt` downloads GDELT's raw files for each finished day,
-reduces them to per-domain article and country-mention counts, and caches one
-JSON file per day under `var/data/gdelt/`. `var/data` is a worktree of the
-`data` branch, which holds every day since 2015; the deploy pushes each new day
-to it. Refetching it all takes about a day, so treat it as data, not a cache.
+reduces them to per-domain article counts by the set of countries each
+mentions, and caches one JSON file per day under `var/data/gdelt/`. `var/data`
+is a worktree of the `data` branch, which holds every day since 2015; the
+deploy pushes each new day to it. Refetching it all takes about a day, so treat
+it as data, not a cache.
 `manage.py fetch_benchmarks` caches World Bank population and GDP and UCDP's
 conflict deaths under `var/data/benchmarks/`, so the branch holds everything the
 site shows. Unlike the days, they're disposable: deleting them only means

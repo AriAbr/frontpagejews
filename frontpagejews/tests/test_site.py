@@ -11,8 +11,8 @@ def cache_day(day, mentions_by_domain, fetched_at=None):
     """Cache one day's GDELT summary, e.g. {"bbc.co.uk": {"ISR": 3}}, fetched at
     `fetched_at`, e.g. "2026-09-23T01:35:00+00:00"."""
     domains = {
-        # The site never reads article counts.
-        domain: {"articles": 1, "countries": mentions}
+        # Each mention its own article, about that country alone.
+        domain: {"articles": sum(mentions.values()), "country_sets": mentions}
         for domain, mentions in mentions_by_domain.items()
     }
     summary = {"date": day, "domains": domains}
