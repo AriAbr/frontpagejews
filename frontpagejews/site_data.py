@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 
 from frontpagejews import benchmarks, gdelt
 from frontpagejews.countries import country_name
-from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, mention_counts
+from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, outlet_mentions
 
 FOCUS = "ISR"
 DEFAULT_COMPARISON = "CHN"
@@ -29,7 +29,7 @@ def load_mentions_by_outlet(days):
     return [
         {
             "date": day_summary["date"],
-            "mentions": {slug: dict(mention_counts([day_summary], [slug])) for slug in OUTLETS},
+            "mentions": {slug: outlet_mentions(day_summary, slug) for slug in OUTLETS},
         }
         for day_summary in day_summaries
     ]
