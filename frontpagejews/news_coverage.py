@@ -1,8 +1,8 @@
-"""Coverage shares: how much of each outlet's attention went to each country.
+"""The outlets, and how many of their articles mention each country.
 
-These are the numbers the project exists to produce, computed from the cached
-GDELT summaries (see `gdelt.py`) and compared against the shares in
-`benchmarks.py`. Nothing here knows about the web page.
+The counts come from the cached GDELT summaries (see `gdelt.py`). The browser
+turns them into each country's percentage of coverage and compares that with
+the benchmarks (see `benchmarks.py`). Nothing here knows about the web page.
 """
 
 from collections import Counter
@@ -65,29 +65,12 @@ def country_counts(domain_day_summary):
     return dict(counts)
 
 
-def mention_counts(day_summaries, outlets):
-    """Map ISO3 -> country mentions by the outlets, added up over the given days."""
-    domains = []
-    for slug in outlets:
-        domains.extend(OUTLETS[slug].domains)
+def outlet_mentions(day_summary, slug):
+    """Map ISO3 -> how many of one outlet's articles mention the country on one day,
+    added up over the outlet's domains."""
     mentions = Counter()
-    for day_summary in day_summaries:
-        for domain in domains:
-            domain_day_summary = day_summary["domains"].get(domain)
-            if domain_day_summary:
-                mentions.update(country_counts(domain_day_summary))
-    return mentions
-
-
-def coverage_shares(day_summaries, outlets):
-    """Map ISO3 -> its share of all country mentions by the outlets over the given days.
-
-    Mentions are added up across outlets and days before dividing, so an outlet
-    or a day with more coverage counts for more. Shares are of *mentions*, not
-    articles, so that they sum to 1 like the reality shares do.
-    """
-    mentions = mention_counts(day_summaries, outlets)
-    total = sum(mentions.values())
-    if not total:
-        return {}
-    return {code: count / total for code, count in mentions.items()}
+    for domain in OUTLETS[slug].domains:
+        domain_day_summary = day_summary["domains"].get(domain)
+        if domain_day_summary:
+            mentions.update(country_counts(domain_day_summary))
+    return dict(mentions)
