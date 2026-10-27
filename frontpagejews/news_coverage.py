@@ -53,11 +53,7 @@ def country_counts(domain_day_summary):
 
     A day file counts articles by the set of countries they mention (see
     `gdelt.summarize`), so an article about Israel and Iran counts once for each.
-    Days fetched before that switch (2026-10) hold these counts directly, under
-    "countries". Drop that case once every day is refetched.
     """
-    if "countries" in domain_day_summary:
-        return dict(domain_day_summary["countries"])
     counts = Counter()
     for country_set, article_count in domain_day_summary["country_sets"].items():
         for country in country_set.split(","):
