@@ -1,0 +1,3 @@
+# Commits here are data, not code; nothing to check. Without this file the
+# repo's pre-commit hook, shared by every worktree, refuses to commit.
+repos: []
