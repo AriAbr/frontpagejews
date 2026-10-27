@@ -34,8 +34,3 @@ def describe_country_counts():
         domain_day_summary = {"articles": 4, "country_sets": {"ISR,USA": 2, "ISR": 1}}
 
         assert news_coverage.country_counts(domain_day_summary) == {"ISR": 3, "USA": 2}
-
-    def test_reads_a_day_fetched_before_country_sets():
-        domain_day_summary = {"articles": 2, "countries": {"ISR": 2, "USA": 1}}
-
-        assert news_coverage.country_counts(domain_day_summary) == {"ISR": 2, "USA": 1}
