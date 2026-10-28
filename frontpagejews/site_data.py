@@ -2,8 +2,9 @@
 
 The site is static: `manage.py build_site` writes this out as `data.json`, and
 the page's scripts do the rest in the browser, since which outlets and which
-comparison country to show are the visitor's choice. Mentions are summed per
-outlet here, so the browser only adds up the outlets that are ticked.
+comparison country to show are the visitor's choice. Mentions are counted per
+set of countries (see `outlet_country_set_mentions`) and summed per outlet
+here, so the browser only adds up the outlets that are ticked.
 
 `data.json` holds the last `DAYS_SHOWN` days. Each earlier month the visitor can
 pick instead is a file of its own, `months/YYYY-MM.json`, so the page only
@@ -14,7 +15,7 @@ from datetime import UTC, datetime
 
 from frontpagejews import benchmarks, gdelt
 from frontpagejews.countries import country_name
-from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, outlet_mentions
+from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, outlet_country_set_mentions
 
 FOCUS = "ISR"
 DEFAULT_COMPARISON = "CHN"
@@ -23,13 +24,15 @@ DEFAULT_COMPARISON = "CHN"
 DEFAULT_BENCHMARK = "composite"
 
 
-def load_mentions_by_outlet(days):
-    """Each day's mentions, per outlet, as the page reads them."""
+def load_country_set_mentions_by_outlet(days):
+    """Each day's mentions per country set, per outlet, as the page reads them."""
     day_summaries = [gdelt.load_day(day) for day in days]
     return [
         {
             "date": day_summary["date"],
-            "mentions": {slug: outlet_mentions(day_summary, slug) for slug in OUTLETS},
+            "country_set_mentions_by_outlet": {
+                slug: outlet_country_set_mentions(day_summary, slug) for slug in OUTLETS
+            },
         }
         for day_summary in day_summaries
     ]
@@ -54,7 +57,9 @@ def month_site_data(month):
     deaths_history = benchmarks.load_history("conflict_deaths")
     deaths_months = benchmarks.conflict_deaths_months_for(deaths_history, month)
     return {
-        "days": load_mentions_by_outlet([day for day in gdelt.cached_days() if f"{day:%Y-%m}" == month]),
+        "days": load_country_set_mentions_by_outlet(
+            [day for day in gdelt.cached_days() if f"{day:%Y-%m}" == month]
+        ),
         "benchmark_figures": {
             "population": population_history[population_year],
             "gdp": gdp_history[gdp_year],
@@ -68,15 +73,14 @@ def site_data():
         benchmark: benchmarks.load_figures(benchmark) for benchmark in benchmarks.BENCHMARKS
     }
     days_shown = gdelt.cached_days()[-DAYS_SHOWN:]
-    daily_mentions_by_outlet = load_mentions_by_outlet(days_shown)
+    daily_country_set_mentions_by_outlet = load_country_set_mentions_by_outlet(days_shown)
     last_fetched = gdelt.last_fetched(days_shown)
-    mentioned_countries = {
-        code
-        for day in daily_mentions_by_outlet
-        for counts in day["mentions"].values()
-        for code in counts
-    }
-    countries_with_figures = {code for figures in figures_by_benchmark.values() for code in figures}
+    mentioned_country_codes = set()
+    for day in daily_country_set_mentions_by_outlet:
+        for country_set_mentions in day["country_set_mentions_by_outlet"].values():
+            for country_set_key in country_set_mentions:
+                mentioned_country_codes.update(country_set_key.split(","))
+    benchmarked_country_codes = {code for figures in figures_by_benchmark.values() for code in figures}
     return {
         "focus": FOCUS,
         "default_comparison": DEFAULT_COMPARISON,
@@ -84,10 +88,11 @@ def site_data():
         "outlets": {slug: outlet.name for slug, outlet in OUTLETS.items()},
         "home_countries": sorted(HOME_COUNTRIES),
         "names": {
-            code: country_name(code) for code in sorted(mentioned_countries | countries_with_figures)
+            code: country_name(code)
+            for code in sorted(mentioned_country_codes | benchmarked_country_codes)
         },
         "benchmark_figures": figures_by_benchmark,
-        "days": daily_mentions_by_outlet,
+        "days": daily_country_set_mentions_by_outlet,
         "months": cached_past_months(),
         # For "Data updated 2 hours ago", worked out in the browser.
         "last_fetched": last_fetched.isoformat(timespec="seconds") if last_fetched else None,

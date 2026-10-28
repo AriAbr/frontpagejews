@@ -14,8 +14,8 @@ and Gaza.
 
 Each article is counted under the set of countries it mentions, not once per
 country, so a group of countries can later be counted the same way: an article
-about Russia and Ukraine counts once for the two together.
-`news_coverage.country_counts` turns the sets back into per-country counts.
+about Russia and Ukraine counts once for the two together. The browser turns
+the sets back into per-country counts (`mentionsByCountry` in chart-data.js).
 
 Only the outlets' domains are kept, so adding an outlet means re-fetching past
 days with `--refresh`.
