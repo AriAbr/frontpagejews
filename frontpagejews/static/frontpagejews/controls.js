@@ -9,6 +9,7 @@
 // benchmark_change, outlets_change or period_change, with what was chosen.
 import { track } from "./analytics.js";
 import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
+import { groupCode } from "./chart-data.js";
 import { choicesQuery, countryMatches, neighboringPeriods } from "./choices.js";
 import { describeOutlets, describePeriod } from "./formats.js";
 
@@ -16,7 +17,7 @@ import { describeOutlets, describePeriod } from "./formats.js";
 // one shown, or null for the last `daysShown` days.
 export function setUpControls({ choices, comparison, selectedOutlets, benchmark, months, month, daysShown }) {
   // What's shown, for each control to change one part of.
-  const chosen = { selectedOutlets, comparisonCode: comparison.code, benchmark, month };
+  const chosen = { selectedOutlets, comparisonCountries: comparison.countries, benchmark, month };
   setUpCountryControl({ choices, comparison, chosen });
   setUpBenchmarkControl(chosen);
   setUpOutletControl(chosen);
@@ -31,7 +32,7 @@ function setUpCountryControl({ choices, comparison, chosen }) {
   const none = list.querySelector(".none");
   for (const { code, name } of choices) {
     const link = document.createElement("a");
-    link.href = choicesQuery({ ...chosen, comparisonCode: code });
+    link.href = choicesQuery({ ...chosen, comparisonCountries: [code] });
     link.textContent = name;
     link.addEventListener("click", () => track("comparison_change", { country: name }));
     const item = document.createElement("li");
@@ -154,9 +155,9 @@ function setUpBenchmarkControl(chosen) {
 // page, which would close the list after every click; closing it does, if the
 // outlets ticked have changed. The form carries the comparison, benchmark and
 // month along, and starts with the chosen outlets ticked.
-function setUpOutletControl({ selectedOutlets, comparisonCode, benchmark, month }) {
+function setUpOutletControl({ selectedOutlets, comparisonCountries, benchmark, month }) {
   const form = document.getElementById("outlet-form");
-  form.elements.vs.value = comparisonCode;
+  form.elements.vs.value = groupCode(comparisonCountries);
   form.elements.by.value = benchmark;
   // With no month, the field is left out, rather than sent empty.
   form.elements.month.value = month ?? "";

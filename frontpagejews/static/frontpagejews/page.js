@@ -6,9 +6,11 @@ import {
   benchmarkTotal,
   COMPOSITE_WEIGHTS,
   countryName,
+  groupCode,
   lineChartRows,
   scatterPoints,
   withComposite,
+  withCountriesCombined,
   withoutCountries,
 } from "./chart-data.js";
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
@@ -27,11 +29,17 @@ await document.fonts.ready;
 const { month } = choicesFromUrl(location.search, siteData);
 const allData = month ? { ...siteData, ...(await fetchJson(`months/${month}.json`)) } : siteData;
 const shownData = withoutCountries(allData, allData.home_countries);
-// After leaving countries out, so the composite's shares are of the countries shown.
-const data = withComposite(shownData, COMPOSITE_WEIGHTS);
-const { selectedOutlets, comparisonCode, benchmark } = choicesFromUrl(location.search, data);
+// Read before they're combined, while the data still names each of them.
+const { comparisonCountries } = choicesFromUrl(location.search, shownData);
+const combinedData = withCountriesCombined(shownData, comparisonCountries);
+// After leaving countries out and combining them, so the composite's shares
+// are of the countries shown.
+const data = withComposite(combinedData, COMPOSITE_WEIGHTS);
+// Once the composite's added, so it can be the benchmark.
+const { selectedOutlets, benchmark } = choicesFromUrl(location.search, data);
+const comparisonCode = groupCode(comparisonCountries);
 const focus = { code: data.focus, name: countryName(data, data.focus) };
-const comparison = { code: comparisonCode, name: countryName(data, comparisonCode) };
+const comparison = { code: comparisonCode, name: countryName(data, comparisonCode), countries: comparisonCountries };
 const period = describePeriod(month, siteData.days.length);
 
 document.getElementById("comparison-name").textContent = comparison.name;

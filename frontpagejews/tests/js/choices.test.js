@@ -11,7 +11,7 @@ describe("choicesFromUrl", () => {
   test("compares Israel with China by population over the last days, with every outlet, by default", () => {
     assert.deepEqual(choicesFromUrl("", data), {
       selectedOutlets: ["fox", "bbc"],
-      comparisonCode: "CHN",
+      comparisonCountries: ["CHN"],
       benchmark: "population",
       month: null,
     });
@@ -20,7 +20,7 @@ describe("choicesFromUrl", () => {
   test("takes the outlets, country, benchmark and month given", () => {
     assert.deepEqual(choicesFromUrl("?vs=USA&outlet=bbc&by=gdp&month=2024-03", data), {
       selectedOutlets: ["bbc"],
-      comparisonCode: "USA",
+      comparisonCountries: ["USA"],
       benchmark: "gdp",
       month: "2024-03",
     });
@@ -30,8 +30,20 @@ describe("choicesFromUrl", () => {
     assert.equal(choicesFromUrl("?month=1999-01", data).month, null);
   });
 
-  test("uses the default comparison when the country given is unknown", () => {
-    assert.equal(choicesFromUrl("?vs=XKX", data).comparisonCode, "CHN");
+  test("takes a group of countries to combine", () => {
+    assert.deepEqual(choicesFromUrl("?vs=USA%2BCHN", data).comparisonCountries, ["USA", "CHN"]);
+  });
+
+  test("reads a + typed into the address bar, which comes through as a space", () => {
+    assert.deepEqual(choicesFromUrl("?vs=USA+CHN", data).comparisonCountries, ["USA", "CHN"]);
+  });
+
+  test("drops unknown countries, Israel and repeats from the comparison", () => {
+    assert.deepEqual(choicesFromUrl("?vs=USA+XKX+ISR+USA", data).comparisonCountries, ["USA"]);
+  });
+
+  test("uses the default comparison when no country given is known", () => {
+    assert.deepEqual(choicesFromUrl("?vs=XKX", data).comparisonCountries, ["CHN"]);
   });
 
   test("uses the default benchmark when the one given is unknown", () => {
@@ -47,19 +59,19 @@ describe("choicesQuery", () => {
   const data = siteData({}, {}, ["2024-03"]);
 
   test("gives the choices back to choicesFromUrl unchanged", () => {
-    const choices = { selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "gdp", month: "2024-03" };
+    const choices = { selectedOutlets: ["bbc"], comparisonCountries: ["USA"], benchmark: "gdp", month: "2024-03" };
 
     assert.deepEqual(choicesFromUrl(choicesQuery(choices), data), choices);
   });
 
   test("leaves the month out when there is none", () => {
-    const query = choicesQuery({ selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "gdp", month: null });
+    const query = choicesQuery({ selectedOutlets: ["bbc"], comparisonCountries: ["USA"], benchmark: "gdp", month: null });
 
     assert.equal(query, "?vs=USA&by=gdp&outlet=bbc");
   });
 
   test("includes the benchmark even when it is the default", () => {
-    const query = choicesQuery({ selectedOutlets: ["bbc"], comparisonCode: "USA", benchmark: "population" });
+    const query = choicesQuery({ selectedOutlets: ["bbc"], comparisonCountries: ["USA"], benchmark: "population" });
 
     assert.equal(query, "?vs=USA&by=population&outlet=bbc");
   });
