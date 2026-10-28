@@ -8,6 +8,7 @@ import {
   mentionsByCountry,
   scatterPoints,
   withComposite,
+  withCountriesCombined,
   withoutCountries,
 } from "../../static/frontpagejews/chart-data.js";
 import { siteData } from "./site-data.js";
@@ -29,6 +30,41 @@ describe("withoutCountries", () => {
     const without = withoutCountries(data, ["USA", "GBR"]);
 
     assert.deepEqual(without.days[0].country_set_mentions_by_outlet.bbc, { ISR: 3, CHN: 1 });
+  });
+});
+
+describe("withCountriesCombined", () => {
+  test("counts an article about any of the countries once for the group", () => {
+    const data = siteData({ "2026-09-22": { bbc: { "RUS,UKR": 2, RUS: 1, "ISR,UKR": 1, ISR: 4 } } });
+
+    const combined = withCountriesCombined(data, ["UKR", "RUS"]);
+
+    assert.deepEqual(combined.days[0].country_set_mentions_by_outlet.bbc, { "RUS+UKR": 3, "ISR,RUS+UKR": 1, ISR: 4 });
+    assert.deepEqual(mentionsByCountry(combined.days, ["bbc"]), { "RUS+UKR": 4, ISR: 5 });
+  });
+
+  test("adds up the countries' benchmark figures", () => {
+    const data = siteData({}, { population: { RUS: 140, UKR: 40, ISR: 10 } });
+
+    const combined = withCountriesCombined(data, ["RUS", "UKR"]);
+
+    assert.deepEqual(combined.benchmark_figures.population, { "RUS+UKR": 180, ISR: 10 });
+  });
+
+  test("gives the group no figure where any of the countries has none", () => {
+    const data = siteData({}, { gdp: { RUS: 2000, ISR: 500 } });
+
+    const combined = withCountriesCombined(data, ["RUS", "UKR"]);
+
+    assert.deepEqual(combined.benchmark_figures.gdp, { ISR: 500 });
+  });
+
+  test("names the group after the countries", () => {
+    const data = siteData({});
+
+    const combined = withCountriesCombined(data, ["CHN", "USA"]);
+
+    assert.deepEqual(combined.names, { "CHN+USA": "China + United States", ISR: "Israel", GBR: "United Kingdom" });
   });
 });
 

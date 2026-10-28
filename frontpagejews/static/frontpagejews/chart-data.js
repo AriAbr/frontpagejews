@@ -56,6 +56,58 @@ export function withoutCountries(data, codes) {
   return { ...data, names: without(data.names), benchmark_figures: benchmarkFigures, days: daysWithoutCountries };
 }
 
+// The code a group of countries goes by once combined: its members' codes,
+// sorted and joined by "+", so Russia and Ukraine are "RUS+UKR".
+export const groupCode = codes => [...codes].sort().join("+");
+
+// data.json with the given countries combined into one, as if each article
+// about any of them were about the group instead: one about Russia and Ukraine
+// counts once for "RUS+UKR", as one about Israel and Gaza counts once for
+// Israel. The group's benchmark figures are its members' added up, or none if
+// any member has none, as North Korea has no GDP.
+export function withCountriesCombined(data, codes) {
+  const combinedCode = groupCode(codes);
+
+  // Mentions per country set, with the countries in each set replaced by the
+  // group: "ISR,RUS,UKR" becomes "ISR,RUS+UKR", and "RUS" becomes "RUS+UKR".
+  function combineInCountrySetMentions(countrySetMentions) {
+    const combined = {};
+    for (const [countrySetKey, mentionCount] of Object.entries(countrySetMentions)) {
+      const countries = countrySetKey.split(",");
+      const otherCountries = countries.filter(code => !codes.includes(code));
+      const mentionsGroup = otherCountries.length < countries.length;
+      const combinedKey = mentionsGroup ? [...otherCountries, combinedCode].sort().join(",") : countrySetKey;
+      combined[combinedKey] = (combined[combinedKey] ?? 0) + mentionCount;
+    }
+    return combined;
+  }
+
+  const daysCombined = [];
+  for (const day of data.days) {
+    const countrySetMentionsByOutlet = {};
+    for (const [slug, outletCountrySetMentions] of Object.entries(day.country_set_mentions_by_outlet)) {
+      countrySetMentionsByOutlet[slug] = combineInCountrySetMentions(outletCountrySetMentions);
+    }
+    daysCombined.push({ ...day, country_set_mentions_by_outlet: countrySetMentionsByOutlet });
+  }
+
+  const benchmarkFigures = {};
+  for (const [benchmark, figures] of Object.entries(data.benchmark_figures)) {
+    const combinedFigures = { ...figures };
+    for (const code of codes) delete combinedFigures[code];
+    if (codes.every(code => code in figures)) {
+      combinedFigures[combinedCode] = sum(codes.map(code => figures[code]));
+    }
+    benchmarkFigures[benchmark] = combinedFigures;
+  }
+
+  const names = { ...data.names };
+  for (const code of codes) delete names[code];
+  names[combinedCode] = codes.map(code => countryName(data, code)).join(" + ");
+
+  return { ...data, names, benchmark_figures: benchmarkFigures, days: daysCombined };
+}
+
 // ISO3 -> mentions by the selected outlets, added up over the given days. An
 // article mentions each country in its set once, so one about Israel and Iran
 // counts once for each.
