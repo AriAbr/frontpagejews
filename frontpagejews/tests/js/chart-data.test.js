@@ -18,9 +18,17 @@ describe("withoutCountries", () => {
 
     const without = withoutCountries(data, ["USA", "GBR"]);
 
-    assert.deepEqual(without.days[0].mentions.bbc, { ISR: 1 });
+    assert.deepEqual(without.days[0].country_set_mentions_by_outlet.bbc, { ISR: 1 });
     assert.deepEqual(without.benchmark_figures.population, { ISR: 10 });
     assert.deepEqual(without.names, { CHN: "China", ISR: "Israel" });
+  });
+
+  test("takes the countries out of each article's set, keeping its other countries", () => {
+    const data = siteData({ "2026-09-22": { bbc: { "ISR,USA": 2, ISR: 1, "CHN,GBR,USA": 1, USA: 4 } } });
+
+    const without = withoutCountries(data, ["USA", "GBR"]);
+
+    assert.deepEqual(without.days[0].country_set_mentions_by_outlet.bbc, { ISR: 3, CHN: 1 });
   });
 });
 
@@ -51,6 +59,12 @@ describe("mentionsByCountry", () => {
     });
 
     assert.deepEqual(mentionsByCountry(data.days, ["bbc", "fox"]), { ISR: 3, USA: 2 });
+  });
+
+  test("counts an article once for each country in its set", () => {
+    const data = siteData({ "2026-09-22": { bbc: { "IRN,ISR": 2, ISR: 1 } } });
+
+    assert.deepEqual(mentionsByCountry(data.days, ["bbc"]), { IRN: 2, ISR: 3 });
   });
 
   test("ignores outlets not selected", () => {

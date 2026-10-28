@@ -2,9 +2,10 @@
 // choices (see choices.js). Nothing here touches the page.
 //
 // data.json (see site_data.py) holds, for each of the days shown, each
-// outlet's mentions of each country, plus each benchmark's (population, GDP)
-// figures by country. Coverage is compared with one benchmark at a time, the
-// visitor's choice.
+// outlet's mentions per set of countries, keyed like {"ISR,USA": 6, "ISR": 3}:
+// an article about Israel and the US is one mention of "ISR,USA". Plus each
+// benchmark's (population, GDP) figures by country. Coverage is compared with
+// one benchmark at a time, the visitor's choice.
 
 const sum = numbers => numbers.reduce((total, n) => total + n, 0);
 
@@ -29,25 +30,43 @@ export function withoutCountries(data, codes) {
     benchmarkFigures[benchmark] = without(figures);
   }
 
+  // Mentions per country set, with the countries taken out of each set: an
+  // article about Israel and the US then counts as one about Israel alone, and
+  // one about the US alone no longer counts.
+  function dropFromCountrySetMentions(countrySetMentions) {
+    const kept = {};
+    for (const [countrySetKey, mentionCount] of Object.entries(countrySetMentions)) {
+      const keptCountries = countrySetKey.split(",").filter(code => !codes.includes(code));
+      if (!keptCountries.length) continue;
+      const keptKey = keptCountries.join(",");
+      kept[keptKey] = (kept[keptKey] ?? 0) + mentionCount;
+    }
+    return kept;
+  }
+
   const daysWithoutCountries = [];
   for (const day of data.days) {
-    const mentions = {};
-    for (const [slug, outletMentions] of Object.entries(day.mentions)) {
-      mentions[slug] = without(outletMentions);
+    const countrySetMentionsByOutlet = {};
+    for (const [slug, outletCountrySetMentions] of Object.entries(day.country_set_mentions_by_outlet)) {
+      countrySetMentionsByOutlet[slug] = dropFromCountrySetMentions(outletCountrySetMentions);
     }
-    daysWithoutCountries.push({ ...day, mentions });
+    daysWithoutCountries.push({ ...day, country_set_mentions_by_outlet: countrySetMentionsByOutlet });
   }
 
   return { ...data, names: without(data.names), benchmark_figures: benchmarkFigures, days: daysWithoutCountries };
 }
 
-// ISO3 -> mentions by the selected outlets, added up over the given days.
+// ISO3 -> mentions by the selected outlets, added up over the given days. An
+// article mentions each country in its set once, so one about Israel and Iran
+// counts once for each.
 export function mentionsByCountry(days, selectedOutlets) {
   const mentions = {};
   for (const day of days) {
     for (const slug of selectedOutlets) {
-      for (const [code, count] of Object.entries(day.mentions[slug] ?? {})) {
-        mentions[code] = (mentions[code] ?? 0) + count;
+      for (const [countrySetKey, mentionCount] of Object.entries(day.country_set_mentions_by_outlet[slug] ?? {})) {
+        for (const code of countrySetKey.split(",")) {
+          mentions[code] = (mentions[code] ?? 0) + mentionCount;
+        }
       }
     }
   }
@@ -117,7 +136,7 @@ export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) 
       date: day.date,
       // Whether GDELT has the day at all, from any outlet, which tells an
       // outage on its side from a day the selected outlets were missing.
-      gdeltHasDay: Object.values(day.mentions).some(counts => Object.keys(counts).length > 0),
+      gdeltHasDay: Object.values(day.country_set_mentions_by_outlet).some(counts => Object.keys(counts).length > 0),
       focusMentionsPercentage: hasMentions ? (mentionsPercentages[data.focus] ?? 0) : null,
       focusBenchmarkPercentage: benchmarkPercentages[data.focus] ?? null,
       comparisonMentionsPercentage: hasMentions ? (mentionsPercentages[comparisonCode] ?? 0) : null,

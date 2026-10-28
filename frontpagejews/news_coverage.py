@@ -1,4 +1,4 @@
-"""The outlets, and how many of their articles mention each country.
+"""The outlets, and their mentions of each set of countries.
 
 The counts come from the cached GDELT summaries (see `gdelt.py`). The browser
 turns them into each country's percentage of coverage and compares that with
@@ -48,25 +48,14 @@ OUTLET_DOMAINS = {domain for outlet in OUTLETS.values() for domain in outlet.dom
 HOME_COUNTRIES = {"USA", "GBR"}
 
 
-def country_counts(domain_day_summary):
-    """Map ISO3 -> how many of one domain's articles that day mention the country.
-
-    A day file counts articles by the set of countries they mention (see
-    `gdelt.summarize`), so an article about Israel and Iran counts once for each.
-    """
-    counts = Counter()
-    for country_set, article_count in domain_day_summary["country_sets"].items():
-        for country in country_set.split(","):
-            counts[country] += article_count
-    return dict(counts)
-
-
-def outlet_mentions(day_summary, slug):
-    """Map ISO3 -> how many of one outlet's articles mention the country on one day,
-    added up over the outlet's domains."""
-    mentions = Counter()
+def outlet_country_set_mentions(day_summary, slug):
+    """Map country set -> one outlet's mentions of it on one day, added up over the
+    outlet's domains. Each set is treated as one unit: an article about Israel
+    and the US is one mention of "ISR,USA", and none of "ISR" alone. Keyed like
+    the day files (see `gdelt.country_set_key`): {"ISR,USA": 6, "ISR": 3}."""
+    country_set_mentions = Counter()
     for domain in OUTLETS[slug].domains:
         domain_day_summary = day_summary["domains"].get(domain)
         if domain_day_summary:
-            mentions.update(country_counts(domain_day_summary))
-    return dict(mentions)
+            country_set_mentions.update(domain_day_summary["country_sets"])
+    return dict(country_set_mentions)
