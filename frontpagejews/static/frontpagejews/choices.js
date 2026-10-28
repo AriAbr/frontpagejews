@@ -1,22 +1,25 @@
 // The visitor's choices: which outlets, which country to compare with, which
 // benchmark to measure reality by, and which month to show. Read from and
 // written to the query string. Nothing here touches the page.
-import { countryName, mentionsByCountry } from "./chart-data.js";
+import { countryName, groupCode, mentionsByCountry } from "./chart-data.js";
 
-// The outlets, comparison country, benchmark and month in the query string,
+// The outlets, comparison countries, benchmark and month in the query string,
 // falling back to all outlets, the defaults, and no month: the last days
-// shown. A country the data doesn't name, like one left out of it, falls back
-// too, as does a month with no data.
+// shown. A country the data doesn't name, like one left out of it, is dropped,
+// as is Israel, and a month with no data falls back too. The comparison is one
+// country, or a group to combine into one, as in "vs=RUS+UKR".
 export function choicesFromUrl(queryString, data) {
   const params = new URLSearchParams(queryString);
   const allOutlets = Object.keys(data.outlets);
   const outletsInUrl = params.getAll("outlet").filter(slug => allOutlets.includes(slug));
-  const comparison = params.get("vs");
+  // A "+" typed into the address bar reads as a space.
+  const comparisonInUrl = new Set((params.get("vs") ?? "").split(/[+ ]/));
+  const comparisonCountriesInUrl = [...comparisonInUrl].filter(code => code in data.names && code !== data.focus);
   const benchmark = params.get("by");
   const month = params.get("month");
   return {
     selectedOutlets: outletsInUrl.length ? outletsInUrl : allOutlets,
-    comparisonCode: comparison in data.names ? comparison : data.default_comparison,
+    comparisonCountries: comparisonCountriesInUrl.length ? comparisonCountriesInUrl : [data.default_comparison],
     benchmark: benchmark in data.benchmark_figures ? benchmark : data.default_benchmark,
     month: data.months.includes(month) ? month : null,
   };
@@ -25,8 +28,8 @@ export function choicesFromUrl(queryString, data) {
 // The query string for the given choices: the reverse of `choicesFromUrl`. In
 // the same order as the outlet form submits them, so a view has one URL
 // whichever control led to it.
-export function choicesQuery({ selectedOutlets, comparisonCode, benchmark, month }) {
-  const params = [["vs", comparisonCode], ["by", benchmark]];
+export function choicesQuery({ selectedOutlets, comparisonCountries, benchmark, month }) {
+  const params = [["vs", groupCode(comparisonCountries)], ["by", benchmark]];
   if (month) params.push(["month", month]);
   params.push(...selectedOutlets.map(slug => ["outlet", slug]));
   return `?${new URLSearchParams(params)}`;
