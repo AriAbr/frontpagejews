@@ -36,7 +36,7 @@ export function setUpControls({ choices, comparison, suggestion, selectedOutlets
 function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   const search = document.getElementById("country-search");
   const list = document.getElementById("country-list");
-  const none = list.querySelector(".none");
+  const noMatchesItem = list.querySelector(".none");
   const { comparisonCountries } = chosen;
   // The list has two modes: picking a country to compare with alone, or one
   // to combine with the comparison. Which it's in, for the links' tracking
@@ -48,7 +48,7 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   const combineItem = document.createElement("li");
   combineItem.className = "combine";
   combineItem.append(combineToggle);
-  list.insertBefore(combineItem, none);
+  list.insertBefore(combineItem, noMatchesItem);
   for (const { code, name } of choices) {
     const link = document.createElement("a");
     link.className = "country";
@@ -59,23 +59,22 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
     const item = document.createElement("li");
     if (comparisonCountries.includes(code)) item.className = "current";
     item.append(link);
-    list.insertBefore(item, none);
+    list.insertBefore(item, noMatchesItem);
   }
   showCombining({ comparison, suggestion, chosen });
   const items = [...list.querySelectorAll("li:not(.none)")];
   search.value = comparison.name;
-  const current = search.value;
-  let active = -1;
+  let highlightedIndex = -1;
 
-  const visible = () => items.filter(li => !li.hidden);
+  const shownRows = () => items.filter(li => !li.hidden);
   const highlight = index => {
-    const shown = visible();
+    const shown = shownRows();
     items.forEach(li => li.classList.remove("active"));
-    active = shown.length ? (index + shown.length) % shown.length : -1;
-    if (active >= 0) {
-      shown[active].classList.add("active");
+    highlightedIndex = shown.length ? (index + shown.length) % shown.length : -1;
+    if (highlightedIndex >= 0) {
+      shown[highlightedIndex].classList.add("active");
       // The button for combining is pinned in view already.
-      if (!shown[active].classList.contains("combine")) shown[active].scrollIntoView({ block: "nearest" });
+      if (!shown[highlightedIndex].classList.contains("combine")) shown[highlightedIndex].scrollIntoView({ block: "nearest" });
     }
   };
   // The button for switching modes shows only in the full list. Combining,
@@ -93,7 +92,7 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
       const isFilteredOut = isFiltering && !countryMatches(li.textContent, typed);
       li.hidden = isAlreadyCombined || isFilteredOut;
     }
-    none.hidden = visible().length > 0;
+    noMatchesItem.hidden = shownRows().length > 0;
     highlight(typed ? 0 : -1);
   };
   // Switches the list to picking a country to combine with the comparison:
@@ -117,7 +116,7 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   const open = () => { list.hidden = false; };
   const close = () => {
     list.hidden = true;
-    search.value = current;
+    search.value = comparison.name;
     stopCombining();
   };
 
@@ -130,9 +129,9 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   });
   search.addEventListener("input", () => { filter(); open(); });
   search.addEventListener("keydown", event => {
-    if (event.key === "ArrowDown") { event.preventDefault(); open(); highlight(active + 1); }
-    else if (event.key === "ArrowUp") { event.preventDefault(); highlight(active - 1); }
-    else if (event.key === "Enter" && active >= 0) { visible()[active].querySelector("a, button").click(); }
+    if (event.key === "ArrowDown") { event.preventDefault(); open(); highlight(highlightedIndex + 1); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); highlight(highlightedIndex - 1); }
+    else if (event.key === "Enter" && highlightedIndex >= 0) { shownRows()[highlightedIndex].querySelector("a, button").click(); }
     else if (event.key === "Escape") { close(); search.blur(); }
   });
   // Close on outside clicks; mousedown on the list keeps focus so a click lands.
