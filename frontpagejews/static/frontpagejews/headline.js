@@ -1,22 +1,25 @@
 // The page's headline: how many times its share of the benchmark each of the
 // two countries gets in coverage, in big type above the charts, so the gist
 // is there at a glance and in a screenshot.
-import { COLORS } from "./chart-common.js";
+import { COLORS, explainedNote } from "./chart-common.js";
 import { definitionLink, withBenchmarkLinked } from "./definitions.js";
 import { multiple, percent } from "./formats.js";
 
 // points: the scatter's points, {code, coverage, reality} with shares.
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
-export function drawHeadline({ points, benchmarkDisplaySettings, focus, comparison }) {
+// focusPointBeforeCombining: Israel's point with the comparison's countries
+// separate, when they're combined; otherwise null.
+export function drawHeadline({ points, benchmarkDisplaySettings, focus, comparison, focusPointBeforeCombining }) {
   const headline = document.getElementById("headline");
-  headline.append(...headlineLine(focus, COLORS.focus, points, benchmarkDisplaySettings));
+  headline.append(...headlineLine(focus, COLORS.focus, points, benchmarkDisplaySettings, focusPointBeforeCombining));
   headline.append(...headlineLine(comparison, COLORS.comparison, points, benchmarkDisplaySettings));
 }
 
 // The country's part, as a list of one block, or of none if the country
 // wasn't mentioned: its line, and under it the two shares the multiple comes
-// from, or only its line where it has no figure for the benchmark.
-function headlineLine(country, color, points, benchmarkDisplaySettings) {
+// from, or only its line where it has no figure for the benchmark. Given its
+// point before combining, the line shows that multiple too.
+function headlineLine(country, color, points, benchmarkDisplaySettings, pointBeforeCombining = null) {
   const point = points.find(p => p.code === country.code);
   if (!point) return [];
 
@@ -34,6 +37,7 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
 
   const times = element("strong", multiple(point.mentionsPercentage, point.benchmarkPercentage));
   line.append(name, " ", times, " expected coverage");
+  if (pointBeforeCombining?.benchmarkPercentage) line.append(" ", beforeCombiningNote(pointBeforeCombining));
 
   // Each share is kept in one piece, with a dot between them, so where the two
   // don't fit on one line they break between them, and the dot goes:
@@ -52,6 +56,17 @@ function headlineLine(country, color, points, benchmarkDisplaySettings) {
   detail.append(shares);
   part.append(detail);
   return [part];
+}
+
+// "9.5× before combining ⓘ": Israel's multiple with the comparison's
+// countries separate, beside the combined one, and why the two differ.
+function beforeCombiningNote(pointBeforeCombining) {
+  const label = `${multiple(pointBeforeCombining.mentionsPercentage, pointBeforeCombining.benchmarkPercentage)} before combining`;
+  const explanation =
+    "Counting multiple countries as one means there are fewer mentions in total, so every other country's share goes up slightly.";
+  const note = explainedNote(label, explanation);
+  note.classList.add("before-combining");
+  return note;
 }
 
 function element(tag, text) {

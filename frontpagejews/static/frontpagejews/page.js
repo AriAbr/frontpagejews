@@ -38,8 +38,10 @@ const combinedData = withCountriesCombined(shownData, comparisonCountries);
 const data = withComposite(combinedData, COMPOSITE_WEIGHTS);
 // Once the composite's added, so it can be the benchmark.
 const { selectedOutlets, benchmark } = choicesFromUrl(location.search, data);
-// Each country on its own, before they're combined, for the picker to list.
-const choices = comparisonChoices(withComposite(shownData, COMPOSITE_WEIGHTS), selectedOutlets, benchmark);
+// Each country on its own, before they're combined: for the picker to list,
+// and for Israel's figures as they'd be without combining.
+const dataBeforeCombining = withComposite(shownData, COMPOSITE_WEIGHTS);
+const choices = comparisonChoices(dataBeforeCombining, selectedOutlets, benchmark);
 const comparisonCode = groupCode(comparisonCountries);
 const focus = { code: data.focus, name: countryName(data, data.focus) };
 const comparison = {
@@ -93,7 +95,13 @@ if (data.days.length) {
   // line chart does over its days.
   const periodHasData = rows.some(row => row.focusMentionsPercentage !== null);
   const points = periodHasData ? scatterPoints(data, selectedOutlets, benchmark) : [];
-  drawHeadline({ points, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison });
+  // With countries combined, Israel's share shifts a little: the headline
+  // shows it as it'd be with them separate too.
+  const isCombined = comparisonCountries.length > 1;
+  const focusPointBeforeCombining = isCombined && periodHasData
+    ? scatterPoints(dataBeforeCombining, selectedOutlets, benchmark).find(point => point.code === data.focus)
+    : null;
+  drawHeadline({ points, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison, focusPointBeforeCombining });
   drawScatter({
     points,
     benchmarkTotal: benchmarkTotal(data, benchmark),

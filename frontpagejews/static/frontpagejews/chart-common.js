@@ -199,16 +199,25 @@ export function hideTooltipOnPressElsewhere(chart) {
 // Room between a note's explanation and the window's edge, as for tooltips.
 const WINDOW_GAP = 12;
 
-// A "No data ⓘ" button over a chart, added to `parent`, whose explanation
-// shows while it's hovered or focused: tapping it focuses it on a phone, and
-// tapping elsewhere hides it again.
+// A "No data ⓘ" note over a chart (see explainedNote), added to `parent`.
 export function noDataNoteElement(parent, explanation) {
+  const note = explainedNote("No data", explanation);
+  note.classList.add("no-data-note");
+  parent.append(note);
+  return note;
+}
+
+// A label with an ⓘ, as a button whose explanation shows while it's hovered
+// or focused: tapping it focuses it on a phone, and tapping elsewhere hides
+// it again. For the caller to place.
+export function explainedNote(label, explanation) {
   const note = document.createElement("div");
-  note.className = "no-data-note";
+  note.className = "explained-note";
   const button = document.createElement("button");
   button.type = "button";
   button.innerHTML =
-    'No data <svg class="info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.75v.5"/></svg>';
+    ' <svg class="info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.75v.5"/></svg>';
+  button.prepend(label);
   const popover = document.createElement("div");
   popover.className = "explanation";
   popover.id = `no-data-${crypto.randomUUID()}`;
@@ -227,6 +236,5 @@ export function noDataNoteElement(parent, explanation) {
   };
   note.addEventListener("mouseenter", keepInWindow);
   note.addEventListener("focusin", keepInWindow);
-  parent.append(note);
   return note;
 }
