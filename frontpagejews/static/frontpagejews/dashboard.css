@@ -121,7 +121,7 @@ a.definition:hover { text-decoration-style: solid; }
 .picker ul { min-width: max-content; scroll-padding-top: 40px; }
 .picker li.combine { position: sticky; top: -4px; z-index: 1; margin: -4px 0 4px; background: var(--bg);
                      border-bottom: 1px solid var(--border); }
-.picker li.combine button { display: block; width: 100%; padding: 5px 10px; font: inherit; text-align: left; color: inherit;
+.picker li.combine button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 10px; font: inherit; text-align: left; color: inherit;
                             background: none; border: none; cursor: pointer; }
 .picker li.combine.active button, .picker li.combine button:hover { background: var(--border); }
 /* Where they fit, the four controls in one row, each heading small above its
@@ -326,7 +326,7 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
    lines tall. */
 .offscreen-badges { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; min-width: 0; margin-bottom: 4px; }
 .badge { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 2px 10px; border-radius: 10px; background: var(--border); color: var(--fg); font-size: 0.75rem; font-weight: 600; }
-.badge .arrow { flex: none; width: 11px; height: 9px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.arrow { flex: none; width: 11px; height: 9px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .badge .kept-together { white-space: nowrap; }
 /* Between two countries' names, so the second dot sits a little further off. */
 .badge .wide-space { word-spacing: 4px; }

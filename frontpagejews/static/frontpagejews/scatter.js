@@ -7,6 +7,7 @@
 // few countries are huge and most are small.
 import { ANIMATION, BACKGROUND, COLORS, hideTooltipOnPressElsewhere, noDataNoteElement } from "./chart-common.js";
 import { multiple, percent } from "./formats.js";
+import { arrowIcon } from "./icons.js";
 
 // Rounded up to this, so the coverage axis ends on a round number.
 const COVERAGE_AXIS_STEP = 0.01;
@@ -306,21 +307,6 @@ function fillBadge(badge, points, colorOf, side) {
   text.append(...content);
   if (side === "left") badge.append(arrow, text);
   else badge.append(text, arrow);
-}
-
-// An arrow pointing left or right. Drawn rather than typed: an arrow
-// character's height in its line depends on the font, and in some it sits
-// well below the text's middle.
-function arrowIcon(side) {
-  const svgNamespace = "http://www.w3.org/2000/svg";
-  const icon = document.createElementNS(svgNamespace, "svg");
-  icon.setAttribute("class", "arrow");
-  icon.setAttribute("viewBox", "0 0 12 10");
-  icon.setAttribute("aria-hidden", "true");
-  const path = document.createElementNS(svgNamespace, "path");
-  path.setAttribute("d", side === "left" ? "M11 5H1M5 1 1 5l4 4" : "M1 5h10M7 1l4 4-4 4");
-  icon.append(path);
-  return icon;
 }
 
 // A wrapped badge stays as wide as the room it was squeezed into, leaving empty
