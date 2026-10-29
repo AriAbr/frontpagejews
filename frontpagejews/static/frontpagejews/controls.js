@@ -12,6 +12,7 @@ import { BENCHMARK_DISPLAY_SETTINGS } from "./benchmark-display-settings.js";
 import { groupCode } from "./chart-data.js";
 import { choicesQuery, countryMatches, neighboringPeriods } from "./choices.js";
 import { describeOutlets, describePeriod } from "./formats.js";
+import { arrowIcon } from "./icons.js";
 
 // months: every month there's data for, "YYYY-MM", oldest first. month: the
 // one shown, or null for the last `daysShown` days.
@@ -29,7 +30,7 @@ export function setUpControls({ choices, comparison, suggestion, selectedOutlets
 // Each country in it links to comparing with that country alone.
 //
 // Pinned above them, a button that turns the list into one for combining
-// another country with the comparison. Under the box, the countries
+// another country with the comparison, and back. Under the box, the countries
 // combined, once there's more than one, and a country to combine with, if one
 // overlaps enough with the comparison (see combiningSuggestion).
 function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
@@ -41,12 +42,12 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   // to combine with the comparison. Which it's in, for the links' tracking
   // and `filter` to read; changed only by startCombining and stopCombining.
   let isCombining = false;
-  const combineButton = document.createElement("button");
-  combineButton.type = "button";
-  combineButton.textContent = "+ Combine with another country";
+  // Pinned at the top of the list: switches it from one mode to the other.
+  const combineToggle = document.createElement("button");
+  combineToggle.type = "button";
   const combineItem = document.createElement("li");
   combineItem.className = "combine";
-  combineItem.append(combineButton);
+  combineItem.append(combineToggle);
   list.insertBefore(combineItem, none);
   for (const { code, name } of choices) {
     const link = document.createElement("a");
@@ -77,15 +78,15 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
       if (!shown[active].classList.contains("combine")) shown[active].scrollIntoView({ block: "nearest" });
     }
   };
-  // The button for combining shows only in the full list. Combining, the
-  // countries already chosen are left out.
+  // The button for switching modes shows only in the full list. Combining,
+  // the countries already chosen are left out.
   const filter = () => {
     const typed = search.value.trim();
     const isFiltering = typed !== "";
     for (const li of items) {
       const isCombineButton = li.classList.contains("combine");
       if (isCombineButton) {
-        li.hidden = isFiltering || isCombining;
+        li.hidden = isFiltering;
         continue;
       }
       const isAlreadyCombined = isCombining && li.classList.contains("current");
@@ -96,10 +97,12 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
     highlight(typed ? 0 : -1);
   };
   // Switches the list to picking a country to combine with the comparison:
-  // the box's placeholder says so, and each country links to the two combined.
+  // the box's placeholder says so, the button at the top offers the way back,
+  // and each country links to the two combined.
   const startCombining = () => {
     isCombining = true;
     search.placeholder = "Combine with…";
+    combineToggle.replaceChildren(arrowIcon("left"), "Back to all countries");
     for (const link of list.querySelectorAll("a.country")) link.href = link.dataset.combinedHref;
   };
   // Switches it back to picking a country to compare with alone, as it starts
@@ -107,6 +110,7 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   const stopCombining = () => {
     isCombining = false;
     search.placeholder = "Filter countries";
+    combineToggle.textContent = "+ Combine with another country";
     for (const link of list.querySelectorAll("a.country")) link.href = link.dataset.aloneHref;
   };
   stopCombining();
@@ -134,8 +138,12 @@ function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   // Close on outside clicks; mousedown on the list keeps focus so a click lands.
   list.addEventListener("mousedown", event => event.preventDefault());
   search.addEventListener("blur", close);
-  combineButton.addEventListener("click", () => {
-    startCombining();
+  combineToggle.addEventListener("click", () => {
+    if (isCombining) {
+      stopCombining();
+    } else {
+      startCombining();
+    }
     search.value = "";
     filter();
     list.scrollTop = 0;
