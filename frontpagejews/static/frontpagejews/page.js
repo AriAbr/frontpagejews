@@ -6,10 +6,10 @@ import {
   benchmarkTotal,
   COMPOSITE_WEIGHTS,
   combiningSuggestion,
+  countryMeasures,
   countryName,
   groupCode,
   lineChartRows,
-  scatterPoints,
   withComposite,
   withCountriesCombined,
   withoutCountries,
@@ -94,16 +94,16 @@ if (data.days.length) {
   // has no shares to plot: the scatter is drawn empty, saying why, as the
   // line chart does over its days.
   const periodHasData = rows.some(row => row.focusMentionsPercentage !== null);
-  const points = periodHasData ? scatterPoints(data, selectedOutlets, benchmark) : [];
+  const measures = periodHasData ? countryMeasures(data, selectedOutlets, benchmark) : [];
   // With countries combined, Israel's share shifts a little: the headline
   // shows it as it'd be with them separate too.
   const isCombined = comparisonCountries.length > 1;
-  const focusPointBeforeCombining = isCombined && periodHasData
-    ? scatterPoints(dataBeforeCombining, selectedOutlets, benchmark).find(point => point.code === data.focus)
+  const focusMeasuresBeforeCombining = isCombined && periodHasData
+    ? countryMeasures(dataBeforeCombining, selectedOutlets, benchmark).find(country => country.code === data.focus)
     : null;
-  drawHeadline({ points, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison, focusPointBeforeCombining });
+  drawHeadline({ measures, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison, focusMeasuresBeforeCombining });
   drawScatter({
-    points,
+    points: measures,
     benchmarkTotal: benchmarkTotal(data, benchmark),
     benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
     period,

@@ -240,17 +240,19 @@ export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) 
   });
 }
 
-// One point per country: its share of the mentions over the days shown,
-// beside its figure for the benchmark and that figure's share of the total.
-// Countries with no figure have no place on the benchmark's axis.
-export function scatterPoints(data, selectedOutlets, benchmark) {
+// Each mentioned country's measures over the days shown: its mentions and
+// their share of all mentions, beside its figure for the benchmark and that
+// figure's share of the total. What the headline's multiples and the
+// scatter's points are made of. Countries with no figure are left out: they
+// have no multiple, and no place on the benchmark's axis.
+export function countryMeasures(data, selectedOutlets, benchmark) {
   const mentions = mentionsByCountry(data.days, selectedOutlets);
   const mentionsPercentages = percentagesOfTotal(mentions);
   const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
-  const points = [];
+  const measures = [];
   for (const code of Object.keys(mentions).sort()) {
     if (!(code in benchmarkPercentages)) continue;
-    points.push({
+    measures.push({
       code,
       name: countryName(data, code),
       mentions: mentions[code],
@@ -259,7 +261,7 @@ export function scatterPoints(data, selectedOutlets, benchmark) {
       benchmarkPercentage: benchmarkPercentages[code],
     });
   }
-  return points;
+  return measures;
 }
 
 // The benchmark added up over every country in the data.
