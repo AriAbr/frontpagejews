@@ -15,10 +15,10 @@ import { describeOutlets, describePeriod } from "./formats.js";
 
 // months: every month there's data for, "YYYY-MM", oldest first. month: the
 // one shown, or null for the last `daysShown` days.
-export function setUpControls({ choices, comparison, selectedOutlets, benchmark, months, month, daysShown }) {
+export function setUpControls({ choices, comparison, suggestion, selectedOutlets, benchmark, months, month, daysShown }) {
   // What's shown, for each control to change one part of.
-  const chosen = { selectedOutlets, comparisonCountries: comparison.countries, benchmark, month };
-  setUpCountryControl({ choices, comparison, chosen });
+  const chosen = { selectedOutlets, comparisonCountries: comparison.members.map(member => member.code), benchmark, month };
+  setUpCountryControl({ choices, comparison, suggestion, chosen });
   setUpBenchmarkControl(chosen);
   setUpOutletControl(chosen);
   setUpMonthControl({ months, daysShown, chosen });
@@ -26,20 +26,41 @@ export function setUpControls({ choices, comparison, selectedOutlets, benchmark,
 
 // Country picker: focus opens the full list, typing filters it (anywhere in
 // the name), arrows move, Enter follows the highlighted link, Escape closes.
-function setUpCountryControl({ choices, comparison, chosen }) {
+// Each country in it links to comparing with that country alone.
+//
+// Pinned above them, a button that turns the list into one for combining
+// another country with the comparison. Under the box, the countries
+// combined, once there's more than one, and a country to combine with, if one
+// overlaps enough with the comparison (see combiningSuggestion).
+function setUpCountryControl({ choices, comparison, suggestion, chosen }) {
   const search = document.getElementById("country-search");
   const list = document.getElementById("country-list");
   const none = list.querySelector(".none");
+  const { comparisonCountries } = chosen;
+  // The list has two modes: picking a country to compare with alone, or one
+  // to combine with the comparison. Which it's in, for the links' tracking
+  // and `filter` to read; changed only by startCombining and stopCombining.
+  let isCombining = false;
+  const combineButton = document.createElement("button");
+  combineButton.type = "button";
+  combineButton.textContent = "+ Combine with another country";
+  const combineItem = document.createElement("li");
+  combineItem.className = "combine";
+  combineItem.append(combineButton);
+  list.insertBefore(combineItem, none);
   for (const { code, name } of choices) {
     const link = document.createElement("a");
-    link.href = choicesQuery({ ...chosen, comparisonCountries: [code] });
+    link.className = "country";
     link.textContent = name;
-    link.addEventListener("click", () => track("comparison_change", { country: name }));
+    link.dataset.aloneHref = choicesQuery({ ...chosen, comparisonCountries: [code] });
+    link.dataset.combinedHref = choicesQuery({ ...chosen, comparisonCountries: [...comparisonCountries, code] });
+    link.addEventListener("click", () => track("comparison_change", { country: isCombining ? `${comparison.name} + ${name}` : name }));
     const item = document.createElement("li");
-    if (code === comparison.code) item.className = "current";
+    if (comparisonCountries.includes(code)) item.className = "current";
     item.append(link);
     list.insertBefore(item, none);
   }
+  showCombining({ comparison, suggestion, chosen });
   const items = [...list.querySelectorAll("li:not(.none)")];
   search.value = comparison.name;
   const current = search.value;
@@ -52,17 +73,49 @@ function setUpCountryControl({ choices, comparison, chosen }) {
     active = shown.length ? (index + shown.length) % shown.length : -1;
     if (active >= 0) {
       shown[active].classList.add("active");
-      shown[active].scrollIntoView({ block: "nearest" });
+      // The button for combining is pinned in view already.
+      if (!shown[active].classList.contains("combine")) shown[active].scrollIntoView({ block: "nearest" });
     }
   };
+  // The button for combining shows only in the full list. Combining, the
+  // countries already chosen are left out.
   const filter = () => {
     const typed = search.value.trim();
-    items.forEach(li => { li.hidden = typed && !countryMatches(li.textContent, typed); });
+    const isFiltering = typed !== "";
+    for (const li of items) {
+      const isCombineButton = li.classList.contains("combine");
+      if (isCombineButton) {
+        li.hidden = isFiltering || isCombining;
+        continue;
+      }
+      const isAlreadyCombined = isCombining && li.classList.contains("current");
+      const isFilteredOut = isFiltering && !countryMatches(li.textContent, typed);
+      li.hidden = isAlreadyCombined || isFilteredOut;
+    }
     none.hidden = visible().length > 0;
     highlight(typed ? 0 : -1);
   };
+  // Switches the list to picking a country to combine with the comparison:
+  // the box's placeholder says so, and each country links to the two combined.
+  const startCombining = () => {
+    isCombining = true;
+    search.placeholder = "Combine with…";
+    for (const link of list.querySelectorAll("a.country")) link.href = link.dataset.combinedHref;
+  };
+  // Switches it back to picking a country to compare with alone, as it starts
+  // out, and as it goes back to on closing.
+  const stopCombining = () => {
+    isCombining = false;
+    search.placeholder = "Filter countries";
+    for (const link of list.querySelectorAll("a.country")) link.href = link.dataset.aloneHref;
+  };
+  stopCombining();
   const open = () => { list.hidden = false; };
-  const close = () => { list.hidden = true; search.value = current; };
+  const close = () => {
+    list.hidden = true;
+    search.value = current;
+    stopCombining();
+  };
 
   search.addEventListener("focus", () => {
     search.value = "";
@@ -75,12 +128,57 @@ function setUpCountryControl({ choices, comparison, chosen }) {
   search.addEventListener("keydown", event => {
     if (event.key === "ArrowDown") { event.preventDefault(); open(); highlight(active + 1); }
     else if (event.key === "ArrowUp") { event.preventDefault(); highlight(active - 1); }
-    else if (event.key === "Enter" && active >= 0) { visible()[active].querySelector("a").click(); }
+    else if (event.key === "Enter" && active >= 0) { visible()[active].querySelector("a, button").click(); }
     else if (event.key === "Escape") { close(); search.blur(); }
   });
   // Close on outside clicks; mousedown on the list keeps focus so a click lands.
   list.addEventListener("mousedown", event => event.preventDefault());
   search.addEventListener("blur", close);
+  combineButton.addEventListener("click", () => {
+    startCombining();
+    search.value = "";
+    filter();
+    list.scrollTop = 0;
+  });
+}
+
+// Under the country picker: the countries combined into the comparison, if
+// there's more than one, each a link to the comparison without it; then the
+// suggestion, if there is one, "+ Combine with Ukraine (52% overlap)", drawn
+// like them but dashed, as one that could be. Nothing, most of the time.
+function showCombining({ comparison, suggestion, chosen }) {
+  const combining = document.getElementById("combining");
+  const members = comparison.members.length > 1 ? comparison.members : [];
+  for (const member of members) {
+    // Only the cross is a link: the name is a label, not a choice.
+    const removeLink = document.createElement("a");
+    removeLink.className = "remove";
+    removeLink.href = choicesQuery({
+      ...chosen,
+      comparisonCountries: chosen.comparisonCountries.filter(code => code !== member.code),
+    });
+    removeLink.textContent = "×";
+    removeLink.setAttribute("aria-label", `Take ${member.name} out`);
+    removeLink.addEventListener("click", () => track("comparison_change", { country: `${comparison.name} - ${member.name}` }));
+    const chip = document.createElement("span");
+    chip.className = "comparison-member";
+    chip.append(member.name, removeLink);
+    combining.append(chip);
+  }
+  if (suggestion) {
+    const link = document.createElement("a");
+    link.className = "combining-suggestion";
+    link.href = choicesQuery({ ...chosen, comparisonCountries: [...chosen.comparisonCountries, suggestion.code] });
+    // In two parts, so a narrow screen wraps it between them.
+    const action = document.createElement("span");
+    action.textContent = `+ Combine with ${suggestion.name}`;
+    const overlap = document.createElement("span");
+    overlap.textContent = `(${Math.round(suggestion.overlapPercentage * 100)}% overlap)`;
+    link.append(action, " ", overlap);
+    link.addEventListener("click", () => track("comparison_change", { country: `${comparison.name} + ${suggestion.name}` }));
+    combining.append(link);
+  }
+  combining.hidden = !combining.children.length;
 }
 
 // Benchmark choice: a button that opens a link per benchmark, each with its

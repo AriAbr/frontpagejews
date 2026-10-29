@@ -84,14 +84,18 @@
           <div>
             <label class="heading" for="country-search">{{ focus_name }} vs</label>
             {# The script fills the list with a link per country. #}
-            <div class="picker">
-              <input id="country-search"
-                     placeholder="Filter countries"
-                     autocomplete="off"
-                     aria-controls="country-list" />
-              <ul id="country-list" hidden>
-                <li class="none" hidden>No matches</li>
-              </ul>
+            {# The box, and under it the countries combined, once there's more than one, and a country to combine with, if one's covered together with the comparison enough. #}
+            <div class="comparison">
+              <div class="picker">
+                <input id="country-search"
+                       placeholder="Filter countries"
+                       autocomplete="off"
+                       aria-controls="country-list" />
+                <ul id="country-list" hidden>
+                  <li class="none" hidden>No matches</li>
+                </ul>
+              </div>
+              <div id="combining" hidden></div>
             </div>
           </div>
           <div>
