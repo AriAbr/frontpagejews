@@ -5,9 +5,9 @@ import { describe, test } from "node:test";
 import {
   benchmarkTotal,
   combiningSuggestion,
+  countryMeasures,
   lineChartRows,
   mentionsByCountry,
-  scatterPoints,
   withComposite,
   withCountriesCombined,
   withoutCountries,
@@ -204,12 +204,12 @@ describe("lineChartRows", () => {
   });
 });
 
-describe("scatterPoints", () => {
-  test("plots each country's share of mentions against its population", () => {
+describe("countryMeasures", () => {
+  test("gives each country's share of mentions beside its share of the population", () => {
     // Israel has 3 of the 4 mentions and 10 of the 100 people.
     const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
 
-    assert.deepEqual(scatterPoints(data, ["bbc"], "population"), [
+    assert.deepEqual(countryMeasures(data, ["bbc"], "population"), [
       { code: "CHN", name: "China", mentions: 1, mentionsPercentage: 0.25, benchmarkFigure: 90, benchmarkPercentage: 0.9 },
       { code: "ISR", name: "Israel", mentions: 3, mentionsPercentage: 0.75, benchmarkFigure: 10, benchmarkPercentage: 0.1 },
     ]);
@@ -221,7 +221,7 @@ describe("scatterPoints", () => {
       { population: { ISR: 10, PRK: 30 }, gdp: { ISR: 5 } },
     );
 
-    assert.deepEqual(scatterPoints(data, ["bbc"], "gdp").map(point => point.code), ["ISR"]);
+    assert.deepEqual(countryMeasures(data, ["bbc"], "gdp").map(measures => measures.code), ["ISR"]);
   });
 });
 

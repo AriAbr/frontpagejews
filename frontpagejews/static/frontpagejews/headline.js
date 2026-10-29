@@ -5,23 +5,23 @@ import { COLORS, explainedNote } from "./chart-common.js";
 import { definitionLink, withBenchmarkLinked } from "./definitions.js";
 import { multiple, percent } from "./formats.js";
 
-// points: the scatter's points, {code, coverage, reality} with shares.
+// measures: each country's, from countryMeasures in chart-data.js.
 // benchmarkDisplaySettings: the benchmark's entry in BENCHMARK_DISPLAY_SETTINGS.
-// focusPointBeforeCombining: Israel's point with the comparison's countries
+// focusMeasuresBeforeCombining: Israel's with the comparison's countries
 // separate, when they're combined; otherwise null.
-export function drawHeadline({ points, benchmarkDisplaySettings, focus, comparison, focusPointBeforeCombining }) {
+export function drawHeadline({ measures, benchmarkDisplaySettings, focus, comparison, focusMeasuresBeforeCombining }) {
   const headline = document.getElementById("headline");
-  headline.append(...headlineLine(focus, COLORS.focus, points, benchmarkDisplaySettings, focusPointBeforeCombining));
-  headline.append(...headlineLine(comparison, COLORS.comparison, points, benchmarkDisplaySettings));
+  headline.append(...headlineLine(focus, COLORS.focus, measures, benchmarkDisplaySettings, focusMeasuresBeforeCombining));
+  headline.append(...headlineLine(comparison, COLORS.comparison, measures, benchmarkDisplaySettings));
 }
 
 // The country's part, as a list of one block, or of none if the country
 // wasn't mentioned: its line, and under it the two shares the multiple comes
 // from, or only its line where it has no figure for the benchmark. Given its
-// point before combining, the line shows that multiple too.
-function headlineLine(country, color, points, benchmarkDisplaySettings, pointBeforeCombining = null) {
-  const point = points.find(p => p.code === country.code);
-  if (!point) return [];
+// measures before combining, the line shows that multiple too.
+function headlineLine(country, color, measures, benchmarkDisplaySettings, measuresBeforeCombining = null) {
+  const measuresForCountry = measures.find(entry => entry.code === country.code);
+  if (!measuresForCountry) return [];
 
   const part = document.createElement("div");
   const line = document.createElement("p");
@@ -30,22 +30,22 @@ function headlineLine(country, color, points, benchmarkDisplaySettings, pointBef
   part.append(line);
 
   // A multiple of nothing means nothing.
-  if (!point.benchmarkPercentage) {
-    line.append(name, ` ${percent(point.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"), `, no ${benchmarkDisplaySettings.noun} recorded`);
+  if (!measuresForCountry.benchmarkPercentage) {
+    line.append(name, ` ${percent(measuresForCountry.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"), `, no ${benchmarkDisplaySettings.noun} recorded`);
     return [part];
   }
 
-  const times = element("strong", multiple(point.mentionsPercentage, point.benchmarkPercentage));
+  const times = element("strong", multiple(measuresForCountry.mentionsPercentage, measuresForCountry.benchmarkPercentage));
   line.append(name, " ", times, " expected coverage");
-  if (pointBeforeCombining?.benchmarkPercentage) line.append(" ", beforeCombiningNote(pointBeforeCombining));
+  if (measuresBeforeCombining?.benchmarkPercentage) line.append(" ", beforeCombiningNote(measuresBeforeCombining));
 
   // Each share is kept in one piece, with a dot between them, so where the two
   // don't fit on one line they break between them, and the dot goes:
   // "6.0% share of coverage · 0.89% composite score".
   const coverageShare = document.createElement("span");
-  coverageShare.append(`${percent(point.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"));
+  coverageShare.append(`${percent(measuresForCountry.mentionsPercentage)} `, definitionLink("share of coverage", "share-of-coverage"));
   const benchmarkShare = document.createElement("span");
-  benchmarkShare.append(...withBenchmarkLinked(benchmarkDisplaySettings.describeShare(point.benchmarkPercentage), benchmarkDisplaySettings));
+  benchmarkShare.append(...withBenchmarkLinked(benchmarkDisplaySettings.describeShare(measuresForCountry.benchmarkPercentage), benchmarkDisplaySettings));
   const shares = document.createElement("div");
   shares.append(
     coverageShare,
@@ -60,8 +60,8 @@ function headlineLine(country, color, points, benchmarkDisplaySettings, pointBef
 
 // "9.5× before combining ⓘ": Israel's multiple with the comparison's
 // countries separate, beside the combined one, and why the two differ.
-function beforeCombiningNote(pointBeforeCombining) {
-  const label = `${multiple(pointBeforeCombining.mentionsPercentage, pointBeforeCombining.benchmarkPercentage)} before combining`;
+function beforeCombiningNote(measuresBeforeCombining) {
+  const label = `${multiple(measuresBeforeCombining.mentionsPercentage, measuresBeforeCombining.benchmarkPercentage)} before combining`;
   const explanation =
     "Counting multiple countries as one means there are fewer mentions in total, so every other country's share goes up slightly.";
   const note = explainedNote(label, explanation);
