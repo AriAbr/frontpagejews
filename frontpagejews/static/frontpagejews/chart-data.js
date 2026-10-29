@@ -125,6 +125,49 @@ export function mentionsByCountry(days, selectedOutlets) {
   return mentions;
 }
 
+// Two countries' overlap: of the articles mentioning either, the percentage
+// mentioning both. The same whichever one is the comparison: a country
+// mentioned in nearly every article about a smaller one still overlaps
+// little with it if few of its own articles mention the smaller one.
+//
+// A country overlapping with the comparison this much is suggested for
+// combining with it.
+export const MIN_OVERLAP_PERCENTAGE = 0.25;
+// And there must be at least this many articles mentioning both: with a
+// handful, chance alone gives big overlaps.
+export const MIN_SHARED_MENTIONS = 20;
+
+// The country to suggest combining the comparison with, of the candidates:
+// the one overlapping with it most, if enough (see MIN_OVERLAP_PERCENTAGE),
+// with its overlap; or null.
+export function combiningSuggestion(data, selectedOutlets, comparisonCode, candidates) {
+  const mentions = mentionsByCountry(data.days, selectedOutlets);
+  const sharedMentions = {};
+  for (const day of data.days) {
+    for (const slug of selectedOutlets) {
+      for (const [countrySetKey, mentionCount] of Object.entries(day.country_set_mentions_by_outlet[slug] ?? {})) {
+        const countries = countrySetKey.split(",");
+        if (!countries.includes(comparisonCode)) continue;
+        for (const code of countries) {
+          if (code !== comparisonCode) sharedMentions[code] = (sharedMentions[code] ?? 0) + mentionCount;
+        }
+      }
+    }
+  }
+
+  let suggestion = null;
+  for (const code of candidates) {
+    const shared = sharedMentions[code] ?? 0;
+    if (shared < MIN_SHARED_MENTIONS) continue;
+    const mentioningEither = mentions[code] + mentions[comparisonCode] - shared;
+    const overlapPercentage = shared / mentioningEither;
+    if (overlapPercentage < MIN_OVERLAP_PERCENTAGE) continue;
+    if (suggestion && overlapPercentage <= suggestion.overlapPercentage) continue;
+    suggestion = { code, overlapPercentage };
+  }
+  return suggestion;
+}
+
 // Each country's count as a percentage of all the counts: {ISR: 1, CHN: 3} -> {ISR: 0.25, CHN: 0.75}.
 export function percentagesOfTotal(countsByCountry) {
   const total = sum(Object.values(countsByCountry));

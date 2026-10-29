@@ -113,6 +113,17 @@ a.definition:hover { text-decoration-style: solid; }
 .picker li.active a, .picker li a:hover { background: var(--border); }
 .picker li.current a { font-weight: 600; }
 .picker .none { padding: 4px 10px; color: var(--muted); }
+/* The button for combining another country with the comparison: a row like
+   the period list's "Last 30 days" above the months, pinned to the top of the
+   list as it scrolls, so it shows whichever country the list opens on. The
+   list as wide as the button needs, as the benchmark list is, and scrolling
+   a highlighted country into view below it, not under it. */
+.picker ul { min-width: max-content; scroll-padding-top: 40px; }
+.picker li.combine { position: sticky; top: -4px; z-index: 1; margin: -4px 0 4px; background: var(--bg);
+                     border-bottom: 1px solid var(--border); }
+.picker li.combine button { display: block; width: 100%; padding: 5px 10px; font: inherit; text-align: left; color: inherit;
+                            background: none; border: none; cursor: pointer; }
+.picker li.combine.active button, .picker li.combine button:hover { background: var(--border); }
 /* Where they fit, the four controls in one row, each heading small above its
    box. On a phone, stacked, each heading beside its box rather than above, to
    keep the masthead short, and every box the same width, so they line up:
@@ -138,6 +149,30 @@ a.definition:hover { text-decoration-style: solid; }
 .period-step { display: flex; align-items: center; justify-content: center; width: 24px; color: var(--muted); text-decoration: none;
                border: 1px solid var(--border); border-radius: 6px; }
 .period-step:hover { background: var(--border); }
+/* Under the country picker's box, the countries combined, each with a cross
+   to take it out, and a country to combine with, drawn the same but dashed
+   and muted: one that could be added. The suggestion on one line, running
+   past the box into the empty space under the next control if it must,
+   rather than widening the column and pushing the other controls along. */
+.comparison { display: flex; flex-direction: column; gap: 6px; width: 180px; }
+#combining { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+#combining[hidden] { display: none; }
+.comparison-member, .combining-suggestion { display: flex; gap: 4px; padding: 0 8px; font-size: 0.85rem; color: var(--fg); text-decoration: none;
+                                            border: 1px solid var(--border); border-radius: 999px; }
+/* A member's cross, the chip's only link: a circle at the chip's right end,
+   from just after the name to its border, so there's room to tap it, the
+   margin taking back the height it adds. Each name on one line, running past
+   the box like the suggestion if it's long, "Democratic Republic of the
+   Congo". The cross never shrinks, so a wrapping name can't squeeze its
+   circle. */
+.comparison-member { align-items: center; gap: 0; padding: 1px 8px; white-space: nowrap; border-radius: 12px; }
+.comparison-member .remove { display: flex; flex: none; align-items: center; justify-content: center; width: 22px; height: 22px; margin: -2px -8px -2px 4px;
+                             color: var(--muted); text-decoration: none; border-radius: 999px; }
+.comparison-member .remove:hover { background: var(--border); color: var(--fg); }
+.combining-suggestion:hover { background: var(--border); }
+.combining-suggestion { display: block; padding: 1px 10px; color: var(--muted); white-space: nowrap; border-style: dashed; border-radius: 12px; }
+.combining-suggestion span { white-space: nowrap; }
+.combining-suggestion:hover { color: var(--fg); }
 .period-step[aria-disabled] { color: var(--border); pointer-events: none; }
 /* The arrows, here and beside the year: chevrons drawn like the buttons' own,
    in their color, set as the text's so a disabled arrow grays out with it. */
@@ -152,6 +187,16 @@ a.definition:hover { text-decoration-style: solid; }
      in Chrome on Linux, for the box's border and padding. */
   .controls .heading { padding-top: 5.5px; }
   .controls .picker, #benchmark-toggle, #outlets-toggle { width: 100%; }
+  .comparison { width: auto; }
+  /* The country list as wide as its box, which fills the column, rather than
+     as wide as its button, off the screen. */
+  .picker ul { min-width: 0; }
+  /* Wrapping on a phone, between the action and the overlap, rather than
+     running off the screen. */
+  .combining-suggestion { white-space: normal; }
+  /* A long name wraps too. The chip's corners, rounded only as far as one
+     line's height, leave its two lines room; one line is still a pill. */
+  .comparison-member { white-space: normal; }
   .period-dropdown { flex: 1; }
   #period-toggle { width: 100%; }
 }

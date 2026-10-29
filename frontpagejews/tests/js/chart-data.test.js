@@ -4,6 +4,7 @@ import { describe, test } from "node:test";
 
 import {
   benchmarkTotal,
+  combiningSuggestion,
   lineChartRows,
   mentionsByCountry,
   scatterPoints,
@@ -65,6 +66,37 @@ describe("withCountriesCombined", () => {
     const combined = withCountriesCombined(data, ["CHN", "USA"]);
 
     assert.deepEqual(combined.names, { "CHN+USA": "China + United States", ISR: "Israel", GBR: "United Kingdom" });
+  });
+});
+
+describe("combiningSuggestion", () => {
+  test("suggests the country overlapping most with the comparison", () => {
+    // Of the 64 articles mentioning Russia or Ukraine, 30 mention both; of
+    // the 54 mentioning Russia or Poland, 20 do.
+    const data = siteData({ "2026-09-22": { bbc: { "RUS,UKR": 30, "POL,RUS": 20, RUS: 4, UKR: 10 } } });
+
+    const suggestion = combiningSuggestion(data, ["bbc"], "RUS", ["UKR", "POL"]);
+
+    assert.deepEqual(suggestion, { code: "UKR", overlapPercentage: 30 / 64 });
+  });
+
+  test("doesn't suggest a country overlapping too little", () => {
+    // Every article about Poland mentions Ukraine, but few about Ukraine mention Poland.
+    const data = siteData({ "2026-09-22": { bbc: { "POL,UKR": 20, UKR: 100 } } });
+
+    assert.equal(combiningSuggestion(data, ["bbc"], "POL", ["UKR"]), null);
+  });
+
+  test("doesn't suggest a country from a handful of articles", () => {
+    const data = siteData({ "2026-09-22": { bbc: { "PLW,TGO": 1, TGO: 2 } } });
+
+    assert.equal(combiningSuggestion(data, ["bbc"], "TGO", ["PLW"]), null);
+  });
+
+  test("suggests only the candidates", () => {
+    const data = siteData({ "2026-09-22": { bbc: { "ISR,LBN": 50 } } });
+
+    assert.equal(combiningSuggestion(data, ["bbc"], "LBN", ["IRN"]), null);
   });
 });
 

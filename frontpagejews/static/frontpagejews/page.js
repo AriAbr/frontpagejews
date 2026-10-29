@@ -5,6 +5,7 @@ import { setUpControls } from "./controls.js";
 import {
   benchmarkTotal,
   COMPOSITE_WEIGHTS,
+  combiningSuggestion,
   countryName,
   groupCode,
   lineChartRows,
@@ -37,9 +38,23 @@ const combinedData = withCountriesCombined(shownData, comparisonCountries);
 const data = withComposite(combinedData, COMPOSITE_WEIGHTS);
 // Once the composite's added, so it can be the benchmark.
 const { selectedOutlets, benchmark } = choicesFromUrl(location.search, data);
+// Each country on its own, before they're combined, for the picker to list.
+const choices = comparisonChoices(withComposite(shownData, COMPOSITE_WEIGHTS), selectedOutlets, benchmark);
 const comparisonCode = groupCode(comparisonCountries);
 const focus = { code: data.focus, name: countryName(data, data.focus) };
-const comparison = { code: comparisonCode, name: countryName(data, comparisonCode), countries: comparisonCountries };
+const comparison = {
+  code: comparisonCode,
+  name: countryName(data, comparisonCode),
+  members: comparisonCountries.map(code => ({ code, name: countryName(shownData, code) })),
+};
+// From the combined data, so a group's suggestion is for the group as a whole.
+const suggestedCombination = combiningSuggestion(
+  data,
+  selectedOutlets,
+  comparisonCode,
+  choices.map(choice => choice.code).filter(code => !comparisonCountries.includes(code)),
+);
+const suggestion = suggestedCombination && { ...suggestedCombination, name: countryName(data, suggestedCombination.code) };
 const period = describePeriod(month, siteData.days.length);
 
 document.getElementById("comparison-name").textContent = comparison.name;
@@ -51,8 +66,9 @@ if (month) {
 }
 if (data.last_fetched) showLastFetched(new Date(data.last_fetched));
 setUpControls({
-  choices: comparisonChoices(data, selectedOutlets, benchmark),
+  choices,
   comparison,
+  suggestion,
   selectedOutlets,
   benchmark,
   months: data.months,
