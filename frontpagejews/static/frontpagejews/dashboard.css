@@ -328,11 +328,12 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .badge { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 2px 10px; border-radius: 10px; background: var(--border); color: var(--fg); font-size: 0.75rem; font-weight: 600; }
 .arrow { flex: none; width: 11px; height: 9px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .badge .kept-together { white-space: nowrap; }
-/* The gap chart's list of countries scrolls inside a box of its own. Its
+/* The gap chart's list of countries scrolls inside a box of its own, once
+   every row shows, at the height of the top rows, which the script sets. Its
    scrollbar's room is kept on both sides, so the benchmark's line stays in the
    middle, under the gap between the two sides' labels above it, and a
    little room inside them, so the text at the edges keeps off the scrollbar. */
-.gap-chart-scroll { max-height: 480px; overflow-y: auto; scrollbar-width: thin; scrollbar-gutter: stable both-edges; padding: 0 6px; }
+.gap-chart-scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-gutter: stable both-edges; padding: 0 6px; }
 /* The fade the script turns on at an edge with more rows beyond it. */
 .gap-chart-scroll {
   --fade-top: 0px;
@@ -353,6 +354,12 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .gap-chart-sides span:first-child { justify-content: flex-end; }
 .gap-chart-axis { position: relative; height: 1lh; margin-bottom: 2px; font-size: 0.75rem; color: var(--muted); }
 .gap-chart-axis span { position: absolute; transform: translateX(-50%); }
+/* Under the gap chart's rows, centered: outlined, so it reads as a button
+   rather than a caption. */
+.show-all { display: block; margin: 10px auto 0; padding: 4px 12px; border: 1px solid var(--border); border-radius: 6px; background: none;
+            font: inherit; font-size: 0.8rem; color: var(--muted); cursor: pointer; }
+.show-all:hover { background: var(--border); color: var(--fg); }
+.show-all[hidden] { display: none; }
 /* Between two countries' names, so the second dot sits a little further off. */
 .badge .wide-space { word-spacing: 4px; }
 /* See narrowIfWrapped in scatter.js. */

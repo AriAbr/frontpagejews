@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { compactAxisLabel, describePeriod, percentagePoints, timeAgo } from "../../static/frontpagejews/formats.js";
+import { compactAxisLabel, describePeriod, ordinal, percentagePoints, timeAgo } from "../../static/frontpagejews/formats.js";
 
 describe("describePeriod", () => {
   test("names the month picked", () => {
@@ -31,6 +31,12 @@ describe("percentagePoints", () => {
 
   test("gives no sign to a gap that rounds to nothing", () => {
     assert.deepEqual([0.0004, -0.0004, 0].map(percentagePoints), ["0.0", "0.0", "0.0"]);
+  });
+});
+
+describe("ordinal", () => {
+  test("gives each number its suffix, with 11th to 13th as the exceptions", () => {
+    assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 87, 111, 112].map(ordinal), ["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "87th", "111th", "112th"]);
   });
 });
 

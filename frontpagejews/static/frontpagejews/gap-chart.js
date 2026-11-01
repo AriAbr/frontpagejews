@@ -3,14 +3,16 @@
 // middle: right for more coverage than the benchmark's share, left for less.
 // Each row pairs the two sides: the most over-covered country and the most
 // under-covered in the top row, the second most of each in the next, and so
-// on. The rows scroll inside a box of their own.
+// on. It shows the top ROWS_BEFORE_SHOW_ALL rows, with Israel and the
+// comparison country under them, after a blank row, where they're further
+// down, until "Show all" shows every row, in a box of their own that scrolls.
 //
 // The plot takes the whole width, so the bars have room. The countries' gaps
 // and names are over its outer parts, gaps outermost, so each list reads
 // straight down, and a long bar runs under them: the bars are see-through, so
 // the text reads over them and their length still shows.
 import { ANIMATION, COLORS, drawLegend, FOREGROUND, hideTooltipOnPressElsewhere, noDataNoteElement, OTHER_COUNTRIES_COLOR } from "./chart-common.js";
-import { percentagePoints } from "./formats.js";
+import { ordinal, percentagePoints } from "./formats.js";
 import { arrowIcon } from "./icons.js";
 
 // Where each side's bars are in the chart's datasets: the over-covered side's
@@ -28,8 +30,13 @@ const SPACE_BETWEEN_COLUMNS = 8;
 // two sides' names don't meet in the middle; a longer name is cut short:
 // "Democratic Republic o…".
 const MIN_SPACE_BESIDE_LINE = 12;
+// Between a country's name and its rank, for one shown under the top rows.
+const SPACE_BEFORE_RANK = 6;
 // The box's height for a period without data, about as tall as when it's full.
 const WITHOUT_DATA_HEIGHT = 300;
+// The rows shown until "Show all" is pressed: each side's largest gaps. Past
+// them, the gaps are a few tenths of a point, down to a long run of 0.0.
+const ROWS_BEFORE_SHOW_ALL = 20;
 
 // The bars' opacity, as the two hex digits added to the end of their
 // "#rrggbb" color: 4d is 77 of 255, about 30%.
@@ -94,13 +101,15 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
     return null;
   };
 
-  // A row for each country on the longer side.
-  const rowCount = Math.max(overCovered.length, underCovered.length);
-  const rowLabels = [];
-  for (let row = 0; row < rowCount; row++) rowLabels.push(String(row));
+  const isHighlighted = country => highlightColorOf(country) !== null;
+  let isShowingAll = false;
+  let rows = rowsShown(overCovered, underCovered, isShowingAll, isHighlighted);
 
   const wrapper = document.getElementById("gap-chart-wrap");
-  wrapper.style.height = noDataExplanation ? `${WITHOUT_DATA_HEIGHT}px` : `${rowCount * ROW_HEIGHT}px`;
+  const fitWrapperToRows = () => {
+    wrapper.style.height = noDataExplanation ? `${WITHOUT_DATA_HEIGHT}px` : `${rows.overCovered.length * ROW_HEIGHT}px`;
+  };
+  fitWrapperToRows();
 
   // The plot is inset from the canvas's edges by half the width of the
   // axis's end labels ("−15", "+15"). Those labels are centered over the
@@ -114,11 +123,7 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
 
   const gapChart = new Chart(document.getElementById("gap-chart"), {
     type: "bar",
-    data: {
-      labels: rowLabels,
-      // In the order of OVER_COVERED_DATASET_INDEX and UNDER_COVERED_DATASET_INDEX.
-      datasets: [sideDataset(overCovered, rowLabels, highlightColorOf), sideDataset(underCovered, rowLabels, highlightColorOf)],
-    },
+    data: chartData(rows, highlightColorOf),
     options: {
       indexAxis: "y",
       animation: ANIMATION,
@@ -182,7 +187,83 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
     { label: focus.name, color: COLORS.focus },
   ]);
 
-  fadeEdgesWhileScrolling(document.getElementById("gap-chart-scroll"), gapChart);
+  const scrollArea = document.getElementById("gap-chart-scroll");
+  fadeEdgesWhileScrolling(scrollArea, gapChart);
+
+  // Only where there are more rows than the top ones to show.
+  const showAllButton = document.getElementById("gap-chart-show-all");
+  showAllButton.hidden = Math.max(overCovered.length, underCovered.length) <= ROWS_BEFORE_SHOW_ALL;
+  // The box stays as tall as the top rows when every row shows, and the rest
+  // scroll, so nothing on the page moves and the button stays put.
+  if (!showAllButton.hidden) scrollArea.style.maxHeight = wrapper.style.height;
+  const showAllLabel = `Show all ${allCountries.length} countries`;
+  showAllButton.textContent = showAllLabel;
+  showAllButton.addEventListener("click", () => {
+    isShowingAll = !isShowingAll;
+    showAllButton.textContent = isShowingAll ? `Show top ${ROWS_BEFORE_SHOW_ALL}` : showAllLabel;
+    rows = rowsShown(overCovered, underCovered, isShowingAll, isHighlighted);
+    gapChart.setActiveElements([]);
+    gapChart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    gapChart.data = chartData(rows, highlightColorOf);
+    fitWrapperToRows();
+    // At once, rather than rising from the line again, and at the new height.
+    gapChart.resize();
+    gapChart.update("none");
+    scrollArea.scrollTop = 0;
+  });
+}
+
+// The countries in each row, as two lists as long as each other, one for each
+// side, with nothing where a side has no country in a row. With isShowingAll,
+// every country; otherwise each side's top ROWS_BEFORE_SHOW_ALL, and under
+// them, after a blank row, a highlighted country that's further down its
+// side, so Israel and the comparison country always show. Both further down
+// one side take a row each, in order; one on each side share a row. Each
+// keeps its rank on its side, and the blank row above it is marked
+// skippedRows on that side, for barLabels to show what's left out.
+function rowsShown(overCovered, underCovered, isShowingAll, isHighlighted) {
+  const rowCount = Math.max(overCovered.length, underCovered.length);
+  if (isShowingAll || rowCount <= ROWS_BEFORE_SHOW_ALL) {
+    return { overCovered: withEmptyRows(overCovered, rowCount), underCovered: withEmptyRows(underCovered, rowCount) };
+  }
+  const topRowCount = Math.min(rowCount, ROWS_BEFORE_SHOW_ALL);
+  const shownOver = withEmptyRows(overCovered.slice(0, ROWS_BEFORE_SHOW_ALL), topRowCount);
+  const shownUnder = withEmptyRows(underCovered.slice(0, ROWS_BEFORE_SHOW_ALL), topRowCount);
+  const furtherDown = countries => {
+    const highlighted = [];
+    for (const [index, country] of countries.entries()) {
+      if (index >= ROWS_BEFORE_SHOW_ALL && isHighlighted(country)) highlighted.push({ ...country, rank: index + 1 });
+    }
+    return highlighted;
+  };
+  const overFurtherDown = furtherDown(overCovered);
+  const underFurtherDown = furtherDown(underCovered);
+  const furtherDownRowCount = Math.max(overFurtherDown.length, underFurtherDown.length);
+  if (furtherDownRowCount > 0) {
+    const skippedRowsMark = countries => (countries.length > 0 ? { skippedRows: true } : undefined);
+    shownOver.push(skippedRowsMark(overFurtherDown), ...withEmptyRows(overFurtherDown, furtherDownRowCount));
+    shownUnder.push(skippedRowsMark(underFurtherDown), ...withEmptyRows(underFurtherDown, furtherDownRowCount));
+  }
+  return { overCovered: shownOver, underCovered: shownUnder };
+}
+
+// The countries, followed by nothing for as many rows as it takes to fill
+// rowCount.
+function withEmptyRows(countries, rowCount) {
+  const filled = [...countries];
+  while (filled.length < rowCount) filled.push(undefined);
+  return filled;
+}
+
+// The chart's rows and its two datasets, from rowsShown.
+function chartData(rows, highlightColorOf) {
+  const rowLabels = [];
+  for (let row = 0; row < rows.overCovered.length; row++) rowLabels.push(String(row));
+  return {
+    labels: rowLabels,
+    // In the order of OVER_COVERED_DATASET_INDEX and UNDER_COVERED_DATASET_INDEX.
+    datasets: [sideDataset(rows.overCovered, rowLabels, highlightColorOf), sideDataset(rows.underCovered, rowLabels, highlightColorOf)],
+  };
 }
 
 // How far the axis reaches, the same each way so the line stays in the
@@ -194,16 +275,21 @@ function axisMaxFor(countries, benchmarkDisplaySettings) {
   return Math.max(benchmarkDisplaySettings.gapAxisMax, roundUp(largestGap, AXIS_STEP));
 }
 
-// One side's dataset: a bar in each row, for the side's countries in order.
+// One side's dataset: a bar in each row, for the side's country in that row.
 // Each bar keeps its whole country, so the labels and tooltip can use its name
-// and measures; a row past the end of the shorter side has an empty bar.
-function sideDataset(countries, rowLabels, highlightColorOf) {
+// and measures; a row with no country on this side has an empty bar.
+function sideDataset(countriesByRow, rowLabels, highlightColorOf) {
   const barData = [];
-  for (const [rowIndex, rowLabel] of rowLabels.entries()) barData.push({ row: rowLabel, coverageGap: null, ...countries[rowIndex] });
+  const barColors = [];
+  for (const [rowIndex, rowLabel] of rowLabels.entries()) {
+    const country = countriesByRow[rowIndex];
+    barData.push({ row: rowLabel, coverageGap: null, ...country });
+    barColors.push(country ? `${highlightColorOf(country) ?? OTHER_COUNTRIES_BAR_COLOR}${BAR_FILL_ALPHA}` : null);
+  }
   return {
     data: barData,
     parsing: { xAxisKey: "coverageGap", yAxisKey: "row" },
-    backgroundColor: countries.map(country => `${highlightColorOf(country) ?? OTHER_COUNTRIES_BAR_COLOR}${BAR_FILL_ALPHA}`),
+    backgroundColor: barColors,
     barThickness: BAR_THICKNESS,
     borderRadius: 2,
     // Both sides' bars in the middle of their row, rather than side by side.
@@ -269,7 +355,8 @@ function tooltipEquation({ mentionsPercentage, benchmarkPercentage, coverageGap 
 
 // Fades the box's top and bottom edges while there are more rows beyond them,
 // so it reads as a list that scrolls. A tooltip left open would stay put while
-// its row scrolls away, so scrolling hides it.
+// its row scrolls away, so scrolling hides it. The fades are updated too when
+// the canvas changes height, as "Show all" does, a moment after the click.
 function fadeEdgesWhileScrolling(scrollArea, chart) {
   const onScroll = () => {
     const atTop = scrollArea.scrollTop <= 0;
@@ -284,6 +371,7 @@ function fadeEdgesWhileScrolling(scrollArea, chart) {
   };
   onScroll();
   scrollArea.addEventListener("scroll", onScroll, { passive: true });
+  new ResizeObserver(onScroll).observe(chart.canvas);
 }
 
 // A Chart.js plugin sizing the columns of gaps and names, before each layout
@@ -381,7 +469,9 @@ function benchmarkLine() {
 // gaps are flush with the edges, and the names line up just inside them, so
 // each row's text reaches in only as far as its name, and a short name leaves
 // its bar more room. A name can be far from its bar, so each gets a faint
-// line from its name to its end, brighter for the hovered bar.
+// line from its name to its end, brighter for the hovered bar. A country
+// shown under the top rows has its rank on its side beside its name, "(87th)",
+// and a "⋮" in the blank row above it, for the rows left out.
 function barLabels(highlightColorOf) {
   return {
     id: "barLabels",
@@ -409,9 +499,15 @@ function barLabels(highlightColorOf) {
         const countries = chart.data.datasets[datasetIndex].data;
         for (const [rowIndex, bar] of bars.entries()) {
           const country = countries[rowIndex];
+          const textY = bar.y + halfCapHeight;
+          if (country.skippedRows) {
+            ctx.font = labelFont(false);
+            ctx.fillStyle = Chart.defaults.color;
+            ctx.fillText("⋮", fromOuterEdge(namesStart), textY);
+            continue;
+          }
           // A row past the end of the shorter side has no country on this side.
           if (!country.code) continue;
-          const textY = bar.y + halfCapHeight;
 
           ctx.font = labelFont(false);
           ctx.fillStyle = Chart.defaults.color;
@@ -420,12 +516,20 @@ function barLabels(highlightColorOf) {
           const highlightColor = highlightColorOf(country);
           ctx.font = labelFont(Boolean(highlightColor));
           ctx.fillStyle = highlightColor ? mixed(highlightColor, FOREGROUND, HIGHLIGHTED_NAME_TEXT_COLOR_MIX) : FOREGROUND;
-          const shownName = cutShort(ctx, country.name, namesColumnWidth);
+          const rankText = country.rank ? `(${ordinal(country.rank)})` : "";
+          const rankWidth = rankText ? textWidthInFont(ctx, labelFont(false), rankText) + SPACE_BEFORE_RANK : 0;
+          const shownName = cutShort(ctx, country.name, namesColumnWidth - rankWidth);
           ctx.fillText(shownName, fromOuterEdge(namesStart), textY);
+          const nameWidth = ctx.measureText(shownName).width;
+          if (rankText) {
+            ctx.font = labelFont(false);
+            ctx.fillStyle = Chart.defaults.color;
+            ctx.fillText(rankText, fromOuterEdge(namesStart + nameWidth + SPACE_BEFORE_RANK), textY);
+          }
 
-          // From just past the name's inner end to the bar's end, where the
-          // bar doesn't already reach the name.
-          const lineStart = fromOuterEdge(namesStart + ctx.measureText(shownName).width + SPACE_BETWEEN_COLUMNS);
+          // From just past the name's inner end, and its rank's, to the bar's
+          // end, where the bar doesn't already reach the name.
+          const lineStart = fromOuterEdge(namesStart + nameWidth + rankWidth + SPACE_BETWEEN_COLUMNS);
           const reachesName = isLeft ? bar.x <= lineStart : bar.x >= lineStart;
           if (reachesName) continue;
           const isHovered = chart.getActiveElements().some(activeBar => activeBar.datasetIndex === datasetIndex && activeBar.index === rowIndex);
@@ -443,6 +547,15 @@ function barLabels(highlightColorOf) {
       ctx.restore();
     },
   };
+}
+
+// How wide the text is in the font, leaving the context's own font as it was.
+function textWidthInFont(ctx, font, text) {
+  const fontBefore = ctx.font;
+  ctx.font = font;
+  const { width } = ctx.measureText(text);
+  ctx.font = fontBefore;
+  return width;
 }
 
 // The labels' font: the two highlighted countries' names in bold.
