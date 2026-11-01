@@ -31,10 +31,6 @@ FIRST_YEAR = 2014
 # UCDP has data for.
 MONTHS_SUMMED = 12
 
-# Country -> the country whose figures it is added to, matching how
-# `country_codes.py` buckets GDELT's mentions.
-COMBINED_INTO = {"PSE": "ISR"}
-
 
 class IncompleteFetch(Exception):
     """A fetch came back with too few countries to replace the cache with."""
@@ -94,11 +90,7 @@ def fetch_world_bank_history(benchmark, country_codes):
             if row["date"] == str(year):
                 latest[row["countryiso3code"]] = row["value"]
         if year >= FIRST_YEAR:
-            figures = dict(latest)
-            for part, whole in COMBINED_INTO.items():
-                if part in figures and whole in figures:
-                    figures[whole] += figures.pop(part)
-            history[str(year)] = figures
+            history[str(year)] = dict(latest)
     return history
 
 
@@ -106,15 +98,17 @@ def fetch_conflict_deaths_history(country_codes):
     """The countries, and a map of month -> ISO3 -> deaths in organized
     violence that month, from UCDP. A country is left out of the months it had
     no deaths in, but it's in the countries: zero is its real figure, unlike a
-    missing GDP, and it still belongs on the chart."""
+    missing GDP, and it still belongs on the chart.
+
+    UCDP has no Palestine, so its deaths in Gaza and the West Bank are
+    Israel's here."""
     months = {}
     for month, deaths_by_country in ucdp.fetch_deaths().items():
         months[month] = {}
         for code, deaths in deaths_by_country.items():
-            code = COMBINED_INTO.get(code, code)
             if code in country_codes:
-                months[month][code] = months[month].get(code, 0) + deaths
-    return {"countries": sorted(set(country_codes) - set(COMBINED_INTO)), "months": months}
+                months[month][code] = deaths
+    return {"countries": sorted(country_codes), "months": months}
 
 
 def latest_figures(benchmark, history):
