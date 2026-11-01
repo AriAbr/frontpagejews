@@ -15,12 +15,10 @@ Generated from GeoNames countryInfo.txt, plus two codes GDELT uses that
 GeoNames lacks: `GZ` (Gaza) and `RB` (Serbia). Unmapped codes are oceans and
 uninhabited islands.
 
-Gaza (`GZ`) and the West Bank (`WE`) map to `ISR`, which the dashboard shows as
-"Israel" and defines as including both. GDELT files much Palestinian coverage under
-Israel's code (the words "Palestinian" and "Palestine", "Gaza, Israel",
-Hebron), so the line between the two can't be drawn from its tags; as one unit,
-the misfilings cancel. `benchmarks.py` folds Palestine's figures into Israel's
-to match.
+Gaza (`GZ`) and the West Bank (`WE`) map to Palestine, `PSE`. But GDELT files
+much Palestinian coverage under Israel's code (the words "Palestinian" and
+"Palestine", "Gaza, Israel", Hebron), so the line between the two can't be
+drawn from its tags; counted as one unit, the misfilings cancel.
 """
 
 FIPS_TO_ISO3 = {
@@ -117,7 +115,7 @@ FIPS_TO_ISO3 = {
     "GT": "GTM",
     "GV": "GIN",
     "GY": "GUY",
-    "GZ": "ISR",
+    "GZ": "PSE",
     "HA": "HTI",
     "HK": "HKG",
     "HM": "HMD",
@@ -266,7 +264,7 @@ FIPS_TO_ISO3 = {
     "VQ": "VIR",
     "VT": "VAT",
     "WA": "NAM",
-    "WE": "ISR",
+    "WE": "PSE",
     "WF": "WLF",
     "WI": "ESH",
     "WS": "WSM",
