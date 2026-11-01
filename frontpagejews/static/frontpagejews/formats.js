@@ -8,12 +8,13 @@ export function percent(fraction) {
   return `${(fraction * 100).toFixed(decimals)}%`;
 }
 
-// A gap between two shares, in percentage points, with its sign, and small
-// gaps to two decimals like percent: 0.033 → "+3.3", -0.0004 → "−0.04".
+// A gap between two shares, in percentage points, to one decimal, with its
+// sign: 0.033 → "+3.3", -0.176 → "−17.6". A gap that rounds to nothing has
+// none: 0.0004 → "0.0".
 export function percentagePoints(fraction) {
-  const decimals = Math.abs(fraction) < 0.01 ? 2 : 1;
-  const sign = fraction < 0 ? "−" : "+";
-  return `${sign}${Math.abs(fraction * 100).toFixed(decimals)}`;
+  const points = Math.abs(fraction * 100).toFixed(1);
+  if (Number(points) === 0) return points;
+  return `${fraction < 0 ? "−" : "+"}${points}`;
 }
 
 // 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".

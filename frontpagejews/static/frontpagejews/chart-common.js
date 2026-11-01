@@ -69,7 +69,12 @@ function drawTooltip({ chart, tooltip }) {
   title.className = "title";
   title.textContent = tooltip.title.join(" ");
   const rows = [title];
-  tooltip.body.forEach((bodyItem, i) => {
+  // A chart whose tooltip sets `bodyFor` (the gap chart) builds what goes under
+  // the title itself: given the hovered item, it returns the elements. From the
+  // chart's own options, as aboveOrBelowAt below.
+  const { bodyFor } = chart.config.options.plugins.tooltip;
+  if (bodyFor) rows.push(...bodyFor(tooltip.dataPoints[0]));
+  else tooltip.body.forEach((bodyItem, i) => {
     // A dataset's tooltipGroup, {name, color, footer}, puts its line under a
     // heading shared with the datasets next to it in the same group: the
     // country, in the line chart. Its footer, given the point's index, returns
