@@ -263,7 +263,7 @@ function tooltipEquation({ mentionsPercentage, benchmarkPercentage, coverageGap 
 
   const roundingNote = document.createElement("div");
   roundingNote.className = "rounding-note";
-  roundingNote.textContent = "* Numbers are rounded, so the math may be off by 0.1.";
+  roundingNote.textContent = "* Displayed numbers are rounded, so the math may be off by 0.1.";
   return [equation, roundingNote];
 }
 
