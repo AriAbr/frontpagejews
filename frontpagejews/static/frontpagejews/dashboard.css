@@ -373,6 +373,8 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart-tooltip { opacity: 0; transition: opacity 0.15s; }
 .chart-tooltip.shown { opacity: 1; }
 .chart-tooltip.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
+/* The gap chart's: with its line, which is drawn at once. */
+.chart-tooltip.without-animation { transition: none; }
 @media (prefers-reduced-motion: reduce) { .chart-tooltip, .chart-tooltip.gliding { transition: none; } }
 .chart-tooltip .title { font-weight: 600; margin-bottom: 2px; }
 /* A heading over the lines that belong together, a country's in the line
@@ -429,13 +431,7 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
             opacity: 0; transition: opacity 0.15s; }
 .day-line.shown { opacity: 0.4; }
 .day-line.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
-/* The gap chart's line from the hovered bar's name to its end: as the line
-   down the hovered day, across instead. */
-.name-line { position: absolute; top: 0; left: 0; width: 1px; height: 1px; transform-origin: 0 0; background: var(--muted);
-             pointer-events: none; opacity: 0; transition: opacity 0.15s; }
-.name-line.shown { opacity: 0.4; }
-.name-line.gliding { transition: opacity 0.15s, transform 0.15s ease-out; }
-@media (prefers-reduced-motion: reduce) { .day-line, .day-line.gliding, .name-line, .name-line.gliding { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .day-line, .day-line.gliding { transition: none; } }
 #line-chart { position: relative; }
 /* None for a day's tooltip, which the line down the day ties to its place. */
 .chart-tooltip.no-caret::before { display: none; }

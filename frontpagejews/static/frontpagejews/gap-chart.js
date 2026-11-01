@@ -42,6 +42,11 @@ const OTHER_COUNTRIES_BAR_COLOR = OTHER_COUNTRIES_COLOR.slice(0, 7);
 // which is a see-through tint of the same color. Other names are in the text
 // color itself.
 const HIGHLIGHTED_NAME_TEXT_COLOR_MIX = 0.25;
+// The lines from each name to its bar: faint, at this much of the grid lines'
+// opacity (0 to 1), so they're fainter than the grid, and the hovered bar's
+// brighter, at this much of the page's muted text color's.
+const NAME_LINES_OPACITY = 0.5;
+const HOVERED_NAME_LINE_OPACITY = 0.4;
 
 // The distance between grid lines, 5 points. When a gap goes past the
 // benchmark's usual axis end, the end is rounded up to a multiple of this.
@@ -118,8 +123,8 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
       indexAxis: "y",
       animation: ANIMATION,
       // A hovered bar's color changes at once, in one redraw, rather than over
-      // a few: on a phone, redrawing a canvas this tall again and again makes
-      // the line from the name and the tooltip stutter as they glide.
+      // a few: redrawing a canvas this tall again and again is slow on a
+      // phone.
       transitions: { active: { animation: { duration: 0 } } },
       maintainAspectRatio: false,
       layout: { padding: { left: plotInset, right: plotInset } },
@@ -140,6 +145,7 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
         legend: { display: false },
         tooltip: {
           position: "barStart",
+          withoutAnimation: true,
           awayFromBar: true,
           aboveOrBelowIfNoRoomBeside: true,
           // When the popup opens above or below the bar, as on a phone
@@ -331,10 +337,8 @@ function benchmarkLine() {
 // "−9.8  China" on the left, mirrored on the right as "Israel  +5.2". The
 // gaps are flush with the edges, and the names line up just inside them, so
 // each row's text reaches in only as far as its name, and a short name leaves
-// its bar more room. The hovered bar gets a line from its name to its end, as
-// a name can be far from its bar: an element over the canvas rather than
-// drawn on it, so it fades and glides as the line chart's line down the
-// hovered day does, by the same CSS.
+// its bar more room. A name can be far from its bar, so each gets a faint
+// line from its name to its end, brighter for the hovered bar.
 function barLabels(highlightColorOf) {
   return {
     id: "barLabels",
@@ -352,10 +356,6 @@ function barLabels(highlightColorOf) {
       ctx.font = labelFont(false);
       const halfCapHeight = ctx.measureText("H").actualBoundingBoxAscent / 2;
 
-      // The line from the hovered bar's name to its end: its left and right
-      // ends across the chart, and its height. It stays null when no bar is
-      // hovered, or when the hovered bar already reaches its name.
-      let nameLine = null;
       for (const datasetIndex of [OVER_COVERED_DATASET_INDEX, UNDER_COVERED_DATASET_INDEX]) {
         const isLeft = datasetIndex === UNDER_COVERED_DATASET_INDEX;
         // Turns a distance in from this side's outer edge into an x across
@@ -380,17 +380,24 @@ function barLabels(highlightColorOf) {
           const shownName = cutShort(ctx, country.name, namesColumnWidth);
           ctx.fillText(shownName, fromOuterEdge(namesStart), textY);
 
-          const isHovered = chart.getActiveElements().some(activeBar => activeBar.datasetIndex === datasetIndex && activeBar.index === rowIndex);
-          if (!isHovered) continue;
           // From just past the name's inner end to the bar's end, where the
           // bar doesn't already reach the name.
           const lineStart = fromOuterEdge(namesStart + ctx.measureText(shownName).width + SPACE_BETWEEN_COLUMNS);
           const reachesName = isLeft ? bar.x <= lineStart : bar.x >= lineStart;
-          if (!reachesName) nameLine = { left: Math.min(lineStart, bar.x), right: Math.max(lineStart, bar.x), y: bar.y };
+          if (reachesName) continue;
+          const isHovered = chart.getActiveElements().some(activeBar => activeBar.datasetIndex === datasetIndex && activeBar.index === rowIndex);
+          const lineY = Math.round(bar.y) + 0.5;
+          ctx.strokeStyle = isHovered ? Chart.defaults.color : Chart.defaults.borderColor;
+          ctx.globalAlpha = isHovered ? HOVERED_NAME_LINE_OPACITY : NAME_LINES_OPACITY;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(lineStart, lineY);
+          ctx.lineTo(bar.x, lineY);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
         }
       }
       ctx.restore();
-      placeNameLine(chart.canvas, nameLine);
     },
   };
 }
@@ -419,29 +426,6 @@ function mixed(baseColor, mixInColor, mixInAmount) {
   const mixInParts = redGreenBlueOf(mixInColor);
   const mixedParts = redGreenBlueOf(baseColor).map((colorPart, partIndex) => Math.round(colorPart + (mixInParts[partIndex] - colorPart) * mixInAmount));
   return `rgb(${mixedParts.join(", ")})`;
-}
-
-// The line from the hovered bar's name to its end, or hidden with none.
-function placeNameLine(canvas, nameLine) {
-  let lineElement = canvas.parentElement.querySelector(".name-line");
-  if (!lineElement) {
-    lineElement = document.createElement("div");
-    lineElement.className = "name-line";
-    canvas.after(lineElement);
-  }
-  if (!nameLine) {
-    lineElement.classList.remove("shown");
-    return;
-  }
-  // It glides from one bar to the next, but where it was hidden, it fades in
-  // at the new bar, as the tooltip does.
-  lineElement.classList.toggle("gliding", lineElement.classList.contains("shown"));
-  lineElement.classList.add("shown");
-  // Stretched by its transform, from 1px wide, rather than by its width: a
-  // phone glides a transform smoothly on its own, but redoes the page's
-  // layout for every step of a width, and stutters.
-  const lineLength = Math.round(nameLine.right - nameLine.left);
-  lineElement.style.transform = `translate(${Math.round(nameLine.left)}px, ${Math.round(nameLine.y)}px) scaleX(${lineLength})`;
 }
 
 // The x halfway from the line down the middle to the inner edge of the gap

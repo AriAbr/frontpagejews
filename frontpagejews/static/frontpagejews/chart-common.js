@@ -60,7 +60,8 @@ function drawTooltip({ chart, tooltip }) {
   if (tooltip.opacity === 0) {
     tooltipElement.classList.remove("shown");
     // With no fade, there's no transitionend to wait for.
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) parkTooltip();
+    const withoutFade = tooltipElement.classList.contains("without-animation") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (withoutFade) parkTooltip();
     return;
   }
 
@@ -142,6 +143,10 @@ function drawTooltip({ chart, tooltip }) {
   // is for a day, not a point) puts it at the top of the plot, beside the line
   // drawn down that day, with no caret: the line ties them. It stays at the
   // top as the day changes rather than following the lines up and down.
+  //
+  // A chart whose tooltip sets `withoutAnimation` (the gap chart, whose line
+  // from the hovered name to its bar is drawn on the canvas, at once) has it
+  // appear, move and disappear at once too, so it stays with the line.
   const canvas = chart.canvas.getBoundingClientRect();
   const atTopBesideDay = tooltip.options.atTopBesideDay;
   const pointX = canvas.left + tooltip.caretX;
@@ -201,6 +206,7 @@ function drawTooltip({ chart, tooltip }) {
   // It glides from one point to the next, but where it was hidden, it fades
   // in at the new point rather than gliding over from where it last was.
   tooltipElement.classList.toggle("gliding", tooltipElement.classList.contains("shown"));
+  tooltipElement.classList.toggle("without-animation", Boolean(tooltip.options.withoutAnimation));
   tooltipElement.classList.add("shown");
   // Whole pixels, so the text is sharp once it stops. Rounded before the
   // caret is placed, so the caret, at its exact place, points at the point.
