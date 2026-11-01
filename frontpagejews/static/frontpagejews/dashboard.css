@@ -395,8 +395,10 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart-tooltip .gap-equation .label { grid-column: 4; margin-left: 8px; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
 .chart-tooltip .gap-equation .rule { grid-column: 1 / 4; height: 1px; margin: 2px 0; background: var(--muted); }
 /* As wide as the rest, wrapping, but widening a narrow tooltip enough to
-   keep it to two lines. */
-.chart-tooltip .rounding-note { width: 0; min-width: max(100%, 17em); font-size: 0.7rem; color: var(--muted); }
+   keep it to two lines. Its text doesn't count toward the tooltip's width
+   (contain), only its min-width does: a percentage there, to fill the
+   tooltip, isn't counted by every browser, and a phone's let it overflow. */
+.chart-tooltip .rounding-note { contain: inline-size; min-width: 17em; font-size: 0.7rem; color: var(--muted); }
 /* A heading over the lines that belong together, a country's in the line
    chart, in its color. */
 .chart-tooltip .group { font-weight: 600; }
