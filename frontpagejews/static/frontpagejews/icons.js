@@ -1,5 +1,5 @@
-// Icons drawn on the page, shared by the scatter's offscreen badges and the
-// country picker.
+// Icons drawn on the page, shared by the scatter's offscreen badges, the gap
+// chart's side headings and the country picker.
 
 // An arrow pointing left or right. Drawn rather than typed: an arrow
 // character's height in its line depends on the font, and in some it sits

@@ -216,8 +216,8 @@
           Each country's <a class="definition" href="#share-of-coverage">share of coverage</a>
           against its <span class="benchmark-noun benchmark-definition"></span>.
           <br />
-          Dashed line is what the benchmark would predict. Countries above it are "over-covered",
-          countries below it are "under-covered".
+          Dashed line is what the benchmark would predict. Countries above it are "over-represented",
+          countries below it are "under-represented".
         </p>
         {# The script fills this, outside the scrolling area so it stays in view. #}
         <div class="legend" id="scatter-legend"></div>
@@ -240,6 +240,30 @@
               {# The x-axis title, filled by the script and kept in view while the chart scrolls. #}
               <p class="axis-title" id="scatter-x-title"></p>
             </div>
+          </div>
+        </div>
+        <h2>
+          Largest gaps, <span class="period">last {{ days_shown }} days</span>
+        </h2>
+        <p>
+          The percentage-point gap between each country's
+          <span class="benchmark-short-share benchmark-definition"></span> and its
+          <a class="definition" href="#share-of-coverage">share of coverage</a>, largest first.
+        </p>
+        {# The script fills this, outside the scrolling box so it stays in view. #}
+        <div class="legend" id="gap-chart-legend"></div>
+        {# Over each half of the chart, beside the line. #}
+        <div class="gap-chart-sides" aria-hidden="true">
+          {# Each with an arrow pointing away from the line, added by gap-chart.js. #}
+          <span id="gap-chart-under-side">Under-represented</span>
+          <span id="gap-chart-over-side">Over-represented</span>
+        </div>
+        {# The grid lines' labels, placed by the script over the lines, outside the scrolling box so they stay in view. #}
+        <div class="gap-chart-axis" id="gap-chart-axis" aria-hidden="true"></div>
+        <div class="gap-chart-scroll" id="gap-chart-scroll">
+          {# Its height is set by the script, a row per country. #}
+          <div class="chart" id="gap-chart-wrap">
+            <canvas id="gap-chart"></canvas>
           </div>
         </div>
       </div>

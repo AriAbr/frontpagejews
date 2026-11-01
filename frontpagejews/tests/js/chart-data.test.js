@@ -6,6 +6,7 @@ import {
   benchmarkTotal,
   combiningSuggestion,
   countryMeasures,
+  coverageGapsBySide,
   lineChartRows,
   mentionsByCountry,
   withComposite,
@@ -222,6 +223,32 @@ describe("countryMeasures", () => {
     );
 
     assert.deepEqual(countryMeasures(data, ["bbc"], "gdp").map(measures => measures.code), ["ISR"]);
+  });
+});
+
+describe("coverageGapsBySide", () => {
+  test("gives each country's share of coverage minus its share of the benchmark", () => {
+    // China has 1 of the 4 mentions and 90 of the 100 people, Israel 3 and 10.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
+
+    const { overCovered, underCovered } = coverageGapsBySide(countryMeasures(data, ["bbc"], "population"));
+
+    assert.equal(overCovered[0].coverageGap.toFixed(2), "0.65");
+    assert.equal(underCovered[0].coverageGap.toFixed(2), "-0.65");
+  });
+
+  test("puts each side's furthest from the benchmark first", () => {
+    // Shares of mentions 40/30/20/10%, of people 10/25/30/35%: gaps of +30,
+    // +5, -10 and -25 points.
+    const data = siteData(
+      { "2026-09-22": { bbc: { ISR: 4, IRN: 3, CHN: 2, IND: 1 } } },
+      { population: { ISR: 10, IRN: 25, CHN: 30, IND: 35 } },
+    );
+
+    const { overCovered, underCovered } = coverageGapsBySide(countryMeasures(data, ["bbc"], "population"));
+
+    assert.deepEqual(overCovered.map(country => country.code), ["ISR", "IRN"]);
+    assert.deepEqual(underCovered.map(country => country.code), ["IND", "CHN"]);
   });
 });
 

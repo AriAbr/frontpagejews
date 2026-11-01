@@ -264,6 +264,24 @@ export function countryMeasures(data, selectedOutlets, benchmark) {
   return measures;
 }
 
+// The countries from countryMeasures with how far their share of coverage is
+// from their share of the benchmark, as a fraction like the shares: 0.033 is
+// 3.3 percentage points more coverage than the benchmark's share. Split into
+// the over-covered (a gap of zero counts as over) and the under-covered, each
+// furthest from the benchmark first, for the gap chart to pair up row by row.
+export function coverageGapsBySide(measures) {
+  const overCovered = [];
+  const underCovered = [];
+  for (const country of measures) {
+    const coverageGap = country.mentionsPercentage - country.benchmarkPercentage;
+    if (coverageGap >= 0) overCovered.push({ ...country, coverageGap });
+    else underCovered.push({ ...country, coverageGap });
+  }
+  overCovered.sort((a, b) => b.coverageGap - a.coverageGap);
+  underCovered.sort((a, b) => a.coverageGap - b.coverageGap);
+  return { overCovered, underCovered };
+}
+
 // The benchmark added up over every country in the data.
 export function benchmarkTotal(data, benchmark) {
   return sum(Object.values(data.benchmark_figures[benchmark]));

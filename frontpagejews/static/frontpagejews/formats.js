@@ -1,11 +1,19 @@
-// Number formats shared by the headline, the scatter and the benchmark
-// display settings, and the outlets and period chosen, shared by the controls,
-// the charts and the summary bar.
+// Number formats shared by the headline, the scatter, the gap chart and the
+// benchmark display settings, and the outlets and period chosen, shared by the
+// controls, the charts and the summary bar.
 
 // 0.139 → "13.9%", and small shares to two decimals: 0.0004 → "0.04%".
 export function percent(fraction) {
   const decimals = fraction < 0.01 ? 2 : 1;
   return `${(fraction * 100).toFixed(decimals)}%`;
+}
+
+// A gap between two shares, in percentage points, with its sign, and small
+// gaps to two decimals like percent: 0.033 → "+3.3", -0.0004 → "−0.04".
+export function percentagePoints(fraction) {
+  const decimals = Math.abs(fraction) < 0.01 ? 2 : 1;
+  const sign = fraction < 0 ? "−" : "+";
+  return `${sign}${Math.abs(fraction * 100).toFixed(decimals)}`;
 }
 
 // 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".

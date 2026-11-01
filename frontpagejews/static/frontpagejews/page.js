@@ -8,6 +8,7 @@ import {
   combiningSuggestion,
   countryMeasures,
   countryName,
+  coverageGapsBySide,
   groupCode,
   lineChartRows,
   withComposite,
@@ -17,6 +18,7 @@ import {
 import { choicesFromUrl, comparisonChoices } from "./choices.js";
 import { withBenchmarkLinked } from "./definitions.js";
 import { describePeriod, timeAgo } from "./formats.js";
+import { drawGapChart } from "./gap-chart.js";
 import { drawHeadline } from "./headline.js";
 import { drawLineChart, explainDayRangeWithoutData } from "./line-chart.js";
 import { drawScatter } from "./scatter.js";
@@ -62,6 +64,7 @@ const period = describePeriod(month, siteData.days.length);
 document.getElementById("comparison-name").textContent = comparison.name;
 fillBenchmarkSpans(".benchmark-noun", BENCHMARK_DISPLAY_SETTINGS[benchmark].noun);
 fillBenchmarkSpans(".benchmark-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].share);
+fillBenchmarkSpans(".benchmark-short-share", BENCHMARK_DISPLAY_SETTINGS[benchmark].shortShare);
 // The page says "last 30 days" until a month is picked.
 if (month) {
   for (const span of document.querySelectorAll(".period")) span.textContent = period;
@@ -91,8 +94,8 @@ if (data.days.length) {
   const rows = lineChartRows(data, selectedOutlets, comparison.code, benchmark);
   drawLineChart({ rows, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison });
   // A period without a single day of data, like the NY Post alone in 2021,
-  // has no shares to plot: the scatter is drawn empty, saying why, as the
-  // line chart does over its days.
+  // has no shares to plot: the scatter and the gap chart are drawn empty,
+  // saying why, as the line chart does over its days.
   const periodHasData = rows.some(row => row.focusMentionsPercentage !== null);
   const measures = periodHasData ? countryMeasures(data, selectedOutlets, benchmark) : [];
   // With countries combined, Israel's share shifts a little: the headline
@@ -101,6 +104,7 @@ if (data.days.length) {
   const focusMeasuresBeforeCombining = isCombined && periodHasData
     ? countryMeasures(dataBeforeCombining, selectedOutlets, benchmark).find(country => country.code === data.focus)
     : null;
+  const noDataExplanation = periodHasData ? null : explainDayRangeWithoutData(rows, { firstDay: 0, lastDay: rows.length - 1 });
   drawHeadline({ measures, benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark], focus, comparison, focusMeasuresBeforeCombining });
   drawScatter({
     points: measures,
@@ -109,7 +113,14 @@ if (data.days.length) {
     period,
     focus,
     comparison,
-    noDataExplanation: periodHasData ? null : explainDayRangeWithoutData(rows, { firstDay: 0, lastDay: rows.length - 1 }),
+    noDataExplanation,
+  });
+  drawGapChart({
+    ...coverageGapsBySide(measures),
+    benchmarkDisplaySettings: BENCHMARK_DISPLAY_SETTINGS[benchmark],
+    focus,
+    comparison,
+    noDataExplanation,
   });
 } else {
   document.getElementById("charts").hidden = true;

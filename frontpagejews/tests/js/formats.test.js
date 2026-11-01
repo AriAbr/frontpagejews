@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { compactAxisLabel, describePeriod, timeAgo } from "../../static/frontpagejews/formats.js";
+import { compactAxisLabel, describePeriod, percentagePoints, timeAgo } from "../../static/frontpagejews/formats.js";
 
 describe("describePeriod", () => {
   test("names the month picked", () => {
@@ -21,6 +21,12 @@ describe("compactAxisLabel", () => {
 
   test("labels below 100K as before", () => {
     assert.deepEqual([5e3, 95e3].map(compactAxisLabel), ["5K", "95K"]);
+  });
+});
+
+describe("percentagePoints", () => {
+  test("gives a gap's sign, and small gaps to two decimals", () => {
+    assert.deepEqual([0.033, -0.176, 0.0004, -0.0004].map(percentagePoints), ["+3.3", "−17.6", "+0.04", "−0.04"]);
   });
 });
 
