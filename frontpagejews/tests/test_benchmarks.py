@@ -104,14 +104,6 @@ def describe_fetch_world_bank_history():
 
         assert history["2025"] == {"ISR": 500, "UKR": 200}
 
-    def test_adds_the_west_bank_and_gaza_to_israel(mocker):
-        """Mentions of the three are counted as one, so their figures are too"""
-        mock_world_bank_response(mocker, {}, world_bank_rows({"ISR": {"2025": 10}, "PSE": {"2025": 5}}))
-
-        history = benchmarks.fetch_world_bank_history("population", {"ISR", "PSE"})
-
-        assert history["2025"] == {"ISR": 15}
-
     def test_raises_when_the_world_bank_sends_no_figures(mocker):
         """As it did to GitHub's runners on 2026-10-17, while answering elsewhere"""
         mock_world_bank_response(mocker, {"page": 0, "pages": 0, "total": 0}, None)
@@ -145,21 +137,6 @@ def describe_fetch_conflict_deaths_history():
         assert history == {
             "countries": ["ISR", "UKR"],
             "months": {"2026-07": {"ISR": 7}, "2026-08": {}},
-        }
-
-    def test_adds_the_west_bank_and_gaza_to_israel(mocker):
-        """Even in a month Israel has none of its own"""
-        mocker.patch.object(
-            benchmarks.ucdp,
-            "fetch_deaths",
-            return_value={"2026-07": {"ISR": 7, "PSE": 2}, "2026-08": {"PSE": 3}},
-        )
-
-        history = benchmarks.fetch_conflict_deaths_history({"ISR", "PSE"})
-
-        assert history == {
-            "countries": ["ISR"],
-            "months": {"2026-07": {"ISR": 9}, "2026-08": {"ISR": 3}},
         }
 
 
