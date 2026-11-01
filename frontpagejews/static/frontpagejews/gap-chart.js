@@ -10,7 +10,7 @@
 // straight down, and a long bar runs under them: the bars are see-through, so
 // the text reads over them and their length still shows.
 import { ANIMATION, COLORS, drawLegend, FOREGROUND, hideTooltipOnPressElsewhere, noDataNoteElement, OTHER_COUNTRIES_COLOR } from "./chart-common.js";
-import { multiple, percent, percentagePoints } from "./formats.js";
+import { percentagePoints } from "./formats.js";
 import { arrowIcon } from "./icons.js";
 
 // Where each side's bars are in the chart's datasets: the over-covered side's
@@ -155,10 +155,9 @@ export function drawGapChart({ overCovered, underCovered, benchmarkDisplaySettin
           // same spot.
           aboveOrBelowAt: item => halfwayToGapsColumn(item.chart, item),
           displayColors: false,
-          callbacks: {
-            title: items => items[0].raw.name,
-            label: item => tooltipLines(item.raw, benchmarkDisplaySettings),
-          },
+          callbacks: { title: items => items[0].raw.name },
+          // Under the name, in place of lines of text.
+          bodyFor: item => tooltipEquation(item.raw, benchmarkDisplaySettings),
         },
       },
     },
@@ -212,16 +211,60 @@ function sideDataset(countries, rowLabels, highlightColorOf) {
   };
 }
 
-// The tooltip's lines under the country's name.
-function tooltipLines({ mentions, mentionsPercentage, benchmarkFigure, benchmarkPercentage, coverageGap }, benchmarkDisplaySettings) {
-  const lines = [
-    `${percentagePoints(coverageGap)} percentage points from expected`,
-    `${percent(mentionsPercentage)} share of coverage (${mentions.toLocaleString()} mentions)`,
-    benchmarkDisplaySettings.describeFigure(benchmarkFigure, benchmarkPercentage),
-  ];
-  // A multiple of nothing means nothing.
-  if (benchmarkPercentage) lines.push(`${multiple(mentionsPercentage, benchmarkPercentage)} expected share`);
-  return lines;
+// The tooltip's body, under the country's name: the gap worked out as a
+// subtraction down the page, large, each number with what it is beside it,
+// then a note on rounding:
+//
+//      4.3%  share of coverage
+//   −
+//     13.9%  composite score
+//   ───────
+//   −  9.6   coverage gap*
+//
+// All three to one decimal, as the bars' gaps, so a small country's shares
+// read 0.0%. Each is rounded on its own, so the result can be off by 0.1, which
+// the note says.
+function tooltipEquation({ mentionsPercentage, benchmarkPercentage, coverageGap }, benchmarkDisplaySettings) {
+  const inPoints = fraction => (fraction * 100).toFixed(1);
+
+  const equation = document.createElement("div");
+  equation.className = "gap-equation";
+  // The "%" in a column of its own after the number, empty for the result,
+  // so the numbers' last digits, and so their decimal points, line up.
+  // The result's row is marked, so it alone is in the full text color.
+  const addRow = (number, unit, label, isResult = false) => {
+    for (const [className, text] of [["number", number], ["unit", unit], ["label", label]]) {
+      const element = document.createElement("span");
+      element.className = className;
+      if (isResult) element.classList.add("result");
+      element.textContent = text;
+      equation.append(element);
+    }
+  };
+  addRow(inPoints(mentionsPercentage), "%", "share of coverage");
+  addRow(inPoints(benchmarkPercentage), "%", benchmarkDisplaySettings.shortShare);
+  // Between the two shares rather than beside the second, so it doesn't read
+  // as that share's sign.
+  const minus = document.createElement("span");
+  minus.className = "minus";
+  minus.textContent = "−";
+  equation.append(minus);
+  const rule = document.createElement("span");
+  rule.className = "rule";
+  equation.append(rule);
+  // The result's sign, as on its bar ("+", "−", or none for 0.0), in the
+  // minus's column, so all three numbers' digits line up.
+  const gapPoints = percentagePoints(coverageGap);
+  const resultSign = document.createElement("span");
+  resultSign.className = "sign result";
+  resultSign.textContent = gapPoints.match(/^[+−]/)?.[0] ?? "";
+  equation.append(resultSign);
+  addRow(gapPoints.replace(/^[+−]/, ""), "", "coverage gap*", true);
+
+  const roundingNote = document.createElement("div");
+  roundingNote.className = "rounding-note";
+  roundingNote.textContent = "* Numbers are rounded, so the math may be off by 0.1.";
+  return [equation, roundingNote];
 }
 
 // Fades the box's top and bottom edges while there are more rows beyond them,

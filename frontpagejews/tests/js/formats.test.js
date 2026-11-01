@@ -25,8 +25,12 @@ describe("compactAxisLabel", () => {
 });
 
 describe("percentagePoints", () => {
-  test("gives a gap's sign, and small gaps to two decimals", () => {
-    assert.deepEqual([0.033, -0.176, 0.0004, -0.0004].map(percentagePoints), ["+3.3", "−17.6", "+0.04", "−0.04"]);
+  test("gives a gap's sign, to one decimal", () => {
+    assert.deepEqual([0.033, -0.176, 0.0006, -0.0006].map(percentagePoints), ["+3.3", "−17.6", "+0.1", "−0.1"]);
+  });
+
+  test("gives no sign to a gap that rounds to nothing", () => {
+    assert.deepEqual([0.0004, -0.0004, 0].map(percentagePoints), ["0.0", "0.0", "0.0"]);
   });
 });
 

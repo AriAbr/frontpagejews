@@ -377,6 +377,25 @@ h2 { font-size: 1.1rem; margin: 40px 0 4px; }
 .chart-tooltip.without-animation { transition: none; }
 @media (prefers-reduced-motion: reduce) { .chart-tooltip, .chart-tooltip.gliding { transition: none; } }
 .chart-tooltip .title { font-weight: 600; margin-bottom: 2px; }
+/* The gap chart's sum, worked down the page: a number, its "%" (none for the
+   result) and what it is on each row, the numbers right-aligned so their
+   decimal points line up, the minus to their left between the two shares,
+   the result's own sign under it, and a rule over the result. */
+.chart-tooltip .gap-equation { display: grid; grid-template-columns: repeat(4, auto); justify-content: start; align-items: baseline;
+                               margin: 4px 0 6px; }
+.chart-tooltip .gap-equation .minus, .chart-tooltip .gap-equation .sign, .chart-tooltip .gap-equation .number, .chart-tooltip .gap-equation .unit { font-size: 1.2rem; line-height: 1.3; }
+.chart-tooltip .gap-equation .minus, .chart-tooltip .gap-equation .sign { grid-column: 1; margin-right: 6px; }
+.chart-tooltip .gap-equation .minus { grid-row: 1 / 3; align-self: center; color: var(--muted); }
+.chart-tooltip .gap-equation .sign { font-weight: 600; }
+.chart-tooltip .gap-equation .number { grid-column: 2; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chart-tooltip .gap-equation .unit { grid-column: 3; font-weight: 600; }
+/* The two shares in the page's muted text color, so only the result, the
+   gap, stands out in the full one. */
+.chart-tooltip .gap-equation .number:not(.result), .chart-tooltip .gap-equation .unit:not(.result) { color: var(--muted); }
+.chart-tooltip .gap-equation .label { grid-column: 4; margin-left: 8px; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
+.chart-tooltip .gap-equation .rule { grid-column: 1 / 4; height: 1px; margin: 2px 0; background: var(--muted); }
+/* As wide as the rest, wrapping, rather than widening the tooltip. */
+.chart-tooltip .rounding-note { width: 0; min-width: 100%; font-size: 0.7rem; color: var(--muted); }
 /* A heading over the lines that belong together, a country's in the line
    chart, in its color. */
 .chart-tooltip .group { font-weight: 600; }
