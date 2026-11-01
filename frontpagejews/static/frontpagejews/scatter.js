@@ -5,13 +5,12 @@
 // chart is made as wide as it needs to be for the dashed line to sit at 45
 // degrees, and scrolls sideways. Most countries sit near the origin, because a
 // few countries are huge and most are small.
-import { ANIMATION, BACKGROUND, COLORS, hideTooltipOnPressElsewhere, noDataNoteElement } from "./chart-common.js";
+import { ANIMATION, BACKGROUND, COLORS, drawLegend, hideTooltipOnPressElsewhere, noDataNoteElement, OTHER_COUNTRIES_COLOR } from "./chart-common.js";
 import { multiple, percent } from "./formats.js";
 import { arrowIcon } from "./icons.js";
 
 // Rounded up to this, so the coverage axis ends on a round number.
 const COVERAGE_AXIS_STEP = 0.01;
-const OTHER_COUNTRIES_COLOR = "#a8a29e99";
 // The axes for a period without data, which has no shares to size them by: a
 // usual range, so the empty chart shows what would be there. The benchmark's
 // is a share of its world total, and the chart's width keeps the dashed line
@@ -171,7 +170,7 @@ export function drawScatter({ points, benchmarkTotal, benchmarkDisplaySettings, 
   });
   hideTooltipOnPressElsewhere(scatter);
 
-  drawLegend([
+  drawLegend(document.getElementById("scatter-legend"), [
     { label: "Other countries", color: OTHER_COUNTRIES_COLOR },
     { label: comparison.name, color: COLORS.comparison },
     { label: focus.name, color: COLORS.focus },
@@ -334,21 +333,6 @@ function keptTogether(...parts) {
   span.className = "kept-together";
   span.append(...parts);
   return span;
-}
-
-// The legend, as a row of colored dots and labels above the chart. It sits
-// outside the scrolling area, so it stays centered when the chart is wider than
-// the window.
-function drawLegend(items) {
-  const legend = document.getElementById("scatter-legend");
-  for (const { label, color } of items) {
-    const item = document.createElement("span");
-    const dot = document.createElement("span");
-    dot.className = "dot";
-    dot.style.background = color;
-    item.append(dot, label);
-    legend.append(item);
-  }
 }
 
 // The y-axis's width: everything left of the plot area, through the axis line.

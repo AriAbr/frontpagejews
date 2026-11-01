@@ -14,6 +14,11 @@
 // apart, about 1% of the benchmark's total, which makes the grid's cells near
 // square, since the chart is sized for a 45-degree line. Only the lines at
 // multiples of labelStep get a label, where there is one.
+//
+// The gap chart's axis runs as far each way from the benchmark, gapAxisMax
+// percentage points (as a fraction), just past the largest gap either way in
+// the same 12 months, rounded up to 5 points. A larger gap (Ethiopia's deaths
+// in 2021) runs it further, as on the scatter.
 import { compact, compactAxisLabel, percent } from "./formats.js";
 
 export const BENCHMARK_DISPLAY_SETTINGS = {
@@ -24,6 +29,10 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     noun: "composite score",
     definition: "composite-score",
     share: "composite score — the average of its shares of population, GDP and conflict deaths",
+    // The same in a few words, for the gap chart's description: "its share of
+    // coverage minus its composite score". The composite score is already a
+    // share, so not "share of composite score".
+    shortShare: "composite score",
     // A country's share, as the headline puts it after its share of coverage.
     // The composite score is already a share, so "0.9% of the composite score"
     // would read as a share of a share.
@@ -34,6 +43,8 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     describeFigure: (score, share) => `${percent(share)} composite score`,
     // China, 13.9%.
     axisMax: 0.15,
+    // Iran, +11.3 points, March 2026.
+    gapAxisMax: 0.15,
     axisStep: 0.01,
     format: percent,
   },
@@ -42,9 +53,12 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     description: "Share of world's people",
     noun: "population",
     share: "share of the world's population",
+    shortShare: "share of population",
     describeShare: share => `${percent(share)} of the world's population`,
     // India, 1.46B.
     axisMax: 1.5e9,
+    // India, −17.6 points, April 2026.
+    gapAxisMax: 0.2,
     axisStep: 100e6,
     format: compact,
     describeFigure: (people, share) => `${percent(share)} of the world's population (${compact(people)})`,
@@ -54,9 +68,12 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     description: "Share of world economy",
     noun: "GDP",
     share: "share of world GDP",
+    shortShare: "share of world GDP",
     describeShare: share => `${percent(share)} of world GDP`,
     // China, $18.7T.
     axisMax: 20e12,
+    // China, −20.2 points, March 2026.
+    gapAxisMax: 0.25,
     axisStep: 1e12,
     format: dollars => `$${compact(dollars)}`,
     describeFigure: (dollars, share) => `${percent(share)} of world GDP ($${compact(dollars)})`,
@@ -67,9 +84,12 @@ export const BENCHMARK_DISPLAY_SETTINGS = {
     noun: "conflict deaths",
     definition: "conflict-deaths",
     share: "share of the world's conflict deaths",
+    shortShare: "share of conflict deaths",
     describeShare: share => `${percent(share)} of the world's conflict deaths`,
     // Ukraine, 85K.
     axisMax: 100e3,
+    // Ukraine, −37.3 points, June 2026.
+    gapAxisMax: 0.4,
     // 1% of the total is about 2,350.
     axisStep: 2.5e3,
     labelStep: 5e3,

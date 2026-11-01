@@ -3,12 +3,15 @@
 
 const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name);
 export const BACKGROUND = cssVar("--bg");
+export const FOREGROUND = cssVar("--fg").trim();
 
 // The scatter colors its two highlighted dots like their coverage lines, so
 // these must match across both charts. Blue and amber rather than blue and
 // red, which would read as a US Democrat/Republican comparison; the pair also
 // stays apart for colorblind readers. The blue is --focus in dashboard.css.
 export const COLORS = { focus: cssVar("--focus").trim(), comparison: "#d97706" };
+// Every other country, in the scatter and the gap chart.
+export const OTHER_COUNTRIES_COLOR = "#a8a29e99";
 
 // A short rise from the axis: shows the charts being built without the full
 // second of the default.
@@ -38,6 +41,9 @@ const TOOLTIP_GAP = 12;
 const POINT_GAP = 18;
 // From the line drawn down the hovered day to the tooltip's edge.
 const DAY_LINE_GAP = 8;
+// From the gap chart's middle line to the tooltip's edge: room for the caret,
+// with its tip just short of the line.
+const BAR_START_GAP = 10;
 // The caret stays this far inside the tooltip's top and bottom, clear of the
 // rounded corners.
 const CARET_INSET = 10;
@@ -124,6 +130,14 @@ function drawTooltip({ chart, tooltip }) {
   // room above, centered on it but kept inside the window, with the caret on
   // the edge facing the point, in line with it.
   //
+  // A chart whose tooltip sets `awayFromBar` (the gap chart, whose tooltip
+  // points at the bar's start, on the line down the middle) puts it on the
+  // side away from the bar, so it doesn't cover the bar. Where there's no
+  // room there, as on a phone, it goes above or below, as the scatter's does.
+  // There it stays centered on the line, so it doesn't jump about from one
+  // country to the next, and its caret points across the canvas where the
+  // tooltip's `aboveOrBelowAt`, given the hovered item, says, if it has one.
+  //
   // A chart whose tooltip sets `atTopBesideDay` (the line chart, whose tooltip
   // is for a day, not a point) puts it at the top of the plot, beside the line
   // drawn down that day, with no caret: the line ties them. It stays at the
@@ -132,8 +146,15 @@ function drawTooltip({ chart, tooltip }) {
   const atTopBesideDay = tooltip.options.atTopBesideDay;
   const pointX = canvas.left + tooltip.caretX;
   const pointY = canvas.top + (atTopBesideDay ? chart.chartArea.top : tooltip.caretY);
-  const gap = atTopBesideDay ? DAY_LINE_GAP : POINT_GAP;
-  const { width, height } = tooltipElement.getBoundingClientRect();
+  let gap = POINT_GAP;
+  if (atTopBesideDay) gap = DAY_LINE_GAP;
+  else if (tooltip.options.awayFromBar) gap = BAR_START_GAP;
+  // Its width set in whole pixels, so an edge placed on a whole pixel keeps
+  // the text sharp; cleared first, to measure the new text.
+  tooltipElement.style.width = "";
+  const { width: textWidth, height } = tooltipElement.getBoundingClientRect();
+  const width = Math.ceil(textWidth);
+  tooltipElement.style.width = `${width}px`;
   // The window less any scrollbar, which innerWidth and innerHeight include.
   const { clientWidth: windowWidth, clientHeight: windowHeight } = document.documentElement;
   // The summary bar covers the window's top once the page is scrolled down,
@@ -144,20 +165,33 @@ function drawTooltip({ chart, tooltip }) {
     Math.min(Math.max(windowStart + TOOLTIP_GAP, start), windowEnd - TOOLTIP_GAP - size);
   const fitsRight = pointX + gap + width <= windowWidth - TOOLTIP_GAP;
   const fitsLeft = pointX - gap - width >= TOOLTIP_GAP;
+  // By its value, not its ends: Chart.js puts the line on a whole pixel, so a
+  // bar too short to see can end just left of it on the right-hand side.
+  const barGoesRight = tooltip.options.awayFromBar && tooltip.dataPoints[0].parsed.x > 0;
+  let toRight = fitsRight;
+  let fitsBeside = fitsRight || fitsLeft;
+  if (tooltip.options.awayFromBar) {
+    toRight = !barGoesRight;
+    fitsBeside = toRight ? fitsRight : fitsLeft;
+  }
   let side;
   let left;
   let top;
-  if (fitsRight || fitsLeft || !tooltip.options.aboveOrBelowIfNoRoomBeside) {
-    side = fitsRight ? "right" : "left";
-    left = Math.round(Math.max(TOOLTIP_GAP, fitsRight ? pointX + gap : pointX - gap - width));
+  if (fitsBeside || !tooltip.options.aboveOrBelowIfNoRoomBeside) {
+    side = toRight ? "right" : "left";
+    left = Math.round(Math.max(TOOLTIP_GAP, toRight ? pointX + gap : pointX - gap - width));
     top = Math.round(keptInside(atTopBesideDay ? pointY : pointY - height / 2, height, windowTop, windowHeight));
     const caretY = Math.min(Math.max(CARET_INSET, pointY - top), height - CARET_INSET);
     tooltipElement.style.setProperty("--caret-y", `${caretY}px`);
   } else {
+    // From the chart's own options, not the tooltip's: Chart.js would call
+    // the function itself, taking it for a scriptable option.
+    const { aboveOrBelowAt } = chart.config.options.plugins.tooltip;
+    const pointAboveOrBelowX = aboveOrBelowAt ? canvas.left + aboveOrBelowAt(tooltip.dataPoints[0]) : pointX;
     side = pointY - POINT_GAP - height >= windowTop + TOOLTIP_GAP ? "above" : "below";
     top = Math.round(side === "above" ? pointY - POINT_GAP - height : pointY + POINT_GAP);
     left = Math.round(keptInside(pointX - width / 2, width, 0, windowWidth));
-    const caretX = Math.min(Math.max(CARET_INSET, pointX - left), width - CARET_INSET);
+    const caretX = Math.min(Math.max(CARET_INSET, pointAboveOrBelowX - left), width - CARET_INSET);
     tooltipElement.style.setProperty("--caret-x", `${caretX}px`);
   }
   tooltipElement.classList.toggle("no-caret", Boolean(atTopBesideDay));
@@ -170,9 +204,14 @@ function drawTooltip({ chart, tooltip }) {
   tooltipElement.classList.add("shown");
   // Whole pixels, so the text is sharp once it stops. Rounded before the
   // caret is placed, so the caret, at its exact place, points at the point.
-  const pageX = Math.round(left + window.scrollX);
+  // On the point's left, it's placed by its right edge, the one facing the
+  // point: from one point to the next its width changes at once while its
+  // place glides, so the edge facing the point would otherwise jump and slide
+  // back.
+  const pageX = Math.round((side === "left" ? left + width : left) + window.scrollX);
   const pageY = Math.round(top + window.scrollY);
-  tooltipElement.style.transform = `translate(${pageX}px, ${pageY}px)`;
+  const shift = side === "left" ? "-100%" : "0%";
+  tooltipElement.style.transform = `translate(${pageX}px, ${pageY}px) translateX(${shift})`;
 }
 
 // Once faded out, back to the page's top left corner. Left where it was, near
@@ -194,6 +233,20 @@ export function hideTooltipOnPressElsewhere(chart) {
     chart.tooltip.setActiveElements([], { x: 0, y: 0 });
     chart.update();
   });
+}
+
+// A chart's legend, as a row of colored dots and labels in the page, above
+// the chart: outside the scatter's and the gap chart's scrolling areas, so it
+// stays in view.
+export function drawLegend(legend, items) {
+  for (const { label, color } of items) {
+    const item = document.createElement("span");
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = color;
+    item.append(dot, label);
+    legend.append(item);
+  }
 }
 
 // Room between a note's explanation and the window's edge, as for tooltips.
