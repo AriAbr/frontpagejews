@@ -17,6 +17,14 @@ export function percentagePoints(fraction) {
   return `${fraction < 0 ? "−" : "+"}${points}`;
 }
 
+// 1 → "1st", 2 → "2nd", 3 → "3rd", 11 → "11th", 22 → "22nd".
+export function ordinal(n) {
+  const lastTwoDigits = n % 100;
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 13) return `${n}th`;
+  const suffixes = { 1: "st", 2: "nd", 3: "rd" };
+  return `${n}${suffixes[n % 10] ?? "th"}`;
+}
+
 // 1.4e9 → "1.4B", 10e6 → "10M", 11204 → "11K".
 export const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumSignificantDigits: 2 }).format;
 
