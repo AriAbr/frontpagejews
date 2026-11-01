@@ -15,10 +15,13 @@ Generated from GeoNames countryInfo.txt, plus two codes GDELT uses that
 GeoNames lacks: `GZ` (Gaza) and `RB` (Serbia). Unmapped codes are oceans and
 uninhabited islands.
 
-Gaza (`GZ`) and the West Bank (`WE`) map to Palestine, `PSE`. But GDELT files
-much Palestinian coverage under Israel's code (the words "Palestinian" and
-"Palestine", "Gaza, Israel", Hebron), so the line between the two can't be
-drawn from its tags; counted as one unit, the misfilings cancel.
+Gaza (`GZ`) and the West Bank (`WE`) are kept apart, though ISO has only
+Palestine, `PSE`, for the two. They get codes from ISO's user-assigned `X`
+range, `XGZ` and `XWB`, as Kosovo has the World Bank's `XKX`, so they can be
+counted alone or together. GDELT also files much Palestinian coverage under
+Israel's code (the words "Palestinian" and "Palestine", "Gaza, Israel",
+Hebron), so the line between Israel and the two can't be drawn from its tags;
+counted as one unit, the misfilings cancel.
 """
 
 FIPS_TO_ISO3 = {
@@ -115,7 +118,7 @@ FIPS_TO_ISO3 = {
     "GT": "GTM",
     "GV": "GIN",
     "GY": "GUY",
-    "GZ": "PSE",
+    "GZ": "XGZ",
     "HA": "HTI",
     "HK": "HKG",
     "HM": "HMD",
@@ -264,7 +267,7 @@ FIPS_TO_ISO3 = {
     "VQ": "VIR",
     "VT": "VAT",
     "WA": "NAM",
-    "WE": "PSE",
+    "WE": "XWB",
     "WF": "WLF",
     "WI": "ESH",
     "WS": "WSM",

@@ -1,4 +1,5 @@
-"""Country display names, by ISO 3166-1 alpha-3 code.
+"""Country display names, by ISO 3166-1 alpha-3 code, or a code from ISO's
+user-assigned `X` range for places ISO has none for (see `country_codes.py`).
 
 The dashboard shows the first name in each list. The rest are variants
 (demonyms, alternate names) from when this file drove matching against article
@@ -253,7 +254,9 @@ COUNTRIES = {
     "VUT": ["Vanuatu", "Ni-Vanuatu"],
     "WLF": ["Wallis and Futuna"],
     "WSM": ["Samoa", "Samoan"],
+    "XGZ": ["Gaza"],
     "XKX": ["Kosovo", "Kosovar"],
+    "XWB": ["West Bank"],
     "YEM": ["Yemen", "Yemeni"],
     "ZAF": ["South Africa", "South African"],
     "ZMB": ["Zambia", "Zambian"],
