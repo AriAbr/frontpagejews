@@ -48,6 +48,20 @@ def describe_site_data():
         assert day["country_set_mentions_by_outlet"]["fox"] == {"CHN": 1}
         assert day["country_set_mentions_by_outlet"]["npr"] == {}
 
+    def test_counts_gaza_and_the_west_bank_as_israel():
+        """An article about two or all three counts once"""
+        cache_day("2026-09-22", {"bbc.co.uk": {"ISR,XGZ": 1, "XGZ,XWB": 1, "USA,XWB": 1, "ISR": 1}})
+
+        day = site_data.site_data()["days"][0]
+
+        assert day["country_set_mentions_by_outlet"]["bbc"] == {"ISR": 3, "ISR,USA": 1}
+
+    def test_adds_palestines_figures_to_israels():
+        """The World Bank's Palestine covers Gaza and the West Bank"""
+        cache_figures("population", ISR=10, PSE=5, CHN=90)
+
+        assert site_data.site_data()["benchmark_figures"]["population"] == {"ISR": 15, "CHN": 90}
+
     def test_includes_only_the_most_recent_days(mocker):
         mocker.patch.object(site_data, "DAYS_SHOWN", 1)
         cache_day("2026-09-21", {"bbc.co.uk": {"ISR": 1}})
