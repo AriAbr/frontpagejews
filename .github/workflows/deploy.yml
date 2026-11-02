@@ -68,7 +68,7 @@ jobs:
       # kept on a branch of their own that holds only data. Each run fetches any
       # day missing from it and pushes the new ones back, so the history stays
       # complete by itself. Changing how days are counted means refetching them
-      # all, with the Refetch workflow (refetch.yml).
+      # all, with the Refetch GDELT workflow (refetch_gdelt.yml).
       - name: Check out data
         uses: actions/checkout@v4
         with:

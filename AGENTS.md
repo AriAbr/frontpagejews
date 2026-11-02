@@ -11,8 +11,8 @@ reduces them to per-domain article counts by the set of countries each
 mentions, and caches one JSON file per day under `var/data/gdelt/`. `var/data`
 is a worktree of the `data` branch, which holds every day since 2015; the
 deploy pushes each new day to it. Refetching it all takes about an hour with
-the Refetch workflow (`refetch.yml`, run by hand), and more than a day on one
-machine, so treat it as data, not a cache.
+the Refetch GDELT workflow (`refetch_gdelt.yml`, run by hand), and more than a
+day on one machine, so treat it as data, not a cache.
 `manage.py fetch_benchmarks` caches World Bank population and GDP and UCDP's
 conflict deaths under `var/data/benchmarks/`, so the branch holds everything the
 site shows. Unlike the days, they're disposable: deleting them only means

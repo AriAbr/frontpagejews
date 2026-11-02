@@ -6,7 +6,7 @@
 # The days are pushed to the data branch as one commit, and the next deploy
 # shows them. If they turn out wrong, reverting that commit brings back the
 # old ones.
-name: Refetch
+name: Refetch GDELT
 on:
   workflow_dispatch:
     inputs:
