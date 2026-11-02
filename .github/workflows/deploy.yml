@@ -67,8 +67,8 @@ jobs:
       # Every GDELT day fetched so far, one JSON file each, and the benchmarks,
       # kept on a branch of their own that holds only data. Each run fetches any
       # day missing from it and pushes the new ones back, so the history stays
-      # complete by itself. Changing how days are counted means refetching them all with
-      # --refresh, once, and pushing the result.
+      # complete by itself. Changing how days are counted means refetching them
+      # all, with the Refetch workflow (refetch.yml).
       - name: Check out data
         uses: actions/checkout@v4
         with:
