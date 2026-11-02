@@ -1,0 +1,141 @@
+# Refetches a range of GDELT days, every day since 2015 by default, for when
+# how days are counted changes. Run by hand from the Actions tab. The range is
+# split into chunks fetched in parallel, so all of it takes about an hour
+# rather than a day or more on one machine.
+#
+# The days are pushed to the data branch as one commit, and the next deploy
+# shows them. If they turn out wrong, reverting that commit brings back the
+# old ones.
+name: Refetch
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: First day to refetch, as YYYY-MM-DD (default GDELT 2's first full day)
+        default: "2015-02-19"
+      end:
+        description: Last day to refetch, as YYYY-MM-DD (default yesterday, the last finished day)
+        default: ""
+
+env:
+  POETRY_VERSION: 1.8.2
+  PYTHON_VERSION: "3.12"
+  # manage.py needs a key to boot; nothing here is secret.
+  SECRET_KEY: "insecurekey"
+  # Print each day's line as it finishes, rather than buffered to the end.
+  PYTHONUNBUFFERED: "1"
+  # About 35 minutes of fetching per job, at about 12 seconds a day.
+  DAYS_PER_JOB: 180
+
+jobs:
+  # Splits the range into chunks of DAYS_PER_JOB days, one per refetch job.
+  split:
+    runs-on: ubuntu-latest
+    outputs:
+      ranges: ${{ steps.split.outputs.ranges }}
+    steps:
+      - id: split
+        env:
+          START: ${{ inputs.start }}
+          END: ${{ inputs.end }}
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          from datetime import UTC, date, datetime, timedelta
+
+          start = date.fromisoformat(os.environ["START"])
+          yesterday = datetime.now(UTC).date() - timedelta(days=1)
+          end = date.fromisoformat(os.environ["END"]) if os.environ["END"] else yesterday
+          days_per_job = int(os.environ["DAYS_PER_JOB"])
+          ranges = []
+          while start <= end:
+              range_end = min(start + timedelta(days=days_per_job - 1), end)
+              ranges.append({"start": start.isoformat(), "end": range_end.isoformat()})
+              start = range_end + timedelta(days=1)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"ranges={json.dumps(ranges)}\n")
+          EOF
+
+  refetch:
+    needs: split
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      # One chunk failing shouldn't cancel the rest; "Re-run failed jobs"
+      # redoes only it, and then the days are collected.
+      fail-fast: false
+      matrix:
+        range: ${{ fromJSON(needs.split.outputs.ranges) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install python dependencies
+        run: poetry install --no-interaction
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
+      # Into an empty var/data, so every day in the range is fetched anew.
+      - name: Fetch GDELT
+        run: poetry run python manage.py fetch_gdelt --start ${{ matrix.range.start }} --end ${{ matrix.range.end }}
+
+      - name: Upload days
+        uses: actions/upload-artifact@v4
+        with:
+          name: days-${{ matrix.range.start }}
+          path: var/data/gdelt
+          retention-days: 7
+
+  # Only once every chunk has succeeded, so data never gets part of a range.
+  collect:
+    needs: refetch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out data
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          path: var/data
+
+      # Each artifact holds year folders, so they merge into gdelt/ in place,
+      # replacing the old copies of the days.
+      - name: Download days
+        uses: actions/download-artifact@v4
+        with:
+          pattern: days-*
+          merge-multiple: true
+          path: var/data/gdelt
+
+      - name: Push
+        working-directory: var/data
+        run: |
+          git add gdelt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -m "chore: Refetch $(git diff --cached --name-only | wc -l) GDELT days"
+          # The deploy may have pushed new days meanwhile.
+          if ! git pull --quiet --rebase; then
+            echo "::error::The deploy pushed a day this refetch also has. Re-run this job to collect the days again on top of it."
+            exit 1
+          fi
+          git push
