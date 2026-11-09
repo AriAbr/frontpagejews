@@ -18,9 +18,9 @@ Names are matched whole, never searched for inside a tag: "New Mexico" is not
 Mexico, and "Lebanon (NH)" is in New Hampshire.
 """
 
-from frontpagejews.countries import ISO3_TO_COUNTRY_NAMES
+from frontpagejews.countries import ISO3_TO_COUNTRY_NAME
 
-# The NYT's names for countries, where they differ from the first name in
+# The NYT's names for countries, where they differ from the name in
 # `countries.py`.
 NYT_COUNTRY_CODES = {
     "Bahama Islands": "BHS",
@@ -117,7 +117,7 @@ US_ABBREVIATIONS = ["US", "DC", "NYC", "NYS", "NYS Area"]
 COUNTRIES_BY_NYT_TAG = {
     name.lower(): code
     for name, code in [
-        *[(names[0], code) for code, names in ISO3_TO_COUNTRY_NAMES.items()],
+        *[(name, code) for code, name in ISO3_TO_COUNTRY_NAME.items()],
         *NYT_COUNTRY_CODES.items(),
         *[(name, "USA") for name in [*US_STATES, *US_STATES.values(), *US_ABBREVIATIONS]],
     ]
