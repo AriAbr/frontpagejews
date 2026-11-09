@@ -20,9 +20,11 @@ from frontpagejews.news_coverage import DAYS_SHOWN, HOME_COUNTRIES, OUTLETS, out
 FOCUS = "ISR"
 DEFAULT_COMPARISON = "CHN"
 # Israel, Gaza and the West Bank are shown as one, "Israel". GDELT files much of
-# the coverage of Gaza and the West Bank under Israel (see `country_codes.py`),
-# and the World Bank has one figure for the two, Palestine's, whose borders
-# needn't match GDELT's. The sources' data keeps them apart; they're merged here.
+# the coverage of Gaza and the West Bank under Israel (the words "Palestinian"
+# and "Palestine", "Gaza, Israel", Hebron), so the line between them can't be
+# drawn from its tags; counted as one unit, the misfilings cancel. The World Bank
+# has one figure for the two, Palestine's, whose borders needn't match GDELT's.
+# The sources' data keeps them apart; they're merged here.
 # UCDP files deaths in all three under Israel already.
 MERGED_INTO_FOCUS_MENTIONS = {"XGZ", "XWB"}
 MERGED_INTO_FOCUS_FIGURES = {"PSE"}
