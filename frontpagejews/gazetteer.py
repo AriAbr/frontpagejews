@@ -8,7 +8,7 @@
   country.
 - If Wikidata has no exact match, or the exact match has no coordinates and
   no GeoNames ID (treating this as "not a specific place", like the entry for
-  "Air Base"), return `None` as the country.
+  "East Asia"), return `None` as the country.
 - If Wikidata returns an exact match with no GeoNames ID, or one GeoNames has
   since removed, search GeoNames for the name. Wikidata has confirmed the
   place exists, so the search only has to find it ("Kashmir" gives Jammu and
@@ -17,6 +17,9 @@
   South China Sea is Thailand's), so it isn't used. Water inside one country
   is usually tagged with it ("Great Salt Lake (Utah)"), and settled before
   GeoNames is asked.
+- A country that no longer exists is in no country. GeoNames gives it a code
+  that may now mean another (Czechoslovakia's `CS` was later Serbia and
+  Montenegro's), or a current country's (East Germany is `DE`).
 
 Each name is looked up once a run and not kept after, so a day's counts use
 GeoNames' answers from when the day was fetched. GeoNames keeps no history, so
@@ -45,8 +48,9 @@ SEARCH_RESULTS = 10
 # The Wikidata properties read: an entry's coordinates, and its GeoNames ID.
 COORDINATES = "P625"
 GEONAMES_ID = "P1566"
-# GeoNames' feature class for water.
+# GeoNames' feature class for water, and feature code for a former country.
 WATER = "H"
+FORMER_COUNTRY = "PCLH"
 
 logger = logging.getLogger(__name__)
 
@@ -154,11 +158,12 @@ class Gazetteer:
         return places[0] if places else None
 
     def _country_of(self, place):
-        """The ISO3 code of the country a GeoNames place is in, or None for water
-        or a place in no country."""
+        """The ISO3 code of the country a GeoNames place is in, or None for water,
+        a former country, or a place in no country."""
         feature_class = place.get("fcl")
+        feature_code = place.get("fcode")
         country_code = place.get("countryCode")
-        if feature_class == WATER or not country_code:
+        if feature_class == WATER or feature_code == FORMER_COUNTRY or not country_code:
             return None
         return ISO2_TO_ISO3.get(country_code)
 
