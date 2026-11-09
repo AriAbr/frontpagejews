@@ -23,6 +23,9 @@ DATA_DIR = BASE_DIR / "var" / "data"
 # Daily summaries of GDELT's bulk files; see frontpagejews/gdelt.py.
 GDELT_CACHE_DIR = DATA_DIR / "gdelt"
 BENCHMARK_CACHE_DIR = DATA_DIR / "benchmarks"
+# A GeoNames account, with its free web services turned on, for the places NYT
+# tags don't give a country for; see frontpagejews/gazetteer.py.
+GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME", "")
 
 # Google Analytics. Set only for the live site, so local visits aren't counted.
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "")
