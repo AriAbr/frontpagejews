@@ -107,9 +107,9 @@ US_STATES = {
     "Wisconsin": "Wis",
     "Wyoming": "Wyo",
 }
-# The NYT's other names for the US and places in it, in parentheses ("Southern
-# States (US)", "Harlem (NYC)").
-US_ABBREVIATIONS = ["US", "DC", "NYC", "NYS", "NYS Area"]
+# The NYT's other names for the US and places in it, alone ("New York City") or
+# in parentheses ("Southern States (US)", "Harlem (NYC)").
+US_OTHER_NAMES = ["US", "DC", "New York City", "NYC", "NYS", "NYS Area"]
 
 # The names a whole tag, or a part of its parentheses, can be matched against,
 # each with its country's code. Keyed in lowercase, as older tags are
@@ -119,7 +119,7 @@ COUNTRIES_BY_NYT_TAG = {
     for name, code in [
         *[(name, code) for code, name in ISO3_TO_COUNTRY_NAME.items()],
         *NYT_COUNTRY_CODES.items(),
-        *[(name, "USA") for name in [*US_STATES, *US_STATES.values(), *US_ABBREVIATIONS]],
+        *[(name, "USA") for name in [*US_STATES, *US_STATES.values(), *US_OTHER_NAMES]],
     ]
 }
 

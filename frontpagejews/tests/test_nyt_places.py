@@ -30,6 +30,9 @@ def describe_place_country():
         assert place_country("Las Vegas (Nev)", gazetteer) == "USA"
         assert place_country("West Village (Manhattan, NY)", gazetteer) == "USA"
 
+    def test_finds_new_york_city_without_a_lookup(gazetteer):
+        assert place_country("New York City", gazetteer) == "USA"
+
     def test_finds_a_place_across_two_states(gazetteer):
         assert place_country("Lake Powell (Utah-Ariz)", gazetteer) == "USA"
 
