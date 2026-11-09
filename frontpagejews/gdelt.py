@@ -8,7 +8,7 @@ is disposable: deleting it only means re-downloading.
 
 An article "mentions" a country if any location GDELT found in it lies in that
 country, so "Tel Aviv" counts for Israel. GDELT tags with FIPS 10-4 codes;
-they are converted to ISO3 per article (see `country_codes.py`), so an article that
+they are converted to ISO3 per article (see `countries.py`), so an article that
 mentions both Tel Aviv and Haifa counts once for Israel.
 
 Each article is counted under the set of countries it mentions, not once per
@@ -34,7 +34,7 @@ from urllib.parse import urlparse
 import requests
 from django.conf import settings
 
-from frontpagejews.country_codes import FIPS_TO_ISO3
+from frontpagejews.countries import FIPS_TO_ISO3
 from frontpagejews.news_coverage import OUTLET_DOMAINS
 
 BASE_URL = "https://data.gdeltproject.org/gdeltv2/"
