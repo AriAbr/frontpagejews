@@ -49,15 +49,20 @@ def describe_place_country():
         assert place_country("Tokyo", gazetteer) == "JPN"
         place_country_by_geonames.assert_called_once_with("Tokyo")
 
-    def test_looks_up_the_parts_of_its_parentheses_until_one_gives_a_country(mocker, gazetteer):
-        """The last part may not be a place"""
-        lookups = {"Gloucestershire, England, Air Base": None, "Air Base": None, "England": "GBR"}
-        mocker.patch.object(gazetteer, "fetch_place_country", side_effect=lookups.get)
+    def test_looks_up_its_parentheses_as_one_name(mocker, gazetteer):
+        fetch_place_country = mocker.patch.object(gazetteer, "fetch_place_country", return_value="CAN")
+
+        assert place_country("Kensington Market (Toronto, Ontario)", gazetteer) == "CAN"
+        fetch_place_country.assert_called_once_with("Toronto, Ontario")
+
+    def test_returns_None_when_its_parentheses_give_no_country(mocker, gazetteer):
+        fetch_place_country = mocker.patch.object(gazetteer, "fetch_place_country", return_value=None)
 
         assert (
             place_country("Royal Air Force Fairford (Gloucestershire, England, Air Base)", gazetteer)
-            == "GBR"
+            is None
         )
+        fetch_place_country.assert_called_once_with("Gloucestershire, England, Air Base")
 
     def test_needs_no_lookup_for_a_place_its_parentheses_name_a_country_for(gazetteer):
         """The autouse fixture fails any lookup"""

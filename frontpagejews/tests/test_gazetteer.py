@@ -1,4 +1,4 @@
-from frontpagejews.gazetteer import WATER, Gazetteer
+from frontpagejews.gazetteer import FORMER_COUNTRY, WATER, Gazetteer
 
 
 def wikidata_properties(geonames_id=None, has_coordinates=True):
@@ -11,14 +11,14 @@ def wikidata_properties(geonames_id=None, has_coordinates=True):
     return entry_properties
 
 
-def geonames_place(name, country_code, feature_class="P"):
+def geonames_place(name, country_code, feature_class="P", feature_code="X"):
     """A place as GeoNames' API returns it."""
     return {
         "geonameId": 1,
         "name": name,
         "countryCode": country_code,
         "fcl": feature_class,
-        "fcode": "X",
+        "fcode": feature_code,
     }
 
 
@@ -70,11 +70,11 @@ def describe_fetch_place_country():
         fetch_geonames_by_name.assert_not_called()
 
     def test_returns_None_when_the_wikidata_match_isnt_a_place(mocker):
-        """ "Air Base", the idea: it has no coordinates"""
+        """ "East Asia", the region: it has no coordinates"""
         mock_wikidata_entry(mocker, wikidata_properties(has_coordinates=False))
         fetch_geonames_by_name = mocker.patch.object(Gazetteer, "_fetch_geonames_by_name")
 
-        assert Gazetteer().fetch_place_country("Air Base") is None
+        assert Gazetteer().fetch_place_country("East Asia") is None
         fetch_geonames_by_name.assert_not_called()
 
     def test_returns_None_for_water(mocker):
@@ -87,6 +87,17 @@ def describe_fetch_place_country():
         )
 
         assert Gazetteer().fetch_place_country("South China Sea") is None
+
+    def test_returns_None_for_a_former_country(mocker):
+        """GeoNames files East Germany under Germany"""
+        mock_wikidata_entry(mocker, wikidata_properties(geonames_id=2921044))
+        mocker.patch.object(
+            Gazetteer,
+            "_fetch_geonames_by_id",
+            return_value=geonames_place("East Germany", "DE", "A", FORMER_COUNTRY),
+        )
+
+        assert Gazetteer().fetch_place_country("East Germany") is None
 
     def test_looks_up_each_name_once_a_run(mocker):
         fetch_wikidata_id = mock_wikidata_entry(mocker, wikidata_properties(geonames_id=6269131))

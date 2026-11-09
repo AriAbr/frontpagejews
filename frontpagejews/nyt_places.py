@@ -5,11 +5,11 @@ The NYT tags articles with places in a fixed style: a country on its own
 (Ukraine)", "Las Vegas (Nev)", "West Village (Manhattan, NY)"). A tag is
 matched in these steps, the first that gives a country winning:
 1. The tag is a country's name, as `countries.py` or the NYT writes it.
-2. Its parentheses name a country or a US state: whole, then part by part
+2. Its parentheses name a country or a US state: as one name, then part by part
    from the right ("West Village (Manhattan, NY)" -> "NY").
 3. Otherwise GeoNames says, for the tag ("England", "Golan Heights") or its
-   parentheses ("Toronto (Ontario)" -> "Ontario"); see `gazetteer.py`.
-Steps 1 and 2, the tag's own words, settle about 95% of tags, so the NYT's
+   parentheses as one name ("Toronto (Ontario)" -> "Ontario"); see `gazetteer.py`.
+Steps 1 and 2, the tag's own words, settle about 90% of tags, so the NYT's
 labels stand as written when it published them. Step 3 settles the rest by
 GeoNames' calls, not ours, the way GDELT's geocoder settles the other
 outlets'. Only names whose meaning can't be argued are written here.
@@ -154,10 +154,4 @@ def place_country(tag, gazetteer):
     for name in names:
         if country_named(name):
             return country_named(name)
-    # "Royal Air Force Fairford (Gloucestershire, England, Air Base)": the last
-    # part may not be a place, so the first part GeoNames finds a country for.
-    for name in names:
-        country = gazetteer.fetch_place_country(name)
-        if country:
-            return country
-    return None
+    return gazetteer.fetch_place_country(qualifier)
