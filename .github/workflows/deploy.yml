@@ -104,8 +104,7 @@ jobs:
         run: poetry run python manage.py fetch_nyt --start 2015-02-19
         env:
           NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
-          # Not secret; a repository variable, like SENTRY_DSN.
-          GEONAMES_USERNAME: ${{ vars.GEONAMES_USERNAME }}
+          GEONAMES_USERNAME: ${{ secrets.GEONAMES_USERNAME }}
 
       # Only the counts: nothing the NYT's APIs return is kept.
       - name: Push new NYT days
