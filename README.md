@@ -14,6 +14,11 @@ git worktree add var/data data
 caches them: one JSON file per finished day since GDELT 2 began (2015-02-19), in
 a folder per year: `gdelt/2024/2024-03-01.json`.
 
+`nyt/` holds the New York Times's mentions in the same shape, as
+`manage.py fetch_nyt` caches them from the NYT's own APIs: one JSON file per
+finished day since 2015-02-19, `nyt/2024/2024-03-01.json`. Only the counts are
+kept; nothing the NYT's APIs return is stored.
+
 `benchmarks/` holds the population, GDP and conflict-deaths figures the site
 compares against, as `manage.py fetch_benchmarks` last fetched them. The
 deploy refetches them on every run and pushes any change.
