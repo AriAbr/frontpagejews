@@ -1,6 +1,6 @@
-# Fetches any GDELT day not yet fetched, builds the static site and deploys it
-# to Netlify. Runs daily, on every push to main (so code changes go live), and by
-# hand from the Actions tab.
+# Fetches any GDELT or NYT day not yet fetched, builds the static site and
+# deploys it to Netlify. Runs daily, on every push to main (so code changes go
+# live), and by hand from the Actions tab.
 name: Deploy
 on:
   schedule:
@@ -92,6 +92,33 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit --quiet -m "chore: Add $(git diff --cached --name-only | wc -l) GDELT days"
           # In case days were pushed from elsewhere meanwhile; each day is its own file.
+          git pull --quiet --rebase
+          git push
+
+      # The NYT's counts, from its own APIs (see frontpagejews/nyt.py), from the
+      # same first day. Normally just yesterday, about 15 of the 500 calls a day
+      # the key allows. The site doesn't show them yet, so a failed fetch
+      # doesn't stop the deploy; Sentry reports it.
+      - name: Fetch NYT
+        continue-on-error: true
+        run: poetry run python manage.py fetch_nyt --start 2015-02-19
+        env:
+          NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
+          # Not secret; a repository variable, like SENTRY_DSN.
+          GEONAMES_USERNAME: ${{ vars.GEONAMES_USERNAME }}
+
+      # Only the counts: nothing the NYT's APIs return is kept.
+      - name: Push new NYT days
+        if: always()
+        working-directory: var/data
+        run: |
+          # Nothing to add if the fetch failed before its first day.
+          if [ ! -d nyt ]; then exit 0; fi
+          git add nyt
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -m "chore: Add $(git diff --cached --name-only | wc -l) NYT days"
           git pull --quiet --rebase
           git push
 
