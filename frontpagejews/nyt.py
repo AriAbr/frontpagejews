@@ -63,6 +63,9 @@ MOST_DAYS_TO_SEARCH = 2
 MONTH_END_MARGIN = timedelta(hours=3)
 # The keyword type of place tags: "glocations" in older articles.
 LOCATION_KEYWORD_NAMES = {"Location", "glocations"}
+# Item types only the archive has (podcast episodes and their shows): Search
+# never returns them.
+ARCHIVE_ONLY_TYPES = {"audio", "audiocontainer"}
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +205,11 @@ def save_day(day, articles, source, gazetteer, complete=True):
 
 def summarize(articles, gazetteer):
     """Reduce a day's articles to the article count and the counts by set of
-    countries, like a GDELT day's."""
+    countries, like a GDELT day's. Types Search never returns are left out, so
+    a day counts the same items whichever API it came from."""
+    articles = [
+        article for article in articles if article.get("document_type") not in ARCHIVE_ONLY_TYPES
+    ]
     country_set_keys = []
     for article in articles:
         countries = set()
