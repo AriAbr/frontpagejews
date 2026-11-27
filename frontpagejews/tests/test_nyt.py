@@ -76,6 +76,16 @@ def describe_summarize():
 
         assert summary["domains"]["nytimes.com"]["country_sets"] == {}
 
+    def test_leaves_out_types_search_never_returns():
+        """The archive's podcast episodes and shows"""
+        podcast = {**article("p", "2026-09-15T10:00:00Z", "Iran"), "document_type": "audio"}
+        show = {**article("s", "2026-09-15T11:00:00Z", "Iran"), "document_type": "audiocontainer"}
+        articles = [article("a", "2026-09-15T12:00:00Z", "Iran"), podcast, show]
+
+        summary = nyt.summarize(articles, Gazetteer())
+
+        assert summary == {"domains": {"nytimes.com": {"articles": 1, "country_sets": {"IRN": 1}}}}
+
 
 def describe_fetch_archive_month_days():
     """Tests for the days a month's archive file covers"""
