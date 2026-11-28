@@ -179,6 +179,32 @@ export function percentagesOfTotal(countsByCountry) {
   return percentages;
 }
 
+// Each country's percentage of coverage, with every outlet weighted equally:
+// each outlet's percentages of its own mentions over the given days, averaged
+// over the outlets. An outlet with fewer than minMentions there (GDELT's
+// outages, the NY Post's 2020-23 gap) is left out of the average rather than
+// counted as 0% for everyone. Returns the percentages and how many outlets
+// went into them.
+export function outletAveragedPercentages(days, selectedOutlets, minMentions) {
+  const percentageTotals = {};
+  let outletsAveraged = 0;
+  for (const slug of selectedOutlets) {
+    const outletMentions = mentionsByCountry(days, [slug]);
+    if (sum(Object.values(outletMentions)) < minMentions) continue;
+    const outletPercentages = percentagesOfTotal(outletMentions);
+    for (const [code, percentage] of Object.entries(outletPercentages)) {
+      percentageTotals[code] = (percentageTotals[code] ?? 0) + percentage;
+    }
+    outletsAveraged += 1;
+  }
+
+  const percentages = {};
+  for (const [code, percentageTotal] of Object.entries(percentageTotals)) {
+    percentages[code] = percentageTotal / outletsAveraged;
+  }
+  return { percentages, outletsAveraged };
+}
+
 // Each benchmark's weight in the composite. Equal, on Kahneman's point that
 // simple equally weighted formulas are often very good predictors.
 export const COMPOSITE_WEIGHTS = { population: 1 / 3, gdp: 1 / 3, conflict_deaths: 1 / 3 };
@@ -220,13 +246,16 @@ export const MIN_MENTIONS_PER_DAY = 10;
 export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) {
   const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
   return data.days.map(day => {
-    const mentions = mentionsByCountry([day], selectedOutlets);
-    const mentionsPercentages = percentagesOfTotal(mentions);
-    // A day with (almost) no mentions from the selected outlets has no shares
+    const { percentages: mentionsPercentages, outletsAveraged } = outletAveragedPercentages(
+      [day],
+      selectedOutlets,
+      MIN_MENTIONS_PER_DAY,
+    );
+    // A day with (almost) no mentions from any selected outlet has no shares
     // at all, rather than 0% for everyone: GDELT has no data for it (June 15
     // to July 1, 2025), or next to none from these outlets. Null, so the line
     // breaks there rather than falling to 0.
-    const hasMentions = sum(Object.values(mentions)) >= MIN_MENTIONS_PER_DAY;
+    const hasMentions = outletsAveraged > 0;
     return {
       date: day.date,
       // Whether GDELT has the day at all, from any outlet, which tells an
@@ -247,7 +276,11 @@ export function lineChartRows(data, selectedOutlets, comparisonCode, benchmark) 
 // have no multiple, and no place on the benchmark's axis.
 export function countryMeasures(data, selectedOutlets, benchmark) {
   const mentions = mentionsByCountry(data.days, selectedOutlets);
-  const mentionsPercentages = percentagesOfTotal(mentions);
+  const { percentages: mentionsPercentages } = outletAveragedPercentages(
+    data.days,
+    selectedOutlets,
+    MIN_MENTIONS_PER_DAY,
+  );
   const benchmarkPercentages = percentagesOfTotal(data.benchmark_figures[benchmark]);
   const measures = [];
   for (const code of Object.keys(mentions).sort()) {
@@ -256,7 +289,8 @@ export function countryMeasures(data, selectedOutlets, benchmark) {
       code,
       name: countryName(data, code),
       mentions: mentions[code],
-      mentionsPercentage: mentionsPercentages[code],
+      // 0 for a country only an outlet left out of the average mentions.
+      mentionsPercentage: mentionsPercentages[code] ?? 0,
       benchmarkFigure: data.benchmark_figures[benchmark][code],
       benchmarkPercentage: benchmarkPercentages[code],
     });

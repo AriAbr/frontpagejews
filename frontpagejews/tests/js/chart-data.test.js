@@ -167,6 +167,22 @@ describe("lineChartRows", () => {
     assert.equal(lineChartRows(data, ["fox"], "CHN", "population")[0].focusMentionsPercentage, 0.75);
   });
 
+  test("weights each outlet equally, however many mentions it has", () => {
+    // Israel has 100% of Fox's mentions and 0% of the BBC's: 50% on average,
+    // where pooling the mentions would give it 10 of 110.
+    const data = siteData({ "2026-09-22": { fox: { ISR: 10 }, bbc: { CHN: 100 } } });
+
+    assert.equal(lineChartRows(data, ["fox", "bbc"], "CHN", "population")[0].focusMentionsPercentage, 0.5);
+  });
+
+  test("leaves an outlet with too few mentions out of a day's average", () => {
+    // Israel has 100% of Fox's mentions; the BBC's 2 would pull it down to 50%
+    // if they counted.
+    const data = siteData({ "2026-09-22": { fox: { ISR: 10 }, bbc: { CHN: 2 } } });
+
+    assert.equal(lineChartRows(data, ["fox", "bbc"], "CHN", "population")[0].focusMentionsPercentage, 1);
+  });
+
   test("gives no coverage shares for a day without mentions, rather than 0", () => {
     // GDELT has no data for the 23rd, so the line breaks there.
     const data = siteData({ "2026-09-22": { bbc: { ISR: 10 } }, "2026-09-23": { bbc: {} } });
@@ -207,13 +223,25 @@ describe("lineChartRows", () => {
 
 describe("countryMeasures", () => {
   test("gives each country's share of mentions beside its share of the population", () => {
-    // Israel has 3 of the 4 mentions and 10 of the 100 people.
-    const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
+    // Israel has 30 of the 40 mentions and 10 of the 100 people.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 30, CHN: 10 } } }, { population: { ISR: 10, CHN: 90 } });
 
     assert.deepEqual(countryMeasures(data, ["bbc"], "population"), [
-      { code: "CHN", name: "China", mentions: 1, mentionsPercentage: 0.25, benchmarkFigure: 90, benchmarkPercentage: 0.9 },
-      { code: "ISR", name: "Israel", mentions: 3, mentionsPercentage: 0.75, benchmarkFigure: 10, benchmarkPercentage: 0.1 },
+      { code: "CHN", name: "China", mentions: 10, mentionsPercentage: 0.25, benchmarkFigure: 90, benchmarkPercentage: 0.9 },
+      { code: "ISR", name: "Israel", mentions: 30, mentionsPercentage: 0.75, benchmarkFigure: 10, benchmarkPercentage: 0.1 },
     ]);
+  });
+
+  test("gives 0% to a country only an outlet with too few mentions names", () => {
+    // Fox's 2 mentions of Iran are too few to count toward the average.
+    const data = siteData(
+      { "2026-09-22": { bbc: { ISR: 30, CHN: 10 }, fox: { IRN: 2 } } },
+      { population: { ISR: 10, CHN: 90, IRN: 90 } },
+    );
+
+    const iran = countryMeasures(data, ["bbc", "fox"], "population").find(measures => measures.code === "IRN");
+
+    assert.equal(iran.mentionsPercentage, 0);
   });
 
   test("leaves off countries with no figure for the chosen benchmark", () => {
@@ -228,8 +256,8 @@ describe("countryMeasures", () => {
 
 describe("coverageGapsBySide", () => {
   test("gives each country's share of coverage minus its share of the benchmark", () => {
-    // China has 1 of the 4 mentions and 90 of the 100 people, Israel 3 and 10.
-    const data = siteData({ "2026-09-22": { bbc: { ISR: 3, CHN: 1 } } }, { population: { ISR: 10, CHN: 90 } });
+    // China has 10 of the 40 mentions and 90 of the 100 people, Israel 30 and 10.
+    const data = siteData({ "2026-09-22": { bbc: { ISR: 30, CHN: 10 } } }, { population: { ISR: 10, CHN: 90 } });
 
     const { overCovered, underCovered } = coverageGapsBySide(countryMeasures(data, ["bbc"], "population"));
 
